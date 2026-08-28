@@ -23,10 +23,10 @@ PREMIUM_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Unbounded:wght@400;600&display=swap');
 
-#MainMenu, footer, header {visibility: hidden;}
+#MainMenu, footer, header {display: none !important;}
 section[data-testid="stSidebar"] {display: none;}
 
-html, body, .stApp {background: #0a0c10 !important;}
+html, body, .stApp, #root, .stAppViewContainer {background: #0a0c10 !important;}
 body, p, li {font-family: 'Manrope', sans-serif !important;}
 h1, h2, h3, h4 {font-family: 'Unbounded', sans-serif !important; color: #fff !important;}
 span.material-symbols-rounded {font-family: 'Material Symbols Rounded' !important;}
