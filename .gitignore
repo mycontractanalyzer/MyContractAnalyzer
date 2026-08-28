@@ -1,0 +1,5 @@
+.streamlit/secrets.toml
+database/mca.db
+__pycache__/
+*.pyc
+test.pdf

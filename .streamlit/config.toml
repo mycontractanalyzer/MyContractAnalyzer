@@ -1,0 +1,12 @@
+[theme]
+base = "dark"
+primaryColor = "#f0b429"
+
+[client]
+showSidebarNavigation = false
+
+[server]
+enableStaticServing = true
+
+[browser]
+gatherUsageStats = false
