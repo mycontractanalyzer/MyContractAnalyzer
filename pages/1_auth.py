@@ -1,50 +1,45 @@
 import streamlit as st
 
-from database.models import init_db
-from utils.auth import get_current_user, login_user, logout_user, register_user
-
 from core.ui import render_header
+from utils.auth import get_current_user, login_user, register_user
+
+st.set_page_config(page_title="Вход и регистрация", page_icon="🔐")
 render_header()
-init_db()
+
+user = get_current_user()
+if user:
+    st.success(f"Вы вошли как **{user['email']}**")
+    st.page_link("pages/5_profile.py", label="👤 Перейти в личный кабинет")
+    st.stop()
 
 st.title("🔐 Вход и регистрация")
 
-user = get_current_user()
+tab_login, tab_reg = st.tabs(["Вход", "Регистрация"])
 
-if user:
-    st.success(f"Вы вошли как: **{user['email']}**")
-    st.write(f"Тариф: **{user['tariff']}** · Осталось проверок: **{user['checks_left']}**")
-    if st.button("Выйти"):
-        logout_user()
-        st.rerun()
-    st.stop()
-
-tab_login, tab_register = st.tabs(["Вход", "Регистрация"])
-
-with tab_register:
-    with st.form("register_form", clear_on_submit=True):
-        st.write("Создай аккаунт — 1 бесплатная проверка в подарок")
-        reg_email = st.text_input("Email")
-        reg_pass = st.text_input("Пароль", type="password")
-        reg_pass2 = st.text_input("Повтори пароль", type="password")
-        reg_submit = st.form_submit_button("Создать аккаунт", type="primary")
-
-    if reg_submit:
-        ok, msg = register_user(reg_email, reg_pass, reg_pass2)
+with tab_login:
+    email = st.text_input("Email", key="login_email")
+    password = st.text_input("Пароль", type="password", key="login_pass")
+    if st.button("Войти", key="login_btn"):
+        ok, msg = login_user(email, password)
         if ok:
+            st.success(msg)
             st.rerun()
         else:
             st.error(msg)
+    if st.button("Забыли пароль?", key="forgot_btn"):
+        st.info(
+            "Автоматическое восстановление пока недоступно. Напишите в поддержку "
+            "(Telegram: @MyContractAnalyzerSupport) — администратор сбросит пароль вручную."
+        )
 
-with tab_login:
-    with st.form("login_form", clear_on_submit=True):
-        log_email = st.text_input("Email")
-        log_pass = st.text_input("Пароль", type="password")
-        log_submit = st.form_submit_button("Войти", type="primary")
-
-    if log_submit:
-        ok, msg = login_user(log_email, log_pass)
+with tab_reg:
+    reg_email = st.text_input("Email", key="reg_email")
+    reg_pass = st.text_input("Пароль", type="password", key="reg_pass")
+    reg_pass2 = st.text_input("Повторите пароль", type="password", key="reg_pass2")
+    if st.button("Создать аккаунт", key="reg_btn"):
+        ok, msg = register_user(reg_email, reg_pass, reg_pass2)
         if ok:
+            st.success(msg)
             st.rerun()
         else:
             st.error(msg)

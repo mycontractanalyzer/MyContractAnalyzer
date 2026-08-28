@@ -1,44 +1,56 @@
 import streamlit as st
 
 import config
-from core.admin_tools import add_checks, find_user, grant_tariff, list_users
 from core.tariffs import TARIFFS
-from utils.auth import get_current_user
-
 from core.ui import render_header
+from database.connection import get_connection
+from utils.auth import delete_user, get_current_user, list_users, reset_password_admin
 
+st.set_page_config(page_title="Админ-панель", page_icon="🛠")
 render_header()
-
-st.title("🛠️ Админка")
 
 user = get_current_user()
 if not user or user["email"] not in config.ADMIN_EMAILS:
-    st.error("Доступ запрещён. Только для администратора.")
+    st.error("Доступ запрещён")
     st.stop()
 
-st.subheader("🔍 Управление пользователем")
-email = st.text_input("Email пользователя")
-if st.button("Найти"):
-    found = find_user(email)
-    if not found:
-        st.error("Пользователь не найден")
-    else:
-        st.success(f"Найден: {found['email']} · тариф {found['tariff']} · проверок {found['checks_left']}")
-        st.session_state["admin_target_id"] = found["id"]
+st.title("🛠 Админ-панель")
 
-if st.session_state.get("admin_target_id"):
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("➕ Добавить 10 проверок"):
-            add_checks(st.session_state["admin_target_id"], 10)
-            st.success("Готово")
-    with col2:
-        tariff = st.selectbox("Тариф", list(TARIFFS.keys()))
-        months = st.selectbox("Срок", [1, 3, 6, 9, 12, 24])
-        if st.button("🎁 Выдать тариф"):
-            grant_tariff(st.session_state["admin_target_id"], tariff, months)
-            st.success("Тариф выдан")
+users = list_users()
+
+st.subheader("👥 Пользователи")
+if not users:
+    st.write("Пока никого нет")
+    st.stop()
+
+options = {f"#{u['id']} {u['email']} — {u['tariff']} ({u['checks_left']} пров.)": u["id"] for u in users}
+label = st.selectbox("Выбрать пользователя", list(options.keys()))
+uid = options[label]
+
+c1, c2 = st.columns(2)
+with c1:
+    new_pass = st.text_input("Временный пароль", value="mca12345")
+    if st.button("🔑 Сбросить пароль"):
+        reset_password_admin(uid, new_pass)
+        st.success(f"Пользователю #{uid} установлен пароль: {new_pass}")
+with c2:
+    st.write("⚠️ Полное удаление")
+    if st.button("🗑 Удалить пользователя"):
+        delete_user(uid)
+        st.success("Пользователь удалён")
+        st.rerun()
 
 st.divider()
-st.subheader("👥 Все пользователи")
-st.dataframe(list_users(), use_container_width=True)
+st.subheader("💳 Выдать тариф")
+options2 = {u["email"]: u["id"] for u in users}
+email = st.selectbox("Пользователь", list(options2.keys()), key="grant_email")
+tariff = st.selectbox("Тариф", list(TARIFFS.keys()), key="grant_tariff")
+if st.button("Выдать", key="grant_btn"):
+    conn = get_connection()
+    conn.execute(
+        "UPDATE users SET tariff = ?, checks_left = ? WHERE id = ?",
+        (tariff, TARIFFS[tariff]["checks"], options2[email]),
+    )
+    conn.commit()
+    conn.close()
+    st.success(f"Тариф {tariff} выдан: {email}")

@@ -89,6 +89,44 @@ def logout_user():
     st.query_params.clear()
 
 
+def change_password(user_id, old_password, new_password):
+    if len(new_password or "") < 6:
+        return False, "Пароль должен быть не короче 6 символов"
+    conn = get_connection()
+    row = conn.execute("SELECT password_hash FROM users WHERE id = ?", (user_id,)).fetchone()
+    if row is None or not verify_password(old_password, row["password_hash"]):
+        conn.close()
+        return False, "Текущий пароль указан неверно"
+    conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (hash_password(new_password), user_id))
+    conn.commit()
+    conn.close()
+    return True, "Пароль изменён!"
+
+
+def reset_password_admin(user_id, new_password):
+    conn = get_connection()
+    conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (hash_password(new_password), user_id))
+    conn.commit()
+    conn.close()
+
+
+def delete_user(user_id):
+    conn = get_connection()
+    conn.execute("DELETE FROM analyses WHERE user_id = ?", (user_id,))
+    conn.execute("DELETE FROM contracts WHERE user_id = ?", (user_id,))
+    conn.execute("DELETE FROM payments WHERE user_id = ?", (user_id,))
+    conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+
+
+def list_users():
+    conn = get_connection()
+    rows = conn.execute("SELECT id, email, tariff, checks_left, created_at FROM users ORDER BY id").fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
 def get_session_user():
     user_id = st.session_state.get("user_id")
     if not user_id:

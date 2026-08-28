@@ -1,14 +1,14 @@
 TARIFFS = {
     "Free": {"price": 0, "checks": 1, "limit_chars": 15_000},
-    "Starter": {"price": 499, "checks": 15, "limit_chars": 35_000},
-    "Standard": {"price": 990, "checks": 50, "limit_chars": 65_000},
-    "Pro": {"price": 1790, "checks": 100, "limit_chars": 125_000},
-    "Business": {"price": 7990, "checks": 250, "limit_chars": 175_000},
-    "Business Pro": {"price": 14990, "checks": 400, "limit_chars": 250_000},
+    "Starter": {"price": 249, "checks": 15, "limit_chars": 35_000},
+    "Standard": {"price": 499, "checks": 50, "limit_chars": 65_000},
+    "Pro": {"price": 899, "checks": 100, "limit_chars": 125_000},
+    "Business": {"price": 2990, "checks": 250, "limit_chars": 175_000},
+    "Business Pro": {"price": 5990, "checks": 400, "limit_chars": 250_000},
 }
 
 DISPLAY_NAMES = {
-    "Free": "Бесплатно",
+    "Free": "Пробный",
     "Starter": "Стартовый",
     "Standard": "Стандартный",
     "Pro": "Pro",
@@ -19,7 +19,7 @@ DISPLAY_NAMES = {
 PERIOD_DISCOUNTS = {1: 0.0, 3: 0.05, 6: 0.10, 9: 0.10, 12: 0.20, 24: 0.30}
 
 FEATURES = {
-    "Free": ["Модель Flash (быстрая)", "Базовый анализ", "1 бесплатная проверка"],
+    "Free": ["Модель Flash (быстрая)", "Базовый анализ"],
     "Starter": ["Модель Pro (глубокая)", "Полный анализ с флагами", "Чат с ИИ"],
     "Standard": ["Модель Pro", "Полный анализ", "Чат с ИИ", "Отчет в формате PDF"],
     "Pro": ["Модель Pro", "Детальный анализ + самопроверка", "Чат с ИИ", "Отчет в формате PDF"],

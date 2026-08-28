@@ -1,36 +1,53 @@
 import streamlit as st
 
-from core.history import get_user_analyses
-from utils.auth import get_current_user, logout_user
-
 from core.ui import render_header
+from utils.auth import change_password, delete_user, get_current_user, logout_user
+
+st.set_page_config(page_title="Личный кабинет", page_icon="👤")
 render_header()
-st.title("👤 Личный кабинет")
 
 user = get_current_user()
 if not user:
-    st.warning("Сначала войди в аккаунт")
-    st.page_link("pages/1_auth.py", label="🔐 Войти / Регистрация")
+    st.warning("Войдите, чтобы открыть личный кабинет.")
+    st.page_link("pages/1_auth.py", label="🔐 Войти")
     st.stop()
 
-c1, c2, c3, c4 = st.columns(4)
-c1.metric("Email", user["email"])
-c2.metric("Тариф", user["tariff"])
-c3.metric("Проверок", user["checks_left"])
-c4.metric("Подписка до", user["subscription_end"] or "—")
+st.title("👤 Личный кабинет")
+st.write(f"**Email:** {user['email']}")
+st.write(f"**Тариф:** {user['tariff']}")
+st.write(f"**Осталось проверок:** {user['checks_left']}")
+if user["subscription_end"]:
+    st.write(f"**Подписка до:** {user['subscription_end']}")
 
 st.divider()
-st.subheader("📚 История анализов")
-
-rows = get_user_analyses(user["id"])
-if not rows:
-    st.info("Пока нет анализов.")
-else:
-    for r in rows:
-        with st.expander(f"{r['created_at']} · {r['contract_type'] or 'Договор'}"):
-            st.markdown(r["report"])
+st.subheader("🔑 Сменить пароль")
+old_p = st.text_input("Текущий пароль", type="password")
+new_p = st.text_input("Новый пароль", type="password")
+new_p2 = st.text_input("Повторите новый пароль", type="password")
+if st.button("Сменить пароль"):
+    if new_p != new_p2:
+        st.error("Пароли не совпадают")
+    else:
+        ok, msg = change_password(user["id"], old_p, new_p)
+        if ok:
+            st.success(msg)
+        else:
+            st.error(msg)
 
 st.divider()
-if st.button("🚪 Выйти из аккаунта"):
+st.subheader("🗑 Удаление аккаунта")
+st.warning(
+    "Вы точно хотите удалить ваш аккаунт без возможности восстановления? "
+    "Все договоры, анализы, тариф и оставшиеся проверки будут удалены безвозвратно."
+)
+confirm = st.checkbox("Я понимаю последствия и хочу удалить аккаунт")
+if st.button("Удалить аккаунт навсегда", disabled=not confirm):
+    delete_user(user["id"])
+    logout_user()
+    st.success("Аккаунт удалён. Нам жаль, что вы уходите!")
+    st.switch_page("app.py")
+
+st.divider()
+if st.button("Выйти из аккаунта"):
     logout_user()
     st.rerun()

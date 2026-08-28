@@ -29,6 +29,7 @@ def render_pricing():
                     st.header(DISPLAY_NAMES.get(name, name))
                     if name == "Free":
                         st.write("**0 ₽** — навсегда")
+                        st.write("• 1 пробная проверка")
                     else:
                         total = price_for(name, months)
                         st.write(f"**{total} ₽** {MONTH_LABEL[months]}")
@@ -36,7 +37,7 @@ def render_pricing():
                             f"≈ {round(total / months)} ₽/мес"
                             + (" с учётом скидки" if PERIOD_DISCOUNTS[months] else "")
                         )
-                    st.write(f"• {tdata['checks']} проверок")
+                        st.write(f"• {tdata['checks']} проверок")
                     st.write(f"• Документы до {tdata['limit_chars'] // 1000} тыс. символов")
                     for f in FEATURES[name]:
                         st.write(f"• {f}")
