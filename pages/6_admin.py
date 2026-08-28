@@ -32,12 +32,12 @@ with c1:
     new_pass = st.text_input("Временный пароль", value="mca12345")
     if st.button("🔑 Сбросить пароль"):
         reset_password_admin(uid, new_pass)
-        st.success(f"Пользователю #{uid} установлен пароль: {new_pass}")
+        st.toast(f"Пароль пользователя #{uid} сброшен", icon="🔑")
 with c2:
     st.write("⚠️ Полное удаление")
     if st.button("🗑 Удалить пользователя"):
         delete_user(uid)
-        st.success("Пользователь удалён")
+        st.toast("Пользователь удалён", icon="🗑")
         st.rerun()
 
 st.divider()
@@ -53,4 +53,4 @@ if st.button("Выдать", key="grant_btn"):
     )
     conn.commit()
     conn.close()
-    st.success(f"Тариф {tariff} выдан: {email}")
+    st.toast(f"Тариф {tariff} выдан: {email}", icon="💳")

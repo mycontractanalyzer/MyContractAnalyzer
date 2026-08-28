@@ -22,8 +22,8 @@ with tab_login:
     if st.button("Войти", key="login_btn"):
         ok, msg = login_user(email, password)
         if ok:
-            st.success(msg)
-            st.rerun()
+            st.toast("👋 Добро пожаловать!", icon="✅")
+            st.switch_page("pages/5_profile.py")
         else:
             st.error(msg)
     if st.button("Забыли пароль?", key="forgot_btn"):
@@ -39,7 +39,7 @@ with tab_reg:
     if st.button("Создать аккаунт", key="reg_btn"):
         ok, msg = register_user(reg_email, reg_pass, reg_pass2)
         if ok:
-            st.success(msg)
-            st.rerun()
+            st.toast("🎉 Аккаунт создан! Вы вошли автоматически", icon="✅")
+            st.switch_page("pages/5_profile.py")
         else:
             st.error(msg)

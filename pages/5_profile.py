@@ -30,7 +30,7 @@ if st.button("Сменить пароль"):
     else:
         ok, msg = change_password(user["id"], old_p, new_p)
         if ok:
-            st.success(msg)
+            st.toast("🔑 Пароль изменён!", icon="✅")
         else:
             st.error(msg)
 
@@ -44,10 +44,11 @@ confirm = st.checkbox("Я понимаю последствия и хочу уд
 if st.button("Удалить аккаунт навсегда", disabled=not confirm):
     delete_user(user["id"])
     logout_user()
-    st.success("Аккаунт удалён. Нам жаль, что вы уходите!")
+    st.toast("Аккаунт удалён. Нам жаль, что вы уходите!", icon="👋")
     st.switch_page("app.py")
 
 st.divider()
 if st.button("Выйти из аккаунта"):
     logout_user()
+    st.toast("Вы вышли из аккаунта", icon="👋")
     st.rerun()
