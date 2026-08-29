@@ -48,6 +48,21 @@ def ensure_schema():
             comment TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+        CREATE TABLE IF NOT EXISTS companies (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            owner_id INTEGER NOT NULL,
+            invite_code TEXT UNIQUE NOT NULL,
+            max_members INTEGER NOT NULL DEFAULT 5,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE TABLE IF NOT EXISTS company_members (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            company_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL UNIQUE,
+            role TEXT NOT NULL DEFAULT 'member',
+            joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
     """)
     _ensure_columns(conn, "promocodes", [
         ("discount_rub", "INTEGER DEFAULT 0"),
@@ -56,6 +71,7 @@ def ensure_schema():
         ("expires_at", "TIMESTAMP"),
         ("used_count", "INTEGER DEFAULT 0"),
     ])
+    _ensure_columns(conn, "users", [("company_id", "INTEGER"), ("theme", "TEXT DEFAULT 'dark'")])
     conn.commit()
     conn.close()
 

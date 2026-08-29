@@ -14,7 +14,6 @@ if user:
     st.stop()
 
 st.title("🔐 Вход и регистрация")
-st.caption("build 29.08 v7")
 
 tab_login, tab_reg = st.tabs(["Вход", "Регистрация"])
 

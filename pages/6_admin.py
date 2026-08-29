@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 from datetime import datetime, timedelta
 
 import config
@@ -21,9 +22,47 @@ if not user or user["email"] not in config.ADMIN_EMAILS:
 st.title("🛠 Админ-панель")
 
 users = list_users()
-tab_users, tab_grant, tab_checks, tab_promo, tab_fb = st.tabs(
-    ["👥 Пользователи", "💳 Тариф", "🎁 Проверки", "🎟 Промокоды", "⭐ Отзывы"]
+tab_dash, tab_users, tab_grant, tab_checks, tab_promo, tab_fb = st.tabs(
+    ["📊 Дашборд", "👥 Пользователи", "💳 Тариф", "🎁 Проверки", "🎟 Промокоды", "⭐ Отзывы"]
 )
+
+with tab_dash:
+    conn = get_connection()
+    regs = pd.read_sql_query("SELECT date(created_at) d, COUNT(*) c FROM users GROUP BY d ORDER BY d", conn)
+    anls = pd.read_sql_query("SELECT date(created_at) d, COUNT(*) c FROM analyses GROUP BY d ORDER BY d", conn)
+    conn.close()
+
+    total_users = len(users)
+    paid = sum(1 for u in users if u["tariff"] != "Free")
+    total_analyses = int(anls["c"].sum()) if not anls.empty else 0
+    fbs = list_feedbacks(1000)
+    likes = sum(1 for f in fbs if f["rating"] == 1)
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("👥 Пользователи", total_users)
+    c2.metric("💳 Платные", paid, f"{int(paid / total_users * 100) if total_users else 0}%")
+    c3.metric("🔍 Анализы", total_analyses)
+    c4.metric("⭐ Доля 👍", f"{int(likes / len(fbs) * 100) if fbs else 0}%")
+
+    st.write("**Регистрации по дням**")
+    if not regs.empty:
+        st.bar_chart(regs.set_index("d")["c"])
+    else:
+        st.write("Пока нет данных")
+
+    st.write("**Анализы по дням**")
+    if not anls.empty:
+        st.bar_chart(anls.set_index("d")["c"])
+    else:
+        st.write("Пока нет данных")
+
+    st.write("**Топ промокодов по использованиям**")
+    promos = sorted(list_promocodes(), key=lambda p: p["used_count"] or 0, reverse=True)[:5]
+    if promos:
+        for p in promos:
+            st.write(f"• **{p['code']}** — {p['used_count'] or 0} исп.")
+    else:
+        st.write("Пока нет промокодов")
 
 with tab_users:
     if not users:
@@ -49,11 +88,7 @@ with tab_grant:
         options2 = {u["email"]: u["id"] for u in users}
         email2 = st.selectbox("Пользователь", list(options2.keys()), key="grant_email")
         tariff = st.selectbox("Тариф", list(TARIFFS.keys()), key="grant_tariff")
-        promo_at_pay = st.text_input(
-            "Промокод скидки (если клиент оплатил с ним)",
-            placeholder="Необязательно",
-            key="grant_promo",
-        )
+        promo_at_pay = st.text_input("Промокод скидки (если клиент оплатил с ним)", placeholder="Необязательно", key="grant_promo")
         if st.button("Выдать", key="grant_btn"):
             conn = get_connection()
             conn.execute(
@@ -89,29 +124,15 @@ with tab_checks:
 with tab_promo:
     st.subheader("➕ Создать промокод")
 
-    code_mode = st.radio(
-        "Код промокода",
-        ["🎲 Сгенерировать автоматически", "✏️ Ввести свой"],
-        horizontal=True,
-        key="p_code_mode",
-    )
+    code_mode = st.radio("Код промокода", ["🎲 Сгенерировать автоматически", "✏️ Ввести свой"], horizontal=True, key="p_code_mode")
     custom_code = None
     if "свой" in code_mode:
-        custom_code = st.text_input(
-            "Введите свой код",
-            placeholder="Например: START250, BLOGER_VASYA, NEWYEAR",
-            max_chars=30,
-            key="p_custom_code",
-        )
+        custom_code = st.text_input("Введите свой код", placeholder="Например: START250, BLOGER_VASYA", max_chars=30, key="p_custom_code")
         st.caption("До 30 символов. Пробелы будут удалены, регистр не важен.")
 
     st.divider()
 
-    promo_kind = st.radio(
-        "Тип промокода",
-        ["🎁 На проверки (бонус проверок)", "💰 На скидку (в рублях)"],
-        horizontal=True,
-    )
+    promo_kind = st.radio("Тип промокода", ["🎁 На проверки (бонус проверок)", "💰 На скидку (в рублях)"], horizontal=True)
 
     if "проверки" in promo_kind:
         checks_bonus = st.number_input("Сколько проверок начислить", min_value=1, max_value=10000, value=10, step=1, key="p_checks_bonus")

@@ -1,3 +1,5 @@
+import re
+
 import streamlit as st
 
 from core.analyzer import choose_model
@@ -6,6 +8,7 @@ from core.feedback import save_feedback
 from core.prompts import build_chat_system_prompt
 from core.ui import render_header
 from integrations.deepseek import ask_deepseek
+from storage.docx_generator import generate_report_docx
 from storage.pdf_generator import generate_report_pdf
 from utils.auth import get_current_user
 
@@ -27,34 +30,46 @@ if not analysis_id:
 analysis = get_analysis(analysis_id)
 contract = get_contract(analysis["contract_id"])
 
+m = re.search(r"Риск-скор[^0-9]*(\d{1,3})\s*/\s*100", analysis["report"])
+if m:
+    score = int(m.group(1))
+    verdict = (
+        "✅ Можно подписывать"
+        if score <= 30
+        else ("🟡 С осторожностью" if score <= 70 else "❌ Не подписывать без правок")
+    )
+    st.metric("🎯 Риск-скор договора", f"{score}/100", verdict)
+
 st.markdown(analysis["report"])
 
-col1, col2 = st.columns([1, 1])
+col1, col2, col3 = st.columns(3)
 with col1:
     pdf_bytes = generate_report_pdf(analysis["report"], user["email"])
     st.download_button(
-        "📄 Скачать отчёт в PDF",
+        "📄 Скачать PDF",
         data=pdf_bytes,
         file_name="MyContractAnalyzer_report.pdf",
         mime="application/pdf",
         use_container_width=True,
     )
 with col2:
-    st.page_link(
-        "pages/7_history.py",
-        label="📚 Открыть историю проверок",
+    docx_bytes = generate_report_docx(analysis["report"], user["email"])
+    st.download_button(
+        "📝 Скачать Word",
+        data=docx_bytes,
+        file_name="MyContractAnalyzer_report.docx",
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         use_container_width=True,
     )
+with col3:
+    st.page_link("pages/7_history.py", label="📚 История проверок", use_container_width=True)
 
 st.divider()
 st.subheader("⭐ Оцените качество анализа")
-st.caption("Это поможет нам улучшить сервис. Отзыв анонимный для других пользователей.")
+st.caption("Это поможет нам улучшить сервис.")
 
-f_col1, f_col2 = st.columns([1, 4])
-with f_col1:
-    rating = st.radio("Оценка", ["👍 Полезно", "👎 Не помогло"], horizontal=True, label_visibility="collapsed")
-with f_col2:
-    comment = st.text_input("Комментарий (необязательно)", placeholder="Что можно улучшить?")
+rating = st.radio("Оценка", ["👍 Полезно", "👎 Не помогло"], horizontal=True, label_visibility="collapsed")
+comment = st.text_input("Комментарий (необязательно)", placeholder="Что можно улучшить?")
 
 if st.button("Отправить отзыв", key="fb_submit"):
     rate = 1 if "Полезно" in rating else -1
