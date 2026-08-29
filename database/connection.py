@@ -10,6 +10,13 @@ def get_connection():
     return conn
 
 
+def _ensure_columns(conn, table, columns):
+    existing = {row[1] for row in conn.execute(f"PRAGMA table_info({table})").fetchall()}
+    for name, ddl in columns:
+        if name not in existing:
+            conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}")
+
+
 def ensure_schema():
     conn = get_connection()
     conn.executescript("""
@@ -22,6 +29,7 @@ def ensure_schema():
             min_tariff TEXT,
             checks_bonus INTEGER DEFAULT 0,
             expires_at TIMESTAMP,
+            used_count INTEGER DEFAULT 0,
             active INTEGER NOT NULL DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -41,6 +49,13 @@ def ensure_schema():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
+    _ensure_columns(conn, "promocodes", [
+        ("discount_rub", "INTEGER DEFAULT 0"),
+        ("min_tariff", "TEXT"),
+        ("checks_bonus", "INTEGER DEFAULT 0"),
+        ("expires_at", "TIMESTAMP"),
+        ("used_count", "INTEGER DEFAULT 0"),
+    ])
     conn.commit()
     conn.close()
 

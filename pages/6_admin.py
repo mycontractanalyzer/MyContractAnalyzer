@@ -3,7 +3,8 @@ from datetime import datetime, timedelta
 
 import config
 from core.feedback import list_feedbacks
-from core.promocodes import create_promocode, deactivate_promocode, list_promocodes
+from core.promocodes import (create_promocode, deactivate_promocode,
+                             list_promocodes, register_discount_use)
 from core.tariffs import DISPLAY_NAMES, TARIFFS
 from core.ui import render_header
 from database.connection import get_connection
@@ -48,6 +49,11 @@ with tab_grant:
         options2 = {u["email"]: u["id"] for u in users}
         email2 = st.selectbox("Пользователь", list(options2.keys()), key="grant_email")
         tariff = st.selectbox("Тариф", list(TARIFFS.keys()), key="grant_tariff")
+        promo_at_pay = st.text_input(
+            "Промокод скидки (если клиент оплатил с ним)",
+            placeholder="Необязательно",
+            key="grant_promo",
+        )
         if st.button("Выдать", key="grant_btn"):
             conn = get_connection()
             conn.execute(
@@ -57,6 +63,12 @@ with tab_grant:
             conn.commit()
             conn.close()
             st.success(f"Тариф {tariff} выдан: {email2}")
+            if promo_at_pay.strip():
+                ok, msg = register_discount_use(promo_at_pay, options2[email2])
+                if ok:
+                    st.toast("Использование промокода засчитано", icon="📊")
+                else:
+                    st.warning(f"Промокод не засчитан: {msg}")
 
 with tab_checks:
     if users:
@@ -77,7 +89,6 @@ with tab_checks:
 with tab_promo:
     st.subheader("➕ Создать промокод")
 
-    # === КОД ПРОМОКОДА ===
     code_mode = st.radio(
         "Код промокода",
         ["🎲 Сгенерировать автоматически", "✏️ Ввести свой"],
@@ -92,11 +103,10 @@ with tab_promo:
             max_chars=30,
             key="p_custom_code",
         )
-        st.caption("Только буквы, цифры и подчёркивания. До 30 символов. Пробелы будут удалены.")
+        st.caption("До 30 символов. Пробелы будут удалены, регистр не важен.")
 
     st.divider()
 
-    # === ТИП ===
     promo_kind = st.radio(
         "Тип промокода",
         ["🎁 На проверки (бонус проверок)", "💰 На скидку (в рублях)"],
@@ -104,25 +114,13 @@ with tab_promo:
     )
 
     if "проверки" in promo_kind:
-        checks_bonus = st.number_input(
-            "Сколько проверок начислить",
-            min_value=1, max_value=10000, value=10, step=1,
-            key="p_checks_bonus",
-        )
+        checks_bonus = st.number_input("Сколько проверок начислить", min_value=1, max_value=10000, value=10, step=1, key="p_checks_bonus")
         discount_rub = 0
         min_tariff = None
     else:
-        discount_rub = st.number_input(
-            "Сумма скидки, ₽",
-            min_value=1, max_value=100000, value=250, step=50,
-            key="p_discount_rub",
-        )
+        discount_rub = st.number_input("Сумма скидки, ₽", min_value=1, max_value=100000, value=250, step=50, key="p_discount_rub")
         tariff_labels = {"Любой тариф": None, **{DISPLAY_NAMES[t]: t for t in TARIFFS if t != "Free"}}
-        min_tariff_label = st.selectbox(
-            "На какой тариф действует",
-            list(tariff_labels.keys()),
-            key="p_min_tariff_label",
-        )
+        min_tariff_label = st.selectbox("На какой тариф действует", list(tariff_labels.keys()), key="p_min_tariff_label")
         min_tariff = tariff_labels[min_tariff_label]
         checks_bonus = 0
 
@@ -131,7 +129,6 @@ with tab_promo:
     dur_mode = st.radio(
         "Длительность",
         ["1 месяц", "3 месяца", "6 месяцев", "9 месяцев", "12 месяцев", "24 месяца", "♾ Неограниченно", "🎯 Точное время"],
-        horizontal=False,
         key="p_dur_mode",
     )
 
@@ -151,7 +148,7 @@ with tab_promo:
         expires_at = (now + timedelta(days=730)).isoformat(sep=" ", timespec="minutes")
     elif dur_mode == "♾ Неограниченно":
         expires_at = None
-    elif dur_mode == "🎯 Точное время":
+    else:
         c_y, c_m, c_d, c_h = st.columns(4)
         year = c_y.number_input("Год", min_value=now.year, max_value=now.year + 10, value=now.year + 1, step=1)
         month = c_m.number_input("Месяц", min_value=1, max_value=12, value=now.month, step=1)
@@ -179,14 +176,13 @@ with tab_promo:
         if not ok:
             st.error(result)
         else:
-            code = result
             if expires_at:
-                st.success(f"✅ Создан промокод: **{code}** (действует до {expires_at})")
+                st.success(f"✅ Создан промокод: **{result}** (действует до {expires_at})")
             else:
-                st.success(f"✅ Создан промокод: **{code}** (бессрочный)")
+                st.success(f"✅ Создан промокод: **{result}** (бессрочный)")
 
     st.divider()
-    st.subheader("📋 Все промокоды")
+    st.subheader("📋 Все промокоды и аналитика")
     promos = list_promocodes()
     if not promos:
         st.write("Пока нет")
@@ -200,12 +196,10 @@ with tab_promo:
             extras.append(f"−{p['discount_rub']} ₽")
         if p["min_tariff"]:
             extras.append(f"только {DISPLAY_NAMES.get(p['min_tariff'], p['min_tariff'])}")
-        if p["expires_at"]:
-            extras.append(f"до {p['expires_at']}")
-        else:
-            extras.append("бессрочно")
+        extras.append(f"использован: {p['used_count'] or 0} раз")
+        extras.append("бессрочно" if not p["expires_at"] else f"до {p['expires_at']}")
 
-        c1, c2, c3 = st.columns([3, 3, 1])
+        c1, c2, c3 = st.columns([4, 3, 1])
         c1.write(f"**{p['code']}** — {kind_label} ({', '.join(extras)}) [{status}]")
         c2.write(f"создан: {p['created_at']}")
         if p["active"] and c3.button("Выключить", key=f"off_{p['code']}"):
