@@ -7,12 +7,17 @@ st.set_page_config(page_title="Вход и регистрация", page_icon="�
 render_header()
 
 user = get_current_user()
+
+if user and st.session_state.pop("go_profile", False):
+    st.switch_page("pages/5_profile.py")
+
 if user:
     st.success(f"Вы вошли как **{user['email']}**")
     st.page_link("pages/5_profile.py", label="👤 Перейти в личный кабинет")
     st.stop()
 
 st.title("🔐 Вход и регистрация")
+st.caption("build 29.08 v3")
 
 tab_login, tab_reg = st.tabs(["Вход", "Регистрация"])
 
@@ -23,7 +28,8 @@ with tab_login:
         ok, msg = login_user(email, password)
         if ok:
             st.session_state["flash"] = "👋 Добро пожаловать! Вы вошли в аккаунт."
-            st.switch_page("pages/5_profile.py")
+            st.session_state["go_profile"] = True
+            st.rerun()
         else:
             st.error(msg)
     if st.button("Забыли пароль?", key="forgot_btn"):
@@ -40,6 +46,7 @@ with tab_reg:
         ok, msg = register_user(reg_email, reg_pass, reg_pass2)
         if ok:
             st.session_state["flash"] = "🎉 Регистрация успешна! Аккаунт создан, вы вошли автоматически."
-            st.switch_page("pages/5_profile.py")
+            st.session_state["go_profile"] = True
+            st.rerun()
         else:
             st.error(msg)
