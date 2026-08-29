@@ -53,21 +53,16 @@ def register_user(email, password, password2):
 
     conn = get_connection()
     try:
-        cur = conn.cursor()
-        cur.execute(
+        conn.execute(
             "INSERT INTO users (email, password_hash) VALUES (?, ?)",
             (email, hash_password(password)),
         )
         conn.commit()
-        user_id = cur.lastrowid
     except Exception:
         conn.close()
         return False, "Пользователь с таким email уже существует"
     conn.close()
-
-    st.session_state["user_id"] = user_id
-    _sync_url(_issue_token(user_id))
-    return True, "Аккаунт создан!"
+    return True, "Успешная регистрация!"
 
 
 def login_user(email, password):

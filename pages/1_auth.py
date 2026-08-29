@@ -1,7 +1,7 @@
 import streamlit as st
 
 from core.ui import render_header
-from utils.auth import get_current_user, login_user, logout_user, register_user
+from utils.auth import get_current_user, login_user, register_user
 
 st.set_page_config(page_title="Вход и регистрация", page_icon="🔐")
 render_header()
@@ -14,7 +14,7 @@ if user:
     st.stop()
 
 st.title("🔐 Вход и регистрация")
-st.caption("build 29.08 v5")
+st.caption("build 29.08 v6")
 
 tab_login, tab_reg = st.tabs(["Вход", "Регистрация"])
 
@@ -42,10 +42,8 @@ with tab_reg:
     if st.button("Создать аккаунт", key="reg_btn"):
         ok, msg = register_user(reg_email, reg_pass, reg_pass2)
         if ok:
-            logout_user()
-            st.success(
-                "🎉 Успешная регистрация! Перейдите во вкладку «Вход» "
-                "и нажмите «Войти», чтобы начать пользоваться аккаунтом."
-            )
+            st.success("🎉 Успешная регистрация!")
+            st.toast("🎉 Успешная регистрация!", icon="✅")
         else:
             st.error(msg)
+    st.info("После регистрации войдите в аккаунт: вкладка «Вход» → кнопка «Войти».")
