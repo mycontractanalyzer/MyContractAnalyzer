@@ -77,13 +77,32 @@ with tab_checks:
 with tab_promo:
     st.subheader("➕ Создать промокод")
 
+    # === КОД ПРОМОКОДА ===
+    code_mode = st.radio(
+        "Код промокода",
+        ["🎲 Сгенерировать автоматически", "✏️ Ввести свой"],
+        horizontal=True,
+        key="p_code_mode",
+    )
+    custom_code = None
+    if "свой" in code_mode:
+        custom_code = st.text_input(
+            "Введите свой код",
+            placeholder="Например: START250, BLOGER_VASYA, NEWYEAR",
+            max_chars=30,
+            key="p_custom_code",
+        )
+        st.caption("Только буквы, цифры и подчёркивания. До 30 символов. Пробелы будут удалены.")
+
+    st.divider()
+
+    # === ТИП ===
     promo_kind = st.radio(
         "Тип промокода",
         ["🎁 На проверки (бонус проверок)", "💰 На скидку (в рублях)"],
         horizontal=True,
     )
 
-    # === Блок: на проверки ===
     if "проверки" in promo_kind:
         checks_bonus = st.number_input(
             "Сколько проверок начислить",
@@ -92,7 +111,6 @@ with tab_promo:
         )
         discount_rub = 0
         min_tariff = None
-    # === Блок: на скидку ===
     else:
         discount_rub = st.number_input(
             "Сумма скидки, ₽",
@@ -149,18 +167,23 @@ with tab_promo:
 
     st.divider()
     if st.button("🎟 Создать промокод"):
-        code = create_promocode(
+        ok, result = create_promocode(
             kind="checks" if "проверки" in promo_kind else "discount",
             value=checks_bonus if "проверки" in promo_kind else 0,
             discount_rub=discount_rub,
             min_tariff=min_tariff,
             checks_bonus=checks_bonus,
             expires_at=expires_at,
+            custom_code=custom_code if "свой" in code_mode else None,
         )
-        if expires_at:
-            st.success(f"Создан промокод: **{code}** (действует до {expires_at})")
+        if not ok:
+            st.error(result)
         else:
-            st.success(f"Создан промокод: **{code}** (бессрочный)")
+            code = result
+            if expires_at:
+                st.success(f"✅ Создан промокод: **{code}** (действует до {expires_at})")
+            else:
+                st.success(f"✅ Создан промокод: **{code}** (бессрочный)")
 
     st.divider()
     st.subheader("📋 Все промокоды")

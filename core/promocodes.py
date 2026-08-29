@@ -1,5 +1,6 @@
 import secrets
 from datetime import datetime, timedelta
+import sqlite3
 
 from database.connection import get_connection
 
@@ -11,9 +12,22 @@ def create_promocode(
     min_tariff=None,
     checks_bonus=0,
     expires_at=None,
+    custom_code=None,
 ):
-    """Создаёт промокод и возвращает его код."""
-    code = secrets.token_hex(3).upper()
+    """
+    Создаёт промокод.
+    Если custom_code указан — используется он, иначе генерируется случайный.
+    Возвращает (успех, код_или_ошибка).
+    """
+    if custom_code:
+        code = custom_code.strip().upper().replace(" ", "")
+        if not code:
+            return False, "Код не может быть пустым"
+        if len(code) > 30:
+            return False, "Код слишком длинный (максимум 30 символов)"
+    else:
+        code = secrets.token_hex(3).upper()
+
     conn = get_connection()
     try:
         conn.execute(
@@ -23,9 +37,12 @@ def create_promocode(
             (code, kind, int(value), int(discount_rub), min_tariff, int(checks_bonus), expires_at),
         )
         conn.commit()
+    except sqlite3.IntegrityError:
+        conn.close()
+        return False, f"Промокод с кодом «{code}» уже существует"
     finally:
         conn.close()
-    return code
+    return True, code
 
 
 def list_promocodes():
@@ -43,7 +60,6 @@ def deactivate_promocode(code):
 
 
 def apply_promocode_checks(user_id, code):
-    """Применяет промокод на ПРОВЕРКИ (старый и новый формат)."""
     code = (code or "").strip().upper()
     if not code:
         return False, "Введите промокод"
@@ -80,10 +96,6 @@ def apply_promocode_checks(user_id, code):
 
 
 def find_discount_promocode(code, tariff, months):
-    """
-    Проверяет промокод для оформления подписки.
-    Возвращает (действует, сумма_скидки, причина_отказа).
-    """
     code = (code or "").strip().upper()
     if not code:
         return False, 0, ""
