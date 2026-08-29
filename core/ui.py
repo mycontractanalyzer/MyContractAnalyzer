@@ -85,50 +85,9 @@ div.stButton > button:hover {box-shadow: 0 0 24px rgba(240,180,41,.45); transfor
 </style>
 """
 
-LIGHT_CSS = """
-<style>
-:root {
-  --background-color: #f6f7fb;
-  --secondary-background-color: #ffffff;
-  --text-color: #171a1f;
-  --primary-color: #b07a00;
-}
-html, body, #root, .stApp, .stAppViewContainer, section.main,
-div[data-testid="stAppView"], div[data-testid="stMainBlockContainer"],
-div[data-testid="stVerticalBlock"] {background-color: #f6f7fb !important;}
-body, p, li, span, label {color: #171a1f !important;}
-h1, h2, h3, h4 {color: #111418 !important;}
-
-/* ЧЁРНЫЕ контуры карточек (тарифы, типы договоров) */
-[data-testid="stVerticalBlockBorderWrapper"] {
-  border: 1.5px solid rgba(0,0,0,.65) !important;
-  background: #ffffff !important;}
-[data-testid="stVerticalBlockBorderWrapper"]:hover {
-  border-color: #b07a00 !important;
-  box-shadow: 0 14px 44px rgba(176,122,0,.15);}
-
-.mca-hero-box {border-color: #111418 !important;}
-.mca-hero-box h1 {color: #111418 !important;}
-.mca-bg {opacity: .12 !important;}
-
-/* FAQ: рамка чёрная, ответы видимые */
-.mca-faq {border: 1.5px solid rgba(0,0,0,.55) !important; background: #ffffff !important;}
-.mca-faq, .mca-faq div {color: #171a1f !important;}
-.mca-faq-q, .mca-faq-q div {color: #b07a00 !important;}
-
-/* Отзывы */
-.mca-review {background: rgba(240,180,41,.12) !important; border-left-color: #b07a00 !important;}
-.mca-review, .mca-review div {color: #171a1f !important;}
-.mca-review-author, .mca-review-author div {color: #111418 !important;}
-</style>
-"""
-
 
 def inject_style():
-    user = get_session_user()
-    theme = (user or {}).get("theme") or "dark"
-    css = PREMIUM_CSS + (LIGHT_CSS if theme == "light" else "")
-    st.markdown(css + '<div class="mca-bg"></div>', unsafe_allow_html=True)
+    st.markdown(PREMIUM_CSS + '<div class="mca-bg"></div>', unsafe_allow_html=True)
 
 
 def render_menu():
