@@ -11,7 +11,6 @@ def get_connection():
 
 
 def ensure_schema():
-    """Создаёт новые таблицы при первом запуске."""
     conn = get_connection()
     conn.executescript("""
         CREATE TABLE IF NOT EXISTS promocodes (
@@ -19,6 +18,10 @@ def ensure_schema():
             code TEXT UNIQUE NOT NULL,
             kind TEXT NOT NULL,
             value INTEGER NOT NULL,
+            discount_rub INTEGER DEFAULT 0,
+            min_tariff TEXT,
+            checks_bonus INTEGER DEFAULT 0,
+            expires_at TIMESTAMP,
             active INTEGER NOT NULL DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );

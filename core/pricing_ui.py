@@ -1,5 +1,6 @@
 import streamlit as st
 
+from core.promocodes import find_discount_promocode
 from core.tariffs import DISPLAY_NAMES, FEATURES, PERIOD_DISCOUNTS, TARIFFS, price_for
 
 MONTH_LABEL = {
@@ -19,6 +20,12 @@ def render_pricing():
         format_func=lambda m: f"{m} мес" + (f" (−{int(PERIOD_DISCOUNTS[m]*100)}%)" if PERIOD_DISCOUNTS[m] else ""),
     )
 
+    promo_input = st.text_input(
+        "🎟 Промокод (если есть)",
+        placeholder="Введите код — скидка применится автоматически",
+        key="promo_pricing",
+    )
+
     names = list(TARIFFS.keys())
     for row_start in range(0, len(names), 3):
         cols = st.columns(3)
@@ -31,11 +38,20 @@ def render_pricing():
                         st.write("**0 ₽** — навсегда")
                         st.write("• 1 пробная проверка")
                     else:
-                        total = price_for(name, months)
-                        st.write(f"**{total} ₽** {MONTH_LABEL[months]}")
+                        base_total = price_for(name, months)
+                        ok, discount, _ = find_discount_promocode(promo_input, name, months)
+
+                        if ok and discount > 0:
+                            final = max(0, base_total - discount)
+                            st.markdown(f"~~{base_total} ₽~~")
+                            st.markdown(f"**{final} ₽** {MONTH_LABEL[months]} 🎉")
+                            st.caption(f"−{discount} ₽ по промокоду")
+                        else:
+                            final = base_total
+                            st.write(f"**{final} ₽** {MONTH_LABEL[months]}")
                         st.caption(
-                            f"≈ {round(total / months)} ₽/мес"
-                            + (" с учётом скидки" if PERIOD_DISCOUNTS[months] else "")
+                            f"≈ {round(final / months)} ₽/мес"
+                            + (" с учётом скидки по сроку" if PERIOD_DISCOUNTS[months] else "")
                         )
                         st.write(f"• {tdata['checks']} проверок")
                     st.write(f"• Документы до {tdata['limit_chars'] // 1000} тыс. символов")

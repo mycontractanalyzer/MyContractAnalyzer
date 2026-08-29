@@ -1,6 +1,6 @@
 import streamlit as st
 
-from core.promocodes import apply_promocode
+from core.promocodes import apply_promocode_checks
 from core.ui import render_header
 from utils.auth import change_password, delete_user, get_current_user, logout_user
 
@@ -21,10 +21,11 @@ if user["subscription_end"]:
     st.write(f"**Подписка до:** {user['subscription_end']}")
 
 st.divider()
-st.subheader("🎁 Промокод")
-code_input = st.text_input("Введите промокод", placeholder="Например: START50")
+st.subheader("🎟 Промокод на проверки")
+st.caption("Если у тебя промокод на +проверки — вводи здесь. Скидочные промокоды вводятся при оформлении подписки.")
+code_input = st.text_input("Введите промокод", placeholder="Например: START10", key="promo_profile")
 if st.button("Активировать промокод"):
-    ok, msg = apply_promocode(user["id"], code_input)
+    ok, msg = apply_promocode_checks(user["id"], code_input)
     if ok:
         st.success(msg)
         st.rerun()
