@@ -53,3 +53,11 @@ def spend_checks(user_id, char_count):
     conn.commit()
     conn.close()
     return True, cost
+def list_user_analyses(user_id):
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT * FROM analyses WHERE user_id = ? ORDER BY created_at DESC",
+        (user_id,),
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]

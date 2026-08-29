@@ -1,5 +1,6 @@
 import streamlit as st
 
+from core.promocodes import apply_promocode
 from core.ui import render_header
 from utils.auth import change_password, delete_user, get_current_user, logout_user
 
@@ -12,17 +13,23 @@ if not user:
     st.page_link("pages/1_auth.py", label="🔐 Войти")
     st.stop()
 
-flash = st.session_state.pop("flash", None)
-if flash:
-    st.success(flash)
-    st.toast(flash, icon="✅")
-
 st.title("👤 Личный кабинет")
 st.write(f"**Email:** {user['email']}")
 st.write(f"**Тариф:** {user['tariff']}")
 st.write(f"**Осталось проверок:** {user['checks_left']}")
 if user["subscription_end"]:
     st.write(f"**Подписка до:** {user['subscription_end']}")
+
+st.divider()
+st.subheader("🎁 Промокод")
+code_input = st.text_input("Введите промокод", placeholder="Например: START50")
+if st.button("Активировать промокод"):
+    ok, msg = apply_promocode(user["id"], code_input)
+    if ok:
+        st.success(msg)
+        st.rerun()
+    else:
+        st.error(msg)
 
 st.divider()
 st.subheader("🔑 Сменить пароль")
@@ -35,7 +42,7 @@ if st.button("Сменить пароль"):
     else:
         ok, msg = change_password(user["id"], old_p, new_p)
         if ok:
-            st.toast("🔑 Пароль изменён!", icon="✅")
+            st.success(msg)
         else:
             st.error(msg)
 
@@ -49,11 +56,10 @@ confirm = st.checkbox("Я понимаю последствия и хочу уд
 if st.button("Удалить аккаунт навсегда", disabled=not confirm):
     delete_user(user["id"])
     logout_user()
-    st.toast("Аккаунт удалён. Нам жаль, что вы уходите!", icon="👋")
+    st.success("Аккаунт удалён. Нам жаль, что вы уходите!")
     st.switch_page("app.py")
 
 st.divider()
 if st.button("Выйти из аккаунта"):
     logout_user()
-    st.toast("Вы вышли из аккаунта", icon="👋")
     st.rerun()

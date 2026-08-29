@@ -2,6 +2,7 @@ import streamlit as st
 
 from core.analyzer import choose_model
 from core.contracts import get_analysis, get_contract
+from core.feedback import save_feedback
 from core.prompts import build_chat_system_prompt
 from core.ui import render_header
 from integrations.deepseek import ask_deepseek
@@ -28,13 +29,37 @@ contract = get_contract(analysis["contract_id"])
 
 st.markdown(analysis["report"])
 
-pdf_bytes = generate_report_pdf(analysis["report"], user["email"])
-st.download_button(
-    "📄 Скачать отчёт в PDF",
-    data=pdf_bytes,
-    file_name="MyContractAnalyzer_report.pdf",
-    mime="application/pdf",
-)
+col1, col2 = st.columns([1, 1])
+with col1:
+    pdf_bytes = generate_report_pdf(analysis["report"], user["email"])
+    st.download_button(
+        "📄 Скачать отчёт в PDF",
+        data=pdf_bytes,
+        file_name="MyContractAnalyzer_report.pdf",
+        mime="application/pdf",
+        use_container_width=True,
+    )
+with col2:
+    st.page_link(
+        "pages/7_history.py",
+        label="📚 Открыть историю проверок",
+        use_container_width=True,
+    )
+
+st.divider()
+st.subheader("⭐ Оцените качество анализа")
+st.caption("Это поможет нам улучшить сервис. Отзыв анонимный для других пользователей.")
+
+f_col1, f_col2 = st.columns([1, 4])
+with f_col1:
+    rating = st.radio("Оценка", ["👍 Полезно", "👎 Не помогло"], horizontal=True, label_visibility="collapsed")
+with f_col2:
+    comment = st.text_input("Комментарий (необязательно)", placeholder="Что можно улучшить?")
+
+if st.button("Отправить отзыв", key="fb_submit"):
+    rate = 1 if "Полезно" in rating else -1
+    save_feedback(analysis_id, user["id"], rate, comment)
+    st.success("Спасибо за отзыв!")
 
 st.divider()
 st.subheader("❓ Задай вопрос по договору")
