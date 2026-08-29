@@ -1,7 +1,7 @@
 import streamlit as st
 
 from core.ui import render_header
-from utils.auth import get_current_user, login_user, register_user
+from utils.auth import get_current_user, login_user, logout_user, register_user
 
 st.set_page_config(page_title="Вход и регистрация", page_icon="🔐")
 render_header()
@@ -9,19 +9,12 @@ render_header()
 user = get_current_user()
 
 if user:
-    flash = st.session_state.pop("flash", None)
-    if flash:
-        st.success(flash)
-        st.toast(flash, icon="✅")
-    st.page_link(
-        "pages/5_profile.py",
-        label="👤 Открыть личный кабинет",
-        use_container_width=True,
-    )
+    st.success(f"Вы вошли как **{user['email']}**")
+    st.page_link("pages/5_profile.py", label="👤 Открыть личный кабинет", use_container_width=True)
     st.stop()
 
 st.title("🔐 Вход и регистрация")
-st.caption("build 29.08 v4")
+st.caption("build 29.08 v5")
 
 tab_login, tab_reg = st.tabs(["Вход", "Регистрация"])
 
@@ -31,8 +24,9 @@ with tab_login:
     if st.button("Войти", key="login_btn"):
         ok, msg = login_user(email, password)
         if ok:
-            st.session_state["flash"] = "👋 Добро пожаловать! Вы вошли в аккаунт."
-            st.rerun()
+            st.success("👋 Успешный вход! Добро пожаловать.")
+            st.toast("👋 Успешный вход!", icon="✅")
+            st.page_link("pages/5_profile.py", label="👤 Открыть личный кабинет", use_container_width=True)
         else:
             st.error(msg)
     if st.button("Забыли пароль?", key="forgot_btn"):
@@ -48,7 +42,10 @@ with tab_reg:
     if st.button("Создать аккаунт", key="reg_btn"):
         ok, msg = register_user(reg_email, reg_pass, reg_pass2)
         if ok:
-            st.session_state["flash"] = "🎉 Регистрация успешна! Аккаунт создан."
-            st.rerun()
+            logout_user()
+            st.success(
+                "🎉 Успешная регистрация! Перейдите во вкладку «Вход» "
+                "и нажмите «Войти», чтобы начать пользоваться аккаунтом."
+            )
         else:
             st.error(msg)
