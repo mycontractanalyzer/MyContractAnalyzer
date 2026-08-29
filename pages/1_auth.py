@@ -14,7 +14,7 @@ if user:
     st.stop()
 
 st.title("🔐 Вход и регистрация")
-st.caption("build 29.08 v6")
+st.caption("build 29.08 v7")
 
 tab_login, tab_reg = st.tabs(["Вход", "Регистрация"])
 
@@ -36,14 +36,20 @@ with tab_login:
         )
 
 with tab_reg:
+    if st.session_state.pop("reg_flash", False):
+        st.success("🎉 Успешная регистрация!")
+        st.toast("🎉 Успешная регистрация!", icon="✅")
     reg_email = st.text_input("Email", key="reg_email")
     reg_pass = st.text_input("Пароль", type="password", key="reg_pass")
     reg_pass2 = st.text_input("Повторите пароль", type="password", key="reg_pass2")
     if st.button("Создать аккаунт", key="reg_btn"):
         ok, msg = register_user(reg_email, reg_pass, reg_pass2)
         if ok:
-            st.success("🎉 Успешная регистрация!")
-            st.toast("🎉 Успешная регистрация!", icon="✅")
+            st.session_state["reg_flash"] = True
+            st.session_state["reg_email"] = ""
+            st.session_state["reg_pass"] = ""
+            st.session_state["reg_pass2"] = ""
+            st.rerun()
         else:
             st.error(msg)
     st.info("После регистрации войдите в аккаунт: вкладка «Вход» → кнопка «Войти».")

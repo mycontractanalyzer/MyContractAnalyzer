@@ -26,7 +26,8 @@ PREMIUM_CSS = """
 #MainMenu, footer, header {display: none !important;}
 section[data-testid="stSidebar"] {display: none;}
 
-html, body, .stApp, #root, .stAppViewContainer {background: #0a0c10 !important;}
+html, body, .stApp, #root, .stAppViewContainer {background-color: #0a0c10 !important;}
+#MainMenu, footer, header {display: none !important;}
 body, p, li {font-family: 'Manrope', sans-serif !important;}
 h1, h2, h3, h4 {font-family: 'Unbounded', sans-serif !important; color: #fff !important;}
 span.material-symbols-rounded {font-family: 'Material Symbols Rounded' !important;}

@@ -43,14 +43,29 @@ with c2:
 st.divider()
 st.subheader("💳 Выдать тариф")
 options2 = {u["email"]: u["id"] for u in users}
-email = st.selectbox("Пользователь", list(options2.keys()), key="grant_email")
+email2 = st.selectbox("Пользователь", list(options2.keys()), key="grant_email")
 tariff = st.selectbox("Тариф", list(TARIFFS.keys()), key="grant_tariff")
 if st.button("Выдать", key="grant_btn"):
     conn = get_connection()
     conn.execute(
         "UPDATE users SET tariff = ?, checks_left = ? WHERE id = ?",
-        (tariff, TARIFFS[tariff]["checks"], options2[email]),
+        (tariff, TARIFFS[tariff]["checks"], options2[email2]),
     )
     conn.commit()
     conn.close()
-    st.toast(f"Тариф {tariff} выдан: {email}", icon="💳")
+    st.toast(f"Тариф {tariff} выдан: {email2}", icon="💳")
+
+st.divider()
+st.subheader("🎁 Выдать проверки")
+email3 = st.selectbox("Пользователь", list(options2.keys()), key="checks_email")
+checks_num = st.number_input("Количество проверок", min_value=0, max_value=100000, value=10, step=1)
+mode = st.radio("Как применить", ("Установить ровно", "Добавить к текущим"), horizontal=True)
+if st.button("🎁 Выдать проверки", key="checks_btn"):
+    conn = get_connection()
+    if mode == "Установить ровно":
+        conn.execute("UPDATE users SET checks_left = ? WHERE id = ?", (int(checks_num), options2[email3]))
+    else:
+        conn.execute("UPDATE users SET checks_left = checks_left + ? WHERE id = ?", (int(checks_num), options2[email3]))
+    conn.commit()
+    conn.close()
+    st.toast("Проверки обновлены", icon="🎁")
