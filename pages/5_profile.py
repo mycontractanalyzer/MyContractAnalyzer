@@ -12,6 +12,11 @@ if not user:
     st.page_link("pages/1_auth.py", label="🔐 Войти")
     st.stop()
 
+flash = st.session_state.pop("flash", None)
+if flash:
+    st.success(flash)
+    st.toast(flash, icon="✅")
+
 st.title("👤 Личный кабинет")
 st.write(f"**Email:** {user['email']}")
 st.write(f"**Тариф:** {user['tariff']}")

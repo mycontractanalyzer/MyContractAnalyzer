@@ -22,7 +22,7 @@ with tab_login:
     if st.button("Войти", key="login_btn"):
         ok, msg = login_user(email, password)
         if ok:
-            st.toast("👋 Добро пожаловать!", icon="✅")
+            st.session_state["flash"] = "👋 Добро пожаловать! Вы вошли в аккаунт."
             st.switch_page("pages/5_profile.py")
         else:
             st.error(msg)
@@ -39,7 +39,7 @@ with tab_reg:
     if st.button("Создать аккаунт", key="reg_btn"):
         ok, msg = register_user(reg_email, reg_pass, reg_pass2)
         if ok:
-            st.toast("🎉 Аккаунт создан! Вы вошли автоматически", icon="✅")
+            st.session_state["flash"] = "🎉 Регистрация успешна! Аккаунт создан, вы вошли автоматически."
             st.switch_page("pages/5_profile.py")
         else:
             st.error(msg)

@@ -21,4 +21,4 @@ MODEL_PAID = _secret("MODEL_PAID", "deepseek-v4-pro")
 
 BIG_DOC_CHARS = 100_000
 
-ADMIN_EMAILS = [e.strip() for e in _secret("ADMIN_EMAILS", "admin@example.com").split(",") if e.strip()]
+ADMIN_EMAILS = [e.strip().lower() for e in _secret("ADMIN_EMAILS", "admin@example.com").split(",") if e.strip()]
