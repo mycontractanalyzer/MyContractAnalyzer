@@ -25,22 +25,22 @@ contract_type = st.selectbox("Тип договора", ["Аренда", "Усл
 role = st.selectbox("Твоя роль", ["Арендатор", "Арендодатель", "Исполнитель", "Заказчик", "Работник", "Работодатель", "Другая"])
 comment = st.text_area("Что тебя беспокоит? (необязательно)")
 
-source = st.radio("Как загрузить договор", ["Вставить текст", "Загрузить файл (TXT / PDF)"])
+source = st.radio("Как загрузить договор", ["Вставить текст", "Загрузить файл (TXT / PDF / DOCX)"])
 
 text = ""
 if source == "Вставить текст":
     text = st.text_area("Текст договора", height=300, placeholder="Вставь сюда текст договора...")
 else:
-    uploaded = st.file_uploader("Выбери файл", type=["txt", "md", "pdf"])
+    uploaded = st.file_uploader("Выбери файл", type=["txt", "md", "pdf", "docx"])
     if uploaded is not None:
         try:
             text = read_uploaded_file(uploaded)
             if not text.strip():
-                st.warning("В этом PDF нет текстового слоя (это скан). Распознавание фото появится в следующем этапе.")
+                st.warning("В этом файле нет текста (возможно, это скан). Распознавание фото появится позже.")
             else:
                 st.success(f"Файл прочитан: {len(text)} символов")
         except Exception:
-            st.error("Не удалось прочитать файл. Поддерживаются: TXT, MD, PDF с текстовым слоем.")
+            st.error("Не удалось прочитать файл. Поддерживаются: TXT, MD, PDF с текстом, DOCX.")
 
 if st.button("🚀 Анализировать", type="primary"):
     if not text.strip():

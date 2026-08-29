@@ -1,8 +1,8 @@
 import streamlit as st
 
-from core.companies import (get_user_company, list_members,
-                             company_stats, leave_company)
+from core.companies import company_stats, get_user_company
 from core.ui import render_header
+from database.connection import get_connection
 from utils.auth import get_current_user
 
 st.set_page_config(page_title="Команда", page_icon="🏢")
@@ -35,17 +35,42 @@ c1.metric("👥 Участников", stats["members"])
 c2.metric("🔍 Проведено анализов", stats["analyses"])
 
 st.divider()
-st.subheader("Участники")
-members = list_members(company["id"])
+st.subheader("Участники и лимиты проверок")
+
+conn = get_connection()
+members = conn.execute(
+    """SELECT u.id, u.email, u.checks_left, cm.role, cm.joined_at
+       FROM company_members cm
+       JOIN users u ON u.id = cm.user_id
+       WHERE cm.company_id = ?""",
+    (company["id"],),
+).fetchall()
+conn.close()
+
 for m in members:
     badge = "👑 владелец" if m["role"] == "owner" else "👤 участник"
-    st.write(f"• **{m['email']}** — {badge} (с {m['joined_at']})")
+    st.write(f"• **{m['email']}** — {badge} · проверок: **{m['checks_left']}**")
+    if m["role"] != "owner":
+        kc1, kc2 = st.columns([1, 1])
+        with kc1:
+            limit = st.number_input(
+                "Выдать проверок",
+                min_value=0, max_value=100000, value=int(m["checks_left"]), step=1,
+                key=f"limit_{m['id']}",
+            )
+        with kc2:
+            if st.button("💾 Установить", key=f"set_{m['id']}"):
+                conn = get_connection()
+                conn.execute("UPDATE users SET checks_left = ? WHERE id = ?", (int(limit), m["id"]))
+                conn.commit()
+                conn.close()
+                st.toast(f"Лимит для {m['email']} обновлён", icon="💾")
+                st.rerun()
 
 st.divider()
-st.warning("⚠️ Удаление команды")
+st.warning("⚠️ Распустить команду")
 st.caption("Удалит компанию и уберёт всех участников. Проверки участников сохранятся.")
 if st.button("Распустить команду"):
-    from database.connection import get_connection
     conn = get_connection()
     conn.execute("DELETE FROM company_members WHERE company_id = ?", (company["id"],))
     conn.execute("UPDATE users SET company_id = NULL WHERE company_id = ?", (company["id"],))

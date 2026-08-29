@@ -220,11 +220,18 @@ with tab_promo:
         extras.append(f"использован: {p['used_count'] or 0} раз")
         extras.append("бессрочно" if not p["expires_at"] else f"до {p['expires_at']}")
 
-        c1, c2, c3 = st.columns([4, 3, 1])
+        c1, c2, c3, c4 = st.columns([4, 2, 1, 1])
         c1.write(f"**{p['code']}** — {kind_label} ({', '.join(extras)}) [{status}]")
         c2.write(f"создан: {p['created_at']}")
         if p["active"] and c3.button("Выключить", key=f"off_{p['code']}"):
             deactivate_promocode(p["code"])
+            st.rerun()
+        if c4.button("🗑 Удалить", key=f"del_{p['code']}"):
+            conn = get_connection()
+            conn.execute("DELETE FROM promocodes WHERE code = ?", (p["code"],))
+            conn.commit()
+            conn.close()
+            st.toast("Промокод удалён", icon="🗑")
             st.rerun()
 
 with tab_fb:

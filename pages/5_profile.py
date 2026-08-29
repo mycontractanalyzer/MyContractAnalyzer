@@ -1,10 +1,8 @@
 import streamlit as st
 
-from core.companies import create_company, get_user_company, leave_company
+from core.companies import create_company, get_user_company, join_by_invite
 from core.promocodes import apply_promocode_checks
-from core.tariffs import TARIFFS
 from core.ui import render_header
-from database.connection import get_connection
 from utils.auth import change_password, delete_user, get_current_user, logout_user
 
 st.set_page_config(page_title="Личный кабинет", page_icon="👤")
@@ -25,7 +23,6 @@ if user["subscription_end"]:
 
 st.divider()
 
-# === БЛОК КОМАНДЫ ДЛЯ BUSINESS ===
 if user["tariff"] in ("Business", "Business Pro"):
     st.subheader("🏢 Команда")
     max_members = 20 if user["tariff"] == "Business Pro" else 5
@@ -43,13 +40,21 @@ if user["tariff"] in ("Business", "Business Pro"):
     else:
         st.success(f"Ваша компания: **{company['name']}**")
         st.write(f"Код приглашения для коллег: **{company['invite_code']}**")
-        st.caption(f"Максимум участников: {max_members}. Отправь код коллегам — они введут его в своём кабинете.")
         st.page_link("pages/9_company.py", label="🏢 Управление командой", use_container_width=True)
+else:
+    st.subheader("🤝 Код приглашения в команду")
+    st.caption("Если коллега с тарифом Business прислал код — введи его здесь и получишь доступ к командным проверкам.")
+    invite = st.text_input("Код приглашения", placeholder="Например: A1B2C3D4", key="invite_profile")
+    if st.button("Присоединиться к команде"):
+        ok, msg = join_by_invite(user["id"], invite)
+        if ok:
+            st.success(msg)
+            st.rerun()
+        else:
+            st.error(msg)
 
 st.divider()
-
 st.subheader("🎟 Промокод на проверки")
-st.caption("Скидочные промокоды вводятся при оформлении подписки.")
 code_input = st.text_input("Введите промокод", placeholder="Например: START10", key="promo_profile")
 if st.button("Активировать промокод"):
     ok, msg = apply_promocode_checks(user["id"], code_input)
