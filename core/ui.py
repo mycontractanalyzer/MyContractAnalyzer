@@ -21,8 +21,6 @@ def _logo_base64():
 
 PREMIUM_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Unbounded:wght@400;600&display=swap');
-
 #MainMenu, footer, header {display: none !important;}
 section[data-testid="stSidebar"] {display: none;}
 
@@ -30,8 +28,9 @@ html, body, #root, .stApp, .stAppViewContainer, section.main,
 div[data-testid="stAppView"], div[data-testid="stMainBlockContainer"],
 div[data-testid="stVerticalBlock"] {background-color: #0a0c10 !important;}
 
-body, p, li {font-family: 'Manrope', sans-serif !important;}
-h1, h2, h3, h4 {font-family: 'Unbounded', sans-serif !important; color: #fff !important;}
+body, p, li {font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif !important;}
+h1, h2, h3, h4 {font-family: 'Unbounded', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif !important;
+  color: #fff !important; letter-spacing: .3px;}
 span.material-symbols-rounded {font-family: 'Material Symbols Rounded' !important;}
 
 .mca-bg {position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .7;
@@ -82,6 +81,35 @@ div.stButton > button:hover {box-shadow: 0 0 24px rgba(240,180,41,.45); transfor
 .mca-review {border-left: 3px solid #f0b429; padding: 10px 16px; margin: 8px 0;
   background: rgba(240,180,41,.06); border-radius: 0 10px 10px 0;}
 .mca-review-author {font-weight: 600;}
+
+/* ========== МОБИЛЬНАЯ ВЕРСИЯ ========== */
+@media (max-width: 720px) {
+  /* герой: колонкой, всё помещается */
+  .mca-hero-wrap {flex-direction: column; gap: 14px; margin: 6px 8px 18px;}
+  .mca-logo {width: 110px; height: 110px; margin-left: 0;}
+  .mca-hero-fallback {font-size: 64px;}
+  .mca-hero-box {padding: 16px 18px; border-radius: 18px; width: 100%; box-sizing: border-box; text-align: center;}
+  .mca-hero-box h1 {font-size: 21px;}
+  .mca-slogan {font-size: 9px; letter-spacing: 2px;}
+
+  /* колонки Streamlit — в столбик, карточки по одной */
+  div[data-testid="stHorizontalBlock"] {flex-direction: column !important; gap: 12px !important;}
+  div[data-testid="stHorizontalBlock"] > div {width: 100% !important;}
+
+  /* отступы и шрифты покомпактнее */
+  .block-container {padding: 1rem 0.9rem !important;}
+  h1 {font-size: 24px !important;}
+  h2 {font-size: 20px !important;}
+  h3 {font-size: 17px !important;}
+  div.stButton > button {padding: 12px 16px !important; font-size: 15px !important;}
+}
+
+/* планшет: герой поменьше, но в ряд */
+@media (min-width: 721px) and (max-width: 1024px) {
+  .mca-logo {width: 150px; height: 150px; margin-left: -20px;}
+  .mca-hero-box {padding: 18px 26px;}
+  .mca-hero-box h1 {font-size: 26px;}
+}
 </style>
 """
 
