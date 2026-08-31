@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 import config
 from core.feedback import list_feedbacks
+from core.records import list_consults
 from core.promocodes import (create_promocode, deactivate_promocode,
                              list_promocodes, register_discount_use)
 from core.tariffs import DISPLAY_NAMES, TARIFFS
@@ -22,8 +23,8 @@ if not user or user["email"] not in config.ADMIN_EMAILS:
 st.title("🛠 Админ-панель")
 
 users = list_users()
-tab_dash, tab_users, tab_grant, tab_checks, tab_promo, tab_fb = st.tabs(
-    ["📊 Дашборд", "👥 Пользователи", "💳 Тариф", "🎁 Проверки", "🎟 Промокоды", "⭐ Отзывы"]
+tab_dash, tab_users, tab_grant, tab_checks, tab_promo, tab_fb, tab_req = st.tabs(
+    ["📊 Дашборд", "👥 Пользователи", "💳 Тариф", "🎁 Проверки", "🎟 Промокоды", "⭐ Отзывы", "🧑‍⚖️ Заявки"]
 )
 
 with tab_dash:
@@ -248,4 +249,16 @@ with tab_fb:
             st.markdown(f"{emoji} **{f['email'] or 'аноним'}** — {f['created_at']}")
             if f["comment"]:
                 st.caption(f"💬 {f['comment']}")
+            st.divider()
+with tab_req:
+    reqs = list_consults()
+    if not reqs:
+        st.write("Заявок на консультацию пока нет")
+    else:
+        st.write(f"Всего заявок: {len(reqs)}")
+        for r in reqs:
+            st.markdown(f"**{r['email'] or 'аноним'}** · {r['created_at']} · статус: {r['status']}")
+            st.write(f"❓ {r['question']}")
+            if r["contact"]:
+                st.write(f"📞 Контакт: {r['contact']}")
             st.divider()

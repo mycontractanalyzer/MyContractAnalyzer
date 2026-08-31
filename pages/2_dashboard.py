@@ -1,9 +1,10 @@
 import streamlit as st
 
 import config
-from core.analyzer import analyze_contract
+from core.analyzer import analyze_contract, extract_highlights
 from core.contracts import save_analysis, save_contract, spend_checks
 from core.file_reader import read_uploaded_file
+from core.records import save_highlights
 from core.ui import render_header
 from database.models import init_db
 from utils.auth import get_current_user
@@ -60,5 +61,10 @@ if st.button("🚀 Анализировать", type="primary"):
             spend_checks(user["id"], len(text))
             contract_id = save_contract(user["id"], contract_type, role, text)
             analysis_id = save_analysis(user["id"], contract_id, model, report)
+            try:
+                with st.spinner("Составляю карту пунктов..."):
+                    save_highlights(analysis_id, extract_highlights(text, user["tariff"]))
+            except Exception:
+                pass
             st.session_state["last_analysis_id"] = analysis_id
             st.switch_page("pages/3_result.py")

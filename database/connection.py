@@ -69,9 +69,20 @@ def ensure_schema():
             role TEXT NOT NULL DEFAULT 'member',
             joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+        CREATE TABLE IF NOT EXISTS consult_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            analysis_id INTEGER,
+            question TEXT,
+            contact TEXT,
+            status TEXT DEFAULT 'new',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
     """)
     if _table_exists(conn, "users"):
         _ensure_columns(conn, "users", [("company_id", "INTEGER"), ("theme", "TEXT DEFAULT 'dark'")])
+    if _table_exists(conn, "analyses"):
+        _ensure_columns(conn, "analyses", [("highlights", "TEXT")])
     conn.commit()
     conn.close()
 
