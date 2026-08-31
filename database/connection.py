@@ -10,6 +10,12 @@ def get_connection():
     return conn
 
 
+def _table_exists(conn, table):
+    return conn.execute(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", (table,)
+    ).fetchone() is not None
+
+
 def _ensure_columns(conn, table, columns):
     existing = {row[1] for row in conn.execute(f"PRAGMA table_info({table})").fetchall()}
     for name, ddl in columns:
@@ -64,14 +70,8 @@ def ensure_schema():
             joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
-    _ensure_columns(conn, "promocodes", [
-        ("discount_rub", "INTEGER DEFAULT 0"),
-        ("min_tariff", "TEXT"),
-        ("checks_bonus", "INTEGER DEFAULT 0"),
-        ("expires_at", "TIMESTAMP"),
-        ("used_count", "INTEGER DEFAULT 0"),
-    ])
-    _ensure_columns(conn, "users", [("company_id", "INTEGER"), ("theme", "TEXT DEFAULT 'dark'")])
+    if _table_exists(conn, "users"):
+        _ensure_columns(conn, "users", [("company_id", "INTEGER"), ("theme", "TEXT DEFAULT 'dark'")])
     conn.commit()
     conn.close()
 

@@ -4,9 +4,11 @@ from core.feedback import list_feedbacks
 from core.i18n import t
 from core.pricing_ui import render_pricing
 from core.ui import inject_style, render_hero, render_menu
+from database.connection import ensure_schema
 from database.models import init_db
 
 init_db()
+ensure_schema()
 
 st.set_page_config(page_title="MyContractAnalyzer", page_icon="⚖️", layout="wide")
 
