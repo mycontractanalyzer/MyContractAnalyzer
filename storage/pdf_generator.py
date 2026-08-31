@@ -37,8 +37,24 @@ def _latin(s: str) -> str:
     return (s or "").encode("latin-1", "replace").decode("latin-1")
 
 
+def _para(pdf, fam, style, size, text, lh=6):
+    """Безопасный вывод абзаца: никогда не роняет генератор."""
+    pdf.set_font(fam, style, size)
+    pdf.set_x(pdf.l_margin)
+    try:
+        pdf.multi_cell(0, lh, text)
+    except Exception:
+        try:
+            pdf.set_x(pdf.l_margin)
+            pdf.multi_cell(0, lh, text.encode("ascii", "ignore").decode())
+        except Exception:
+            pdf.set_x(pdf.l_margin)
+
+
 def generate_report_pdf(report: str, email: str) -> bytes:
     pdf = FPDF()
+    pdf.set_left_margin(10)
+    pdf.set_right_margin(10)
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
 
@@ -46,17 +62,13 @@ def generate_report_pdf(report: str, email: str) -> bytes:
     if font:
         pdf.add_font("mca", "", font)
         pdf.add_font("mca", "B", font)
-        fam = "mca"
-        prep = _clean
+        fam, prep = "mca", _clean
     else:
-        fam = "Helvetica"
-        prep = _latin
+        fam, prep = "Helvetica", _latin
 
-    pdf.set_font(fam, "B", 14)
-    pdf.multi_cell(0, 8, prep("MyContractAnalyzer — отчёт по анализу договора"))
-    pdf.set_font(fam, "", 9)
-    pdf.multi_cell(0, 6, prep(f"Запрошен: {email} · Не является юридической консультацией"))
-    pdf.ln(4)
+    _para(pdf, fam, "B", 14, prep("MyContractAnalyzer — отчёт по анализу договора"), 8)
+    _para(pdf, fam, "", 9, prep(f"Запрошен: {email} · Не является юридической консультацией"))
+    pdf.ln(3)
 
     for line in (report or "").splitlines():
         line = line.rstrip()
@@ -65,12 +77,10 @@ def generate_report_pdf(report: str, email: str) -> bytes:
             continue
         if line.startswith("### ") or line.startswith("## "):
             pdf.ln(2)
-            pdf.set_font(fam, "B", 12)
-            pdf.multi_cell(0, 7, prep(line.replace("#", "").replace("**", "").strip()))
-            pdf.set_font(fam, "", 10)
+            _para(pdf, fam, "B", 12, prep(line.replace("#", "").replace("**", "").strip()), 7)
         elif line.startswith("- "):
-            pdf.multi_cell(0, 6, "• " + prep(line[2:]))
+            _para(pdf, fam, "", 10, "• " + prep(line[2:]))
         else:
-            pdf.multi_cell(0, 6, prep(line.replace("**", "")))
+            _para(pdf, fam, "", 10, prep(line.replace("**", "")))
 
     return bytes(pdf.output())

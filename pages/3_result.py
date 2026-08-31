@@ -9,7 +9,7 @@ from core.analyzer import (choose_model, generate_benchmark, generate_letter,
 from core.contracts import get_analysis, get_contract, list_user_analyses
 from core.feedback import save_feedback
 from core.prompts import build_chat_system_prompt
-from core.records import rename_analysis, save_consult_request
+from core.records import fmt_dt, rename_analysis, save_consult_request
 from core.ui import render_header
 from integrations.deepseek import ask_deepseek
 from storage.docx_generator import generate_report_docx
@@ -25,16 +25,18 @@ if not user:
     st.warning("Сначала войди в аккаунт.")
     st.stop()
 
-analysis_id = st.query_params.get("aid") or st.session_state.get("last_analysis_id")
-if not analysis_id:
-    rows = list_user_analyses(user["id"])
-    if rows:
-        analysis_id = rows[0]["id"]
-
-if not analysis_id:
+rows = list_user_analyses(user["id"])
+if not rows:
     st.info("Пока нет анализа. Загрузи договор.")
     st.page_link("pages/2_dashboard.py", label="📄 Загрузить договор")
     st.stop()
+
+options = {f"{r.get('title') or 'Договор'} · {fmt_dt(r['created_at'])}": r["id"] for r in rows}
+labels = list(options.keys())
+current = str(st.query_params.get("aid") or st.session_state.get("last_analysis_id") or rows[0]["id"])
+default_idx = next((i for i, k in enumerate(labels) if str(options[k]) == current), 0)
+sel = st.selectbox("📑 Какой отчёт открыть", labels, index=default_idx)
+analysis_id = options[sel]
 
 analysis = get_analysis(analysis_id)
 contract = get_contract(analysis["contract_id"])
