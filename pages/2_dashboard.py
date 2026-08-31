@@ -67,4 +67,5 @@ if st.button("🚀 Анализировать", type="primary"):
             except Exception:
                 pass
             st.session_state["last_analysis_id"] = analysis_id
-            st.switch_page("pages/3_result.py")
+            st.success("✅ Анализ готов! Отчёт собран.")
+            st.page_link("pages/3_result.py", label="📊 СМОТРЕТЬ ОТЧЁТ", use_container_width=True)

@@ -24,7 +24,7 @@ if not user:
     st.warning("Сначала войди в аккаунт.")
     st.stop()
 
-analysis_id = st.session_state.get("last_analysis_id")
+analysis_id = st.query_params.get("aid") or st.session_state.get("last_analysis_id")
 if not analysis_id:
     st.info("Пока нет анализа. Загрузи договор.")
     st.page_link("pages/2_dashboard.py", label="📄 Загрузить договор")

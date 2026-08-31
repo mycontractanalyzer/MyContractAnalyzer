@@ -26,6 +26,4 @@ for row in rows:
     label = f"📄 {contract['name']} — {row['created_at']} ({row['model']})"
     with st.expander(label):
         st.markdown(row["report"])
-        if st.button("Открыть полный разбор с чатом", key=f"open_{row['id']}"):
-            st.session_state["last_analysis_id"] = row["id"]
-            st.switch_page("pages/3_result.py")
+        st.page_link(f"pages/3_result.py?aid={row['id']}", label="📊 Открыть отчёт", use_container_width=True)
