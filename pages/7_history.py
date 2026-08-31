@@ -22,8 +22,13 @@ if not rows:
     st.stop()
 
 for row in rows:
-    contract = get_contract(row["contract_id"])
-    label = f"📄 {contract['name']} — {row['created_at']} ({row['model']})"
+    contract = get_contract(row["contract_id"]) or {}
+    ctype = contract.get("contract_type", "Договор")
+    label = f"📄 {ctype} — {row['created_at']} ({row['model']})"
     with st.expander(label):
         st.markdown(row["report"])
-        st.page_link(f"pages/3_result.py?aid={row['id']}", label="📊 Открыть отчёт", use_container_width=True)
+        st.page_link(
+            f"pages/3_result.py?aid={row['id']}",
+            label="📊 Открыть отчёт с чатом",
+            use_container_width=True,
+        )
