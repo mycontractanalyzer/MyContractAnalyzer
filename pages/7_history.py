@@ -28,7 +28,8 @@ for row in rows:
     with st.expander(label):
         st.markdown(row["report"])
         st.page_link(
-            f"pages/3_result.py?aid={row['id']}",
+            "pages/3_result.py",
             label="📊 Открыть отчёт с чатом",
+            query_params={"aid": row["id"]},
             use_container_width=True,
         )
