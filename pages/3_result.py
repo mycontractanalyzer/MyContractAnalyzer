@@ -4,8 +4,9 @@ import re
 
 import streamlit as st
 
-from core.analyzer import choose_model, generate_letter, generate_redline
-from core.contracts import get_analysis, get_contract
+from core.analyzer import (choose_model, generate_benchmark, generate_letter,
+                           generate_negotiation, generate_redline, generate_whatif)
+from core.contracts import get_analysis, get_contract, list_user_analyses
 from core.feedback import save_feedback
 from core.prompts import build_chat_system_prompt
 from core.records import save_consult_request
@@ -26,6 +27,11 @@ if not user:
 
 analysis_id = st.query_params.get("aid") or st.session_state.get("last_analysis_id")
 if not analysis_id:
+    rows = list_user_analyses(user["id"])
+    if rows:
+        analysis_id = rows[0]["id"]
+
+if not analysis_id:
     st.info("Пока нет анализа. Загрузи договор.")
     st.page_link("pages/2_dashboard.py", label="📄 Загрузить договор")
     st.stop()
@@ -36,11 +42,8 @@ contract = get_contract(analysis["contract_id"])
 m = re.search(r"Риск-скор[^0-9]*(\d{1,3})\s*/\s*100", analysis["report"])
 if m:
     score = int(m.group(1))
-    verdict = (
-        "✅ Можно подписывать"
-        if score <= 30
-        else ("🟡 С осторожностью" if score <= 70 else "❌ Не подписывать без правок")
-    )
+    verdict = ("✅ Можно подписывать" if score <= 30
+               else ("🟡 С осторожностью" if score <= 70 else "❌ Не подписывать без правок"))
     st.metric("🎯 Риск-скор договора", f"{score}/100", verdict)
 
 st.markdown(analysis["report"])
@@ -77,18 +80,53 @@ if items:
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    pdf_bytes = generate_report_pdf(analysis["report"], user["email"])
-    st.download_button("📄 Скачать PDF", data=pdf_bytes,
-                       file_name="MyContractAnalyzer_report.pdf",
-                       mime="application/pdf", use_container_width=True)
+    st.download_button("📄 Скачать PDF", data=generate_report_pdf(analysis["report"], user["email"]),
+                       file_name="MyContractAnalyzer_report.pdf", mime="application/pdf",
+                       use_container_width=True)
 with col2:
-    docx_bytes = generate_report_docx(analysis["report"], user["email"])
-    st.download_button("📝 Скачать Word", data=docx_bytes,
+    st.download_button("📝 Скачать Word", data=generate_report_docx(analysis["report"], user["email"]),
                        file_name="MyContractAnalyzer_report.docx",
                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                        use_container_width=True)
 with col3:
     st.page_link("pages/7_history.py", label="📚 История проверок", use_container_width=True)
+
+st.divider()
+st.subheader("🧰 Инструменты переговоров")
+
+t1, t2, t3 = st.columns(3)
+with t1:
+    if st.button("🎙 Скрипт переговоров"):
+        with st.spinner("Составляю скрипт..."):
+            st.session_state["nego"] = generate_negotiation(
+                contract["source_text"], analysis["report"], user["tariff"])
+with t2:
+    scenario = st.selectbox("Сценарий «Что если…»",
+                            ["Я просрочу платёж на 2 месяца",
+                             "Контрагент расторгнет договор",
+                             "Я захочу расторгнуть досрочно",
+                             "Своя ситуация..."])
+    if scenario == "Своя ситуация...":
+        scenario = st.text_input("Опиши ситуацию")
+    if st.button("🎭 Что если…"):
+        with st.spinner("Моделирую последствия..."):
+            st.session_state["whatif"] = generate_whatif(
+                contract["source_text"], analysis["report"], scenario, user["tariff"])
+with t3:
+    if st.button("📊 Рыночный эталон"):
+        with st.spinner("Сравниваю с рынком..."):
+            st.session_state["bench"] = generate_benchmark(
+                contract["source_text"], analysis["report"], user["tariff"])
+
+if st.session_state.get("nego"):
+    with st.expander("🎙 Скрипт переговоров", expanded=True):
+        st.markdown(st.session_state["nego"])
+if st.session_state.get("whatif"):
+    with st.expander("🎭 Что если…", expanded=True):
+        st.markdown(st.session_state["whatif"])
+if st.session_state.get("bench"):
+    with st.expander("📊 Рыночный эталон", expanded=True):
+        st.markdown(st.session_state["bench"])
 
 st.divider()
 rc1, rc2 = st.columns(2)
@@ -105,12 +143,10 @@ with rc2:
                 contract.get("contract_type", ""), contract.get("role", ""))
 
 if st.session_state.get("redline"):
-    st.download_button(
-        "⬇️ Скачать redline (Word)",
-        data=generate_report_docx(st.session_state["redline"], user["email"]),
-        file_name="redline_contract.docx",
-        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    )
+    st.download_button("⬇️ Скачать redline (Word)",
+                       data=generate_report_docx(st.session_state["redline"], user["email"]),
+                       file_name="redline_contract.docx",
+                       mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 if st.session_state.get("letter"):
     st.text_area("Письмо (скопируй или скачай)", value=st.session_state["letter"], height=250)
     st.download_button("⬇️ Скачать письмо (.txt)",

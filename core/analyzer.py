@@ -2,9 +2,11 @@ import json
 import re
 
 import config
-from core.prompts import (build_chat_system_prompt, build_compare_system_prompt,
-                          build_highlights_prompt, build_letter_prompt,
-                          build_redline_prompt, build_system_prompt)
+from core.prompts import (build_benchmark_prompt, build_chat_system_prompt,
+                          build_compare_system_prompt, build_highlights_prompt,
+                          build_letter_prompt, build_negotiation_prompt,
+                          build_redline_prompt, build_system_prompt,
+                          build_whatif_prompt)
 from integrations.deepseek import ask_deepseek
 
 
@@ -31,7 +33,6 @@ def _parse_json_list(raw: str):
 
 
 def extract_highlights(text, tariff="Free"):
-    """Возвращает JSON-строку с картой пунктов (цитаты + уровень + причина)."""
     system = build_highlights_prompt()
     raw = ask_deepseek(system, f"Текст договора:\n\n{text[:30000]}", config.MODEL_FREE)
     items = []
@@ -46,10 +47,25 @@ def extract_highlights(text, tariff="Free"):
 
 
 def generate_redline(text, report, tariff):
-    system = build_redline_prompt()
-    return ask_deepseek(system, f"ДОГОВОР:\n\n{text}\n\nОТЧЁТ О РИСКАХ:\n\n{report}", choose_model(tariff))
+    return ask_deepseek(build_redline_prompt(),
+                        f"ДОГОВОР:\n\n{text}\n\nОТЧЁТ О РИСКАХ:\n\n{report}", choose_model(tariff))
 
 
 def generate_letter(text, report, tariff, contract_type="", role=""):
-    system = build_letter_prompt(contract_type, role)
-    return ask_deepseek(system, f"ДОГОВОР:\n\n{text[:20000]}\n\nОТЧЁТ О РИСКАХ:\n\n{report}", choose_model(tariff))
+    return ask_deepseek(build_letter_prompt(contract_type, role),
+                        f"ДОГОВОР:\n\n{text[:20000]}\n\nОТЧЁТ О РИСКАХ:\n\n{report}", choose_model(tariff))
+
+
+def generate_negotiation(text, report, tariff):
+    return ask_deepseek(build_negotiation_prompt(),
+                        f"ДОГОВОР:\n\n{text[:20000]}\n\nОТЧЁТ:\n\n{report}", choose_model(tariff))
+
+
+def generate_whatif(text, report, scenario, tariff):
+    return ask_deepseek(build_whatif_prompt(scenario),
+                        f"ДОГОВОР:\n\n{text[:20000]}\n\nОТЧЁТ:\n\n{report}", choose_model(tariff))
+
+
+def generate_benchmark(text, report, tariff):
+    return ask_deepseek(build_benchmark_prompt(),
+                        f"ДОГОВОР:\n\n{text[:20000]}\n\nОТЧЁТ:\n\n{report}", choose_model(tariff))

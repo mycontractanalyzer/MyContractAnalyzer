@@ -129,6 +129,8 @@ def render_menu():
         st.page_link("pages/7_settings.py", label="⚙️ Настройки", use_container_width=True)
         st.page_link("pages/7_history.py", label="📚 История", use_container_width=True)
         st.page_link("pages/8_compare.py", label="🆚 Сравнение версий", use_container_width=True)
+        st.page_link("pages/10_lawyers.py", label="🧑‍⚖️ Юристы", use_container_width=True)
+        st.page_link("pages/11_library.py", label="🧱 Библиотека пунктов", use_container_width=True)
         if user and user["tariff"] in ("Business", "Business Pro"):
             st.page_link("pages/9_company.py", label="🏢 Команда", use_container_width=True)
         if user and user["email"] in config.ADMIN_EMAILS:

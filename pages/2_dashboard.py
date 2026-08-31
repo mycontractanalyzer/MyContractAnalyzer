@@ -52,20 +52,24 @@ if st.button("🚀 Анализировать", type="primary"):
             st.error(f"Недостаточно проверок (нужно {cost}). Выбери тариф.")
             st.page_link("pages/4_pricing.py", label="💳 Тарифы")
         else:
+            est = 15 + min(60, (len(text) // 2000) * 5)
             try:
-                with st.spinner("AI читает договор..."):
+                with st.status(f"⏱ Анализирую договор… это займёт примерно {est} сек", expanded=True) as status:
+                    status.update(label="📖 AI читает договор и ищет риски…")
                     report, model = analyze_contract(text, user["tariff"], contract_type, role, comment)
+                    status.update(label="💳 Списываю проверку и сохраняю…")
+                    spend_checks(user["id"], len(text))
+                    contract_id = save_contract(user["id"], contract_type, role, text)
+                    analysis_id = save_analysis(user["id"], contract_id, model, report)
+                    status.update(label="🗺 Составляю карту пунктов…")
+                    try:
+                        save_highlights(analysis_id, extract_highlights(text, user["tariff"]))
+                    except Exception:
+                        pass
+                    status.update(label="✅ Анализ готов!", state="complete")
             except Exception:
                 st.error("AI сейчас недоступен (или не пополнен баланс API). Проверка НЕ списана — попробуй позже.")
                 st.stop()
-            spend_checks(user["id"], len(text))
-            contract_id = save_contract(user["id"], contract_type, role, text)
-            analysis_id = save_analysis(user["id"], contract_id, model, report)
-            try:
-                with st.spinner("Составляю карту пунктов..."):
-                    save_highlights(analysis_id, extract_highlights(text, user["tariff"]))
-            except Exception:
-                pass
             st.session_state["last_analysis_id"] = analysis_id
             st.success("✅ Анализ готов! Отчёт собран.")
             st.page_link("pages/3_result.py", label="📊 СМОТРЕТЬ ОТЧЁТ", use_container_width=True)
