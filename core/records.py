@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from database.connection import get_connection
 
 
@@ -6,6 +8,22 @@ def save_highlights(analysis_id, payload):
     conn.execute("UPDATE analyses SET highlights = ? WHERE id = ?", (payload, analysis_id))
     conn.commit()
     conn.close()
+
+
+def rename_analysis(analysis_id, title):
+    conn = get_connection()
+    conn.execute("UPDATE analyses SET title = ? WHERE id = ?", ((title or "").strip() or "Договор", analysis_id))
+    conn.commit()
+    conn.close()
+
+
+def fmt_dt(s):
+    """2026-08-31 16:35:04 (UTC) -> 31-08-2026 19:35 (МСК)"""
+    try:
+        dt = datetime.fromisoformat(str(s)[:19]) + timedelta(hours=3)
+        return dt.strftime("%d-%m-%Y %H:%M")
+    except Exception:
+        return str(s)
 
 
 def save_consult_request(user_id, analysis_id, question, contact):

@@ -1,4 +1,4 @@
-def build_system_prompt(tariff: str, contract_type: str, role: str, comment: str) -> str:
+def build_system_prompt(tariff: str, contract_type: str, role: str, comment: str, brief: bool = False) -> str:
     base = f"""Ты — юридический ассистент сервиса MyContractAnalyzer.
 Анализируй договоры и объясняй риски простым языком, без сложных терминов.
 
@@ -30,7 +30,9 @@ def build_system_prompt(tariff: str, contract_type: str, role: str, comment: str
 
 Отвечай на языке текста договора. Не выдумывай номера пунктов — если не уверен, что пункт действительно в договоре, не ссылайся на него."""
 
-    if tariff == "Free":
+    if brief:
+        base += "\n\nФормат: МАКСИМАЛЬНО КРАТКО — не более 2 пунктов в каждом разделе, без блока вопросов."
+    elif tariff == "Free":
         base += "\n\nФормат: кратко, не более 3 пунктов в разделе «Осторожно» и 3 в «Следует уточнить»."
     else:
         base += "\n\nФормат: максимально подробно, разбирай каждый подозрительный пункт. В конце раздела «Краткий вывод» добавь блок **«Вопросы, которые стоит задать второй стороне»** с 3-5 пунктами."

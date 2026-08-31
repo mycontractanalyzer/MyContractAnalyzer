@@ -1,6 +1,7 @@
 import streamlit as st
 
-from core.contracts import get_analysis, get_contract, list_user_analyses
+from core.contracts import get_contract, list_user_analyses
+from core.records import fmt_dt
 from core.ui import render_header
 from utils.auth import get_current_user
 
@@ -23,13 +24,8 @@ if not rows:
 
 for row in rows:
     contract = get_contract(row["contract_id"]) or {}
-    ctype = contract.get("contract_type", "Договор")
-    label = f"📄 {ctype} — {row['created_at']} ({row['model']})"
+    title = row.get("title") or contract.get("contract_type") or "Договор"
+    label = f"📄 {title} — {fmt_dt(row['created_at'])}"
     with st.expander(label):
-        st.markdown(row["report"])
-        st.page_link(
-            "pages/3_result.py",
-            label="📊 Открыть отчёт с чатом",
-            query_params={"aid": row["id"]},
-            use_container_width=True,
-        )
+        st.page_link("pages/3_result.py", label="📊 Открыть отчёт с чатом",
+                     query_params={"aid": row["id"]}, use_container_width=True)

@@ -22,7 +22,8 @@ st.markdown(
 )
 _, cta_col, _ = st.columns([1, 2, 1])
 with cta_col:
-    st.page_link("pages/2_dashboard.py", label="🚀 Анализировать договор", use_container_width=True)
+    if st.button("🚀 Анализировать договор", use_container_width=True, key="cta_top"):
+        st.switch_page("pages/2_dashboard.py")
 
 st.divider()
 
@@ -110,4 +111,5 @@ render_pricing()
 st.divider()
 _, cta_col2, _ = st.columns([1, 2, 1])
 with cta_col2:
-    st.page_link("pages/2_dashboard.py", label="🚀 Начать сейчас", use_container_width=True)
+    if st.button("🚀 Начать сейчас", use_container_width=True, key="cta_bottom"):
+        st.switch_page("pages/2_dashboard.py")

@@ -1,7 +1,9 @@
+import re
+
 import streamlit as st
 
 import config
-from core.analyzer import analyze_contract, extract_highlights
+from core.analyzer import analyze_contract, extract_highlights, smart_compress
 from core.contracts import save_analysis, save_contract, spend_checks
 from core.file_reader import read_uploaded_file
 from core.records import save_highlights
@@ -24,13 +26,16 @@ st.write(f"Тариф: **{user['tariff']}** · Осталось проверок
 
 contract_type = st.selectbox("Тип договора", ["Аренда", "Услуги/фриланс", "Трудовой", "NDA", "Кредит", "Другое"])
 role = st.selectbox("Твоя роль", ["Арендатор", "Арендодатель", "Исполнитель", "Заказчик", "Работник", "Работодатель", "Другая"])
-comment = st.text_area("Что тебя беспокоит? (необязательно)")
+comment = st.text_area("Дополнительный комментарий или уточнение запроса (необязательно)")
+
+fmt = st.radio("Формат отчёта", ["📖 Развёрнуто", "📝 Кратко"], horizontal=True)
 
 source = st.radio("Как загрузить договор", ["Вставить текст", "Загрузить файл (TXT / PDF / DOCX)"])
 
 text = ""
 if source == "Вставить текст":
-    text = st.text_area("Текст договора", height=300, placeholder="Вставь сюда текст договора...")
+    text = st.text_area("Текст договора (черновик сохраняется автоматически)", height=300,
+                        placeholder="Вставь сюда текст договора...", key="draft_text")
 else:
     uploaded = st.file_uploader("Выбери файл", type=["txt", "md", "pdf", "docx"])
     if uploaded is not None:
@@ -43,6 +48,14 @@ else:
         except Exception:
             st.error("Не удалось прочитать файл. Поддерживаются: TXT, MD, PDF с текстом, DOCX.")
 
+if text.strip():
+    lang = "Русский 🇷" if re.search(r"[а-яА-ЯёЁ]", text) else "Английский 🇬🇧"
+    compressed = smart_compress(text)
+    saved = max(0, 100 - int(len(compressed) / max(1, len(text)) * 100))
+    st.caption(f"🌐 Язык документа: {lang} · ✂️ Умное сжатие экономит ~{saved}% токенов")
+    est = 15 + min(60, (len(text) // 2000) * 5)
+    st.caption(f"⏱ Примерное время анализа: ~{est} секунд")
+
 if st.button("🚀 Анализировать", type="primary"):
     if not text.strip():
         st.error("Пока пусто — вставь текст или загрузи файл.")
@@ -54,14 +67,16 @@ if st.button("🚀 Анализировать", type="primary"):
         else:
             est = 15 + min(60, (len(text) // 2000) * 5)
             try:
-                with st.status(f"⏱ Анализирую договор… это займёт примерно {est} сек", expanded=True) as status:
-                    status.update(label="📖 AI читает договор и ищет риски…")
-                    report, model = analyze_contract(text, user["tariff"], contract_type, role, comment)
-                    status.update(label="💳 Списываю проверку и сохраняю…")
+                with st.status(f"⏱ Анализирую… осталось примерно {est} сек", expanded=True) as status:
+                    status.update(label=f"📖 AI читает договор и ищет риски (≈{est} сек)…")
+                    report, model = analyze_contract(
+                        text, user["tariff"], contract_type, role, comment,
+                        brief=(fmt == "📝 Кратко"))
+                    status.update(label=f"💾 Сохраняю отчёт (≈{max(3, est // 3)} сек)…")
                     spend_checks(user["id"], len(text))
                     contract_id = save_contract(user["id"], contract_type, role, text)
                     analysis_id = save_analysis(user["id"], contract_id, model, report)
-                    status.update(label="🗺 Составляю карту пунктов…")
+                    status.update(label="🗺 Составляю карту пунктов (≈5 сек)…")
                     try:
                         save_highlights(analysis_id, extract_highlights(text, user["tariff"]))
                     except Exception:

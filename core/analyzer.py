@@ -14,10 +14,18 @@ def choose_model(tariff: str) -> str:
     return config.MODEL_FREE if tariff == "Free" else config.MODEL_PAID
 
 
-def analyze_contract(text, tariff="Free", contract_type="", role="", comment=""):
+def smart_compress(text: str) -> str:
+    """Убирает «воду»: лишние пробелы и пустые строки. Экономит токены, не трогая смысл."""
+    t = re.sub(r"[ \t]{2,}", " ", text or "")
+    t = re.sub(r"[ \t]+\n", "\n", t)
+    t = re.sub(r"\n{3,}", "\n\n", t)
+    return t.strip()
+
+
+def analyze_contract(text, tariff="Free", contract_type="", role="", comment="", brief=False):
     model = choose_model(tariff)
-    system = build_system_prompt(tariff, contract_type, role, comment)
-    report = ask_deepseek(system, f"Вот текст договора для анализа:\n\n{text}", model)
+    system = build_system_prompt(tariff, contract_type, role, comment, brief=brief)
+    report = ask_deepseek(system, f"Вот текст договора для анализа:\n\n{smart_compress(text)}", model)
     return report, model
 
 
@@ -34,7 +42,7 @@ def _parse_json_list(raw: str):
 
 def extract_highlights(text, tariff="Free"):
     system = build_highlights_prompt()
-    raw = ask_deepseek(system, f"Текст договора:\n\n{text[:30000]}", config.MODEL_FREE)
+    raw = ask_deepseek(system, f"Текст договора:\n\n{smart_compress(text)[:30000]}", config.MODEL_FREE)
     items = []
     for it in _parse_json_list(raw)[:10]:
         if isinstance(it, dict) and it.get("quote"):
