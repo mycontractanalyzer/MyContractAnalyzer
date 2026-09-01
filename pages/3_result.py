@@ -12,6 +12,7 @@ from core.extra_ai import generate_precedent
 from core.debate import devil_advocate, judge_mode
 from core.feedback import get_feedback, upsert_feedback
 from core.mailer import send_report_email
+from core.clause_search import explain_clause, search_contract, search_report
 from core.prompts import build_chat_system_prompt
 from core.protocol import generate_protocol, generate_redline_notes, protocol_docx
 from core.records import (fmt_dt, rename_analysis, save_checklist,
@@ -286,6 +287,29 @@ with st.expander("🧑‍⚖️ Проконсультироваться с юр
         else:
             save_consult_request(user["id"], analysis_id, cq, cc)
             st.toast("Заявка отправлена! Мы свяжемся с тобой.", icon="📩")
+
+with st.expander("🔍 Поиск по пункту: введи номер — получи разбор", expanded=False):
+    q = st.text_input("Номер пункта", placeholder="Например: 5.8 или 4.j")
+    if q.strip():
+        rep_hits = search_report(analysis["report"], q)
+        con_hits = search_contract(contract["source_text"], q)
+        if not rep_hits and not con_hits:
+            st.info("Не нашёл упоминаний этого пункта в отчёте и договоре.")
+        else:
+            if con_hits:
+                st.markdown("**Пункт в договоре:**")
+                for h in con_hits:
+                    st.markdown(f"> {h}")
+            if rep_hits:
+                st.markdown("**Что говорит отчёт:**")
+                for h in rep_hits:
+                    st.markdown(h)
+            if st.button("🧠 Объясни этот пункт простыми словами"):
+                with st.spinner("Объясняю..."):
+                    st.session_state["clause_explain"] = explain_clause(
+                        "\n".join(con_hits) or q, "\n".join(rep_hits), user["tariff"])
+            if st.session_state.get("clause_explain"):
+                st.success(st.session_state["clause_explain"])
 
 with st.expander("⭐ Оценить анализ (1 отзыв на договор, можно изменить)", expanded=True):
     existing = get_feedback(user["id"], analysis_id)
