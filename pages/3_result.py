@@ -9,6 +9,7 @@ from core.analyzer import (choose_model, generate_benchmark, generate_letter,
                            generate_redline, generate_whatif, translate_contract)
 from core.contracts import get_analysis, get_contract, list_user_analyses
 from core.extra_ai import generate_precedent
+from core.debate import devil_advocate, judge_mode
 from core.feedback import get_feedback, upsert_feedback
 from core.mailer import send_report_email
 from core.prompts import build_chat_system_prompt
@@ -223,6 +224,26 @@ with st.expander("🧰 Инструменты", expanded=has_tools):
         if st.session_state.get(key):
             st.subheader(head)
             st.markdown(st.session_state[key])
+
+has_debate = bool(st.session_state.get("devil") or st.session_state.get("judge"))
+with st.expander("😈 Дебаты и ⚖️ взгляд суда", expanded=has_debate):
+    d1, d2 = st.columns(2)
+    with d1:
+        if st.button("😈 Адвокат дьявола"):
+            with st.spinner("Спорю с твоей позицией..."):
+                st.session_state["devil"] = devil_advocate(
+                    contract["source_text"], analysis["report"], user["tariff"])
+    with d2:
+        if st.button("⚖️ Режим судьи"):
+            with st.spinner("Смотрю глазами суда..."):
+                st.session_state["judge"] = judge_mode(
+                    contract["source_text"], analysis["report"], user["tariff"])
+    if st.session_state.get("devil"):
+        st.subheader("😈 Адвокат дьявола")
+        st.markdown(st.session_state["devil"])
+    if st.session_state.get("judge"):
+        st.subheader("⚖️ Как это прочитает суд")
+        st.markdown(st.session_state["judge"])
 
 has_docs = bool(st.session_state.get("redline") or st.session_state.get("letter"))
 with st.expander("📄 Redline и автописьмо", expanded=has_docs):
