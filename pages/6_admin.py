@@ -37,13 +37,13 @@ with tab_dash:
     paid = sum(1 for u in users if u["tariff"] != "Free")
     total_analyses = int(anls["c"].sum()) if not anls.empty else 0
     fbs = list_feedbacks(1000)
-    likes = sum(1 for f in fbs if f["rating"] == 1)
+    avg = round(sum(f["rating"] for f in fbs) / len(fbs), 1) if fbs else 0
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("👥 Пользователи", total_users)
     c2.metric("💳 Платные", paid, f"{int(paid / total_users * 100) if total_users else 0}%")
     c3.metric("🔍 Анализы", total_analyses)
-    c4.metric("⭐ Доля 👍", f"{int(likes / len(fbs) * 100) if fbs else 0}%")
+    c4.metric("⭐ Средняя оценка", f"{avg} / 5")
 
     st.write("**Регистрации по дням**")
     if not regs.empty:
@@ -241,11 +241,10 @@ with tab_fb:
         st.write("Отзывов пока нет")
     else:
         total = len(fbs)
-        likes = sum(1 for f in fbs if f["rating"] == 1)
-        dislikes = total - likes
-        st.write(f"Всего: {total} | 👍 {likes} | 👎 {dislikes} | рейтинг {int(likes/total*100) if total else 0}%")
+        avg = sum(f["rating"] for f in fbs) / total if total else 0
+        st.write(f"Всего: {total} | средняя оценка: {avg:.1f} / 5")
         for f in fbs:
-            emoji = "👍" if f["rating"] == 1 else "👎"
+            emoji = "⭐" * int(f["rating"])
             st.markdown(f"{emoji} **{f['email'] or 'аноним'}** — {f['created_at']}")
             if f["comment"]:
                 st.caption(f"💬 {f['comment']}")

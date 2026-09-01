@@ -76,7 +76,7 @@ st.divider()
 
 st.subheader("Отзывы пользователей")
 fbs = list_feedbacks(50)
-positive = [f for f in fbs if f["rating"] == 1 and (f["comment"] or "").strip()]
+positive = [f for f in fbs if f["rating"] >= 4 and (f["comment"] or "").strip()]
 if not positive:
     st.info("Пока нет отзывов с комментариями — будьте первым!")
 else:

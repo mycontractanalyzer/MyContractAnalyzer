@@ -94,13 +94,14 @@ with st.expander("📥 Скачать отчёт", expanded=False):
                            file_name="MyContractAnalyzer_report.pdf", mime="application/pdf",
                            use_container_width=True)
     with c2:
-        st.download_button("📝 Скачать Word", data=generate_report_docx(analysis["report"], user["email"]),
+        st.download_button("📝 Скачать DOCX", data=generate_report_docx(analysis["report"], user["email"]),
                            file_name="MyContractAnalyzer_report.docx",
                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                            use_container_width=True)
     st.page_link("pages/7_history.py", label="📚 История проверок", use_container_width=True)
 
-with st.expander("🧰 Инструменты переговоров", expanded=False):
+has_tools = bool(st.session_state.get("nego") or st.session_state.get("whatif") or st.session_state.get("bench"))
+with st.expander("🧰 Инструменты переговоров", expanded=has_tools):
     t1, t2, t3 = st.columns(3)
     with t1:
         if st.button("🎙 Скрипт переговоров"):
@@ -135,7 +136,8 @@ with st.expander("🧰 Инструменты переговоров", expanded=
         st.subheader("📊 Рыночный эталон")
         st.markdown(st.session_state["bench"])
 
-with st.expander("📄 Redline и автописьмо", expanded=False):
+has_docs = bool(st.session_state.get("redline") or st.session_state.get("letter"))
+with st.expander("📄 Redline и автописьмо", expanded=has_docs):
     rc1, rc2 = st.columns(2)
     with rc1:
         if st.button("📄 Redline-версия (исправленный договор)"):
@@ -149,7 +151,7 @@ with st.expander("📄 Redline и автописьмо", expanded=False):
                     contract["source_text"], analysis["report"], user["tariff"],
                     contract.get("contract_type", ""), contract.get("role", ""))
     if st.session_state.get("redline"):
-        st.download_button("⬇️ Скачать redline (Word)",
+        st.download_button("⬇️ Скачать redline (DOCX)",
                            data=generate_report_docx(st.session_state["redline"], user["email"]),
                            file_name="redline_contract.docx",
                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
@@ -159,7 +161,7 @@ with st.expander("📄 Redline и автописьмо", expanded=False):
                            data=st.session_state["letter"].encode("utf-8"),
                            file_name="letter_counterparty.txt", mime="text/plain")
 
-with st.expander("🧑‍️ Проконсультироваться с юристом", expanded=False):
+with st.expander("🧑‍⚖️ Проконсультироваться с юристом"):
     st.caption("Хочешь, чтобы договор посмотрел живой юрист? Оставь заявку — мы свяжемся.")
     cq = st.text_area("Твой вопрос или что проверить", height=120)
     cc = st.text_input("Telegram или телефон для связи")
@@ -168,14 +170,15 @@ with st.expander("🧑‍️ Проконсультироваться с юри�
             st.error("Опиши вопрос")
         else:
             save_consult_request(user["id"], analysis_id, cq, cc)
-            st.success("Заявка отправлена! Мы свяжемся с тобой в ближайшее время.")
+            st.toast("Заявка отправлена! Мы свяжемся с тобой.", icon="📩")
 
-with st.expander("⭐ Оценить анализ", expanded=False):
-    rating = st.radio("Оценка", ["👍 Полезно", "👎 Не помогло"], horizontal=True, label_visibility="collapsed")
+with st.expander("⭐ Оценить анализ", expanded=True):
+    rating = st.selectbox("Оценка от 1 до 5", [5, 4, 3, 2, 1],
+                          format_func=lambda x: "⭐" * x)
     fcomment = st.text_input("Комментарий (необязательно)", placeholder="Что можно улучшить?")
     if st.button("Отправить отзыв", key="fb_submit"):
-        save_feedback(analysis_id, user["id"], 1 if "Полезно" in rating else -1, fcomment)
-        st.success("Спасибо за отзыв!")
+        save_feedback(analysis_id, user["id"], int(rating), fcomment)
+        st.toast("Спасибо за оценку!", icon="⭐")
 
 st.divider()
 st.subheader("❓ Задай вопрос по договору")

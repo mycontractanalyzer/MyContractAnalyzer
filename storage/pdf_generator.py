@@ -10,11 +10,18 @@ FONT_URLS = [
     "https://cdn.jsdelivr.net/gh/dejavu-fonts/dejavu@master/ttf/DejaVuSans.ttf",
 ]
 
-_EMOJI = re.compile("[\U0001F000-\U0001FAFF☀-⬀-️←-]")
+EMOJI_RE = re.compile(
+    "[\U0001F000-\U0001FAFF"
+    "\U00002600-\U000027BF"
+    "\U00002B00-\U00002BFF"
+    "\U0000FE00-\U0000FE0F"
+    "\U00002190-\U000021FF]"
+)
 
 
 def _clean(s: str) -> str:
-    return _EMOJI.sub("", s or "")
+    s = (s or "").replace("**", "")
+    return EMOJI_RE.sub("", s).strip()
 
 
 @st.cache_resource
@@ -34,11 +41,10 @@ def _font_path():
 
 
 def _latin(s: str) -> str:
-    return (s or "").encode("latin-1", "replace").decode("latin-1")
+    return _clean(s).encode("latin-1", "replace").decode("latin-1")
 
 
 def _para(pdf, fam, style, size, text, lh=6):
-    """Безопасный вывод абзаца: никогда не роняет генератор."""
     pdf.set_font(fam, style, size)
     pdf.set_x(pdf.l_margin)
     try:
@@ -77,10 +83,10 @@ def generate_report_pdf(report: str, email: str) -> bytes:
             continue
         if line.startswith("### ") or line.startswith("## "):
             pdf.ln(2)
-            _para(pdf, fam, "B", 12, prep(line.replace("#", "").replace("**", "").strip()), 7)
+            _para(pdf, fam, "B", 12, prep(line.replace("#", "").strip()), 7)
         elif line.startswith("- "):
             _para(pdf, fam, "", 10, "• " + prep(line[2:]))
         else:
-            _para(pdf, fam, "", 10, prep(line.replace("**", "")))
+            _para(pdf, fam, "", 10, prep(line))
 
     return bytes(pdf.output())
