@@ -47,6 +47,8 @@ def list_consults(limit=200):
     ).fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+
 def save_checklist(analysis_id, payload):
     conn = get_connection()
     conn.execute("UPDATE analyses SET checklist = ? WHERE id = ?", (payload, analysis_id))
@@ -59,14 +61,15 @@ def set_share(analysis_id, on=1):
     conn.execute("UPDATE analyses SET share = ? WHERE id = ?", (int(on), analysis_id))
     conn.commit()
     conn.close()
-    def _ensure_usage_table(conn):
+
+
+def _ensure_usage_table(conn):
     conn.execute("""CREATE TABLE IF NOT EXISTS lawyer_usage (
         user_id INTEGER, day TEXT, cnt INTEGER DEFAULT 0,
         PRIMARY KEY(user_id, day))""")
 
 
 def get_lawyer_count(user_id):
-    from datetime import datetime
     conn = get_connection()
     _ensure_usage_table(conn)
     row = conn.execute(
@@ -79,7 +82,6 @@ def get_lawyer_count(user_id):
 
 def bump_lawyer_usage(user_id, limit):
     """Возвращает (разрешено, текущий счётчик)."""
-    from datetime import datetime
     day = datetime.now().strftime("%Y-%m-%d")
     conn = get_connection()
     _ensure_usage_table(conn)
