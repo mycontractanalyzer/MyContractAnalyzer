@@ -4,22 +4,20 @@ import re
 
 import streamlit as st
 
-_EMOJI = re.compile(
-    "[\U0001F000-\U0001FAFF\U00002600-\U000027BF\U00002B00-\U00002BFF"
-    "\U0000FE00-\U0000FE0F\U00002190-\U000021FF]"
-)
+_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
+_URL = re.compile(r"https?://\S+")
+# БЕЛЫЙ СПИСОК: оставляем ТОЛЬКО буквы, цифры, пробелы и базовую пунктуацию.
+# Всё остальное (# * эмодзи маркеры стрелки и т.д.) заменяется пробелом —
+# голос НИКОГДА не скажет «решётка» или «звёздочка».
+_ALLOWED = re.compile(r"[^\w\s.,!?;:()«»\"\"''\-—–%₽$€°№/]", re.UNICODE)
 
 
 def _clean(text: str) -> str:
     s = text or ""
-    s = s.replace("\r", "\n")
-    # Вычищаем ВСЕ markdown-символы в любом месте текста:
-    # # * ` | < > _ ~ и маркеры списков — голос не должен читать «решётка/звёздочка»
-    s = re.sub(r"[#*`|<>_~■▪●○◆◇•·]", " ", s)
-    s = s.replace("→", ", ")
-    s = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", s)  # ссылки [текст](url)
-    s = re.sub(r"https?://\S+", " ", s)             # голые URL
-    s = _EMOJI.sub("", s)                           # эмодзи
+    s = _LINK.sub(r"\1", s)          # [текст](ссылка) -> текст
+    s = _URL.sub(" ", s)             # голые URL
+    s = _ALLOWED.sub(" ", s)         # всё лишнее -> пробел
+    s = s.replace("_", " ")          # нижние подчёркивания
     s = re.sub(r"[ \t]{2,}", " ", s)
     s = re.sub(r"\n{3,}", "\n\n", s)
     return s.strip()
@@ -32,7 +30,6 @@ def _comm(edge_tts, text, voice):
         return edge_tts.Communicate(text, voice)
 
 
-@st.cache_data
 def generate_audio(text: str) -> bytes:
     import edge_tts
 
