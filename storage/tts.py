@@ -6,18 +6,15 @@ import streamlit as st
 
 _LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
 _URL = re.compile(r"https?://\S+")
-# БЕЛЫЙ СПИСОК: оставляем ТОЛЬКО буквы, цифры, пробелы и базовую пунктуацию.
-# Всё остальное (# * эмодзи маркеры стрелки и т.д.) заменяется пробелом —
-# голос НИКОГДА не скажет «решётка» или «звёздочка».
 _ALLOWED = re.compile(r"[^\w\s.,!?;:()«»\"\"''\-—–%₽$€°№/]", re.UNICODE)
 
 
 def _clean(text: str) -> str:
     s = text or ""
-    s = _LINK.sub(r"\1", s)          # [текст](ссылка) -> текст
-    s = _URL.sub(" ", s)             # голые URL
-    s = _ALLOWED.sub(" ", s)         # всё лишнее -> пробел
-    s = s.replace("_", " ")          # нижние подчёркивания
+    s = _LINK.sub(r"\1", s)
+    s = _URL.sub(" ", s)
+    s = _ALLOWED.sub(" ", s)
+    s = s.replace("_", " ")
     s = re.sub(r"[ \t]{2,}", " ", s)
     s = re.sub(r"\n{3,}", "\n\n", s)
     return s.strip()

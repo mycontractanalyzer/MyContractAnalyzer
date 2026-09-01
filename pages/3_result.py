@@ -15,7 +15,7 @@ from core.records import (fmt_dt, rename_analysis, save_checklist,
                           save_consult_request, set_share)
 from core.ui import render_header
 from integrations.deepseek import ask_deepseek
-from storage.docx_generator import generate_report_docx
+from storage.docx_generator import generate_lawyer_pack, generate_report_docx
 from storage.pdf_generator import generate_report_pdf
 from storage.tts import generate_audio
 from utils.auth import get_current_user
@@ -124,7 +124,7 @@ if cl_items:
             save_checklist(analysis_id, json.dumps(new_done, ensure_ascii=False))
             st.success("Прогресс сохранён")
 
-with st.expander("📥 Скачать / послушать отчёт", expanded=False):
+with st.expander("📥 Скачать / послушать / отправить", expanded=False):
     c1, c2 = st.columns(2)
     with c1:
         st.download_button("📄 Скачать PDF", data=generate_report_pdf(analysis["report"], user["email"]),
@@ -135,11 +135,22 @@ with st.expander("📥 Скачать / послушать отчёт", expanded
                            file_name="MyContractAnalyzer_report.docx",
                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                            use_container_width=True)
+    st.download_button(
+        "📤 Пакет для юриста (отчёт + договор, DOCX)",
+        data=generate_lawyer_pack(analysis["report"], contract["source_text"], user["email"],
+                                  analysis.get("title") or "Договор"),
+        file_name="lawyer_pack.docx",
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        use_container_width=True)
+    st.text_area(
+        "Письмо юристу (скопируй и приложи пакет)",
+        value=f"Здравствуйте!\n\nПрошу проверить договор «{analysis.get('title') or 'Договор'}» и приложенный отчёт ИИ-аналитика. Интересует заключение по рискам, доработка спорных пунктов и стоимость работы.\n\nС уважением, {user['email']}",
+        height=140)
     if st.button("🔊 Аудиоверсия отчёта"):
         with st.spinner("Озвучиваю отчёт..."):
-            st.session_state["audio"] = generate_audio(analysis["report"])
-    if st.session_state.get("audio"):
-        st.audio(st.session_state["audio"], format="audio/mpeg")
+            st.session_state["audio_v2"] = generate_audio(analysis["report"])
+    if st.session_state.get("audio_v2"):
+        st.audio(st.session_state["audio_v2"], format="audio/mpeg")
     st.page_link("pages/7_history.py", label="📚 История проверок", use_container_width=True)
 
 has_tools = bool(st.session_state.get(k) for k in
