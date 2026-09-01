@@ -24,3 +24,17 @@ def generate_audio(text: str) -> bytes:
         return buf.getvalue()
 
     return asyncio.run(_run())
+def generate_dialogue_audio(lines):
+    import edge_tts
+
+    async def _run():
+        buf = io.BytesIO()
+        for speaker, text in lines:
+            voice = "ru-RU-DmitryNeural" if speaker == "A" else "ru-RU-SvetlanaNeural"
+            comm = edge_tts.Communicate(_EMOJI.sub("", text).replace("**", "")[:400], voice)
+            async for chunk in comm.stream():
+                if chunk["type"] == "audio":
+                    buf.write(chunk["data"])
+        return buf.getvalue()
+
+    return asyncio.run(_run())

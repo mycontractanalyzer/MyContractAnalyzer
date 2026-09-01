@@ -7,6 +7,7 @@ import streamlit as st
 from core.analyzer import (choose_model, generate_benchmark, generate_letter,
                            generate_missing, generate_negotiation, generate_passport,
                            generate_redline, generate_whatif, translate_contract)
+from core.extra_ai import generate_precedent
 from core.contracts import get_analysis, get_contract, list_user_analyses
 from core.feedback import get_feedback, upsert_feedback
 from core.prompts import build_chat_system_prompt
@@ -177,10 +178,15 @@ with st.expander("🧰 Инструменты", expanded=has_tools):
         if st.button("🌐 Перевести договор (RU↔EN)"):
             with st.spinner("Перевожу..."):
                 st.session_state["translate"] = translate_contract(contract["source_text"])
+        if st.button("⚖️ Прецедент-радар"):
+            with st.spinner("Ищу судебную практику..."):
+                st.session_state["precedent"] = generate_precedent(
+                    contract["source_text"], analysis["report"], user["tariff"])
 
     for key, head in [("passport", "🪪 Паспорт договора"), ("missing", "🕳 Чего не хватает"),
                       ("nego", "🎙 Скрипт переговоров"), ("whatif", "🎭 Что если…"),
-                      ("bench", "📊 Рыночный эталон"), ("translate", "🌐 Перевод договора")]:
+                      ("bench", "📊 Рыночный эталон"), ("translate", "🌐 Перевод договора"),
+                      ("precedent", "⚖️ Прецедент-радар")]:
         if st.session_state.get(key):
             st.subheader(head)
             st.markdown(st.session_state[key])

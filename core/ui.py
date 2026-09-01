@@ -131,6 +131,11 @@ def render_menu():
         st.page_link("pages/8_compare.py", label="🆚 Сравнение версий", use_container_width=True)
         st.page_link("pages/10_lawyers.py", label="🧑‍⚖️ Юристы", use_container_width=True)
         st.page_link("pages/11_library.py", label="🧱 Библиотека пунктов", use_container_width=True)
+        st.page_link("pages/12_auto.py", label="🚗 Мир Автовладельца", use_container_width=True)
+        st.page_link("pages/13_lawyer247.py", label="🤖 AI-юрист 24/7", use_container_width=True)
+        st.page_link("pages/14_twin.py", label="🧠 Двойник юриста", use_container_width=True)
+        st.page_link("pages/15_podcasts.py", label="🎧 Подкасты", use_container_width=True)
+        st.page_link("pages/16_knowledge.py", label="📖 Библиотека знаний", use_container_width=True)
         if user and user["tariff"] in ("Business", "Business Pro"):
             st.page_link("pages/9_company.py", label="🏢 Команда", use_container_width=True)
         if user and user["email"] in config.ADMIN_EMAILS:
