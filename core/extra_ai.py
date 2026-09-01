@@ -1,8 +1,7 @@
 import config
 from core.analyzer import choose_model
 from core.prompts import (build_lawyer247_prompt, build_podcast_prompt,
-                          build_policy_prompt, build_precedent_prompt,
-                          build_twin_prompt)
+                          build_policy_prompt, build_precedent_prompt)
 from integrations.deepseek import ask_deepseek
 
 
@@ -13,10 +12,6 @@ def analyze_policy(text, tariff):
 
 def lawyer247(question, tariff, history=""):
     return ask_deepseek(build_lawyer247_prompt(history), question, choose_model(tariff))
-
-
-def twin_answer(question, user, reports):
-    return ask_deepseek(build_twin_prompt(user, reports), question, choose_model(user["tariff"]))
 
 
 def generate_podcast(topic):
