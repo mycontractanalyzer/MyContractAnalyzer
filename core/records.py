@@ -47,3 +47,15 @@ def list_consults(limit=200):
     ).fetchall()
     conn.close()
     return [dict(r) for r in rows]
+def save_checklist(analysis_id, payload):
+    conn = get_connection()
+    conn.execute("UPDATE analyses SET checklist = ? WHERE id = ?", (payload, analysis_id))
+    conn.commit()
+    conn.close()
+
+
+def set_share(analysis_id, on=1):
+    conn = get_connection()
+    conn.execute("UPDATE analyses SET share = ? WHERE id = ?", (int(on), analysis_id))
+    conn.commit()
+    conn.close()

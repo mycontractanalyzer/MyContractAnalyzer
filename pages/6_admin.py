@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 import config
 from core.feedback import list_feedbacks
-from core.records import list_consults
+from core.records import fmt_dt, list_consults
 from core.promocodes import (create_promocode, deactivate_promocode,
                              list_promocodes, register_discount_use)
 from core.tariffs import DISPLAY_NAMES, TARIFFS
@@ -245,7 +245,7 @@ with tab_fb:
         st.write(f"Всего: {total} | средняя оценка: {avg:.1f} / 5")
         for f in fbs:
             emoji = "⭐" * int(f["rating"])
-            st.markdown(f"{emoji} **{f['email'] or 'аноним'}** — {f['created_at']}")
+            st.markdown(f"{emoji} **{f['email'] or 'аноним'}** — {fmt_dt(f['created_at'])}")
             if f["comment"]:
                 st.caption(f"💬 {f['comment']}")
             st.divider()
@@ -256,7 +256,7 @@ with tab_req:
     else:
         st.write(f"Всего заявок: {len(reqs)}")
         for r in reqs:
-            st.markdown(f"**{r['email'] or 'аноним'}** · {r['created_at']} · статус: {r['status']}")
+            st.markdown(f"**{r['email'] or 'аноним'}** · {fmt_dt(r['created_at'])} · статус: {r['status']}")
             st.write(f"❓ {r['question']}")
             if r["contact"]:
                 st.write(f"📞 Контакт: {r['contact']}")

@@ -4,3 +4,4 @@ fpdf2
 pdfplumber
 openai
 python-docx
+edge-tts

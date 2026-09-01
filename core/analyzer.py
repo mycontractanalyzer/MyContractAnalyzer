@@ -4,18 +4,21 @@ import re
 import config
 from core.prompts import (build_benchmark_prompt, build_chat_system_prompt,
                           build_compare_system_prompt, build_highlights_prompt,
-                          build_letter_prompt, build_negotiation_prompt,
+                          build_letter_prompt, build_missing_prompt,
+                          build_negotiation_prompt, build_passport_prompt,
                           build_redline_prompt, build_system_prompt,
-                          build_whatif_prompt)
+                          build_translate_prompt, build_whatif_prompt)
 from integrations.deepseek import ask_deepseek
+
+PAID_TIERS = ("Standard", "Pro", "Business", "Business Pro")
 
 
 def choose_model(tariff: str) -> str:
-    return config.MODEL_FREE if tariff == "Free" else config.MODEL_PAID
+    """Free и Starter — дешёвый flash, остальные — pro."""
+    return config.MODEL_PAID if tariff in PAID_TIERS else config.MODEL_FREE
 
 
 def smart_compress(text: str) -> str:
-    """Убирает «воду»: лишние пробелы и пустые строки. Экономит токены, не трогая смысл."""
     t = re.sub(r"[ \t]{2,}", " ", text or "")
     t = re.sub(r"[ \t]+\n", "\n", t)
     t = re.sub(r"\n{3,}", "\n\n", t)
@@ -27,6 +30,30 @@ def analyze_contract(text, tariff="Free", contract_type="", role="", comment="",
     system = build_system_prompt(tariff, contract_type, role, comment, brief=brief)
     report = ask_deepseek(system, f"Вот текст договора для анализа:\n\n{smart_compress(text)}", model)
     return report, model
+
+
+def detect_contract_type(text):
+    raw = ask_deepseek(
+        "Определи тип договора. Верни ОДНО слово из списка: Аренда, Трудовой, Услуги, NDA, Кредит, Другое. Без пояснений.",
+        text[:3000], config.MODEL_FREE)
+    low = (raw or "").strip().lower()
+    for k in ["аренда", "трудовой", "услуги", "nda", "кредит", "другое"]:
+        if k in low:
+            return {"nda": "NDA"}.get(k, k.capitalize() if k != "трудовой" else "Трудовой")
+    return "Другое"
+
+
+def generate_passport(text):
+    return ask_deepseek(build_passport_prompt(), f"ДОГОВОР:\n\n{text[:20000]}", config.MODEL_FREE)
+
+
+def generate_missing(text, report, tariff):
+    return ask_deepseek(build_missing_prompt(),
+                        f"ДОГОВОР:\n\n{text[:20000]}\n\nОТЧЁТ:\n\n{report}", choose_model(tariff))
+
+
+def translate_contract(text):
+    return ask_deepseek(build_translate_prompt(), text[:15000], config.MODEL_FREE)
 
 
 def _parse_json_list(raw: str):
@@ -41,8 +68,8 @@ def _parse_json_list(raw: str):
 
 
 def extract_highlights(text, tariff="Free"):
-    system = build_highlights_prompt()
-    raw = ask_deepseek(system, f"Текст договора:\n\n{smart_compress(text)[:30000]}", config.MODEL_FREE)
+    raw = ask_deepseek(build_highlights_prompt(),
+                       f"Текст договора:\n\n{smart_compress(text)[:30000]}", config.MODEL_FREE)
     items = []
     for it in _parse_json_list(raw)[:10]:
         if isinstance(it, dict) and it.get("quote"):

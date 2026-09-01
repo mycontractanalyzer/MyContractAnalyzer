@@ -5,15 +5,18 @@ import re
 import streamlit as st
 
 from core.analyzer import (choose_model, generate_benchmark, generate_letter,
-                           generate_negotiation, generate_redline, generate_whatif)
+                           generate_missing, generate_negotiation, generate_passport,
+                           generate_redline, generate_whatif, translate_contract)
 from core.contracts import get_analysis, get_contract, list_user_analyses
-from core.feedback import save_feedback
+from core.feedback import get_feedback, upsert_feedback
 from core.prompts import build_chat_system_prompt
-from core.records import fmt_dt, rename_analysis, save_consult_request
+from core.records import (fmt_dt, rename_analysis, save_checklist,
+                          save_consult_request, set_share)
 from core.ui import render_header
 from integrations.deepseek import ask_deepseek
 from storage.docx_generator import generate_report_docx
 from storage.pdf_generator import generate_report_pdf
+from storage.tts import generate_audio
 from utils.auth import get_current_user
 
 render_header()
@@ -21,7 +24,16 @@ render_header()
 st.title("💬 Анализ и чат")
 
 user = get_current_user()
+aid_q = st.query_params.get("aid")
+
 if not user:
+    if aid_q:
+        guest = get_analysis(aid_q)
+        if guest and guest.get("share"):
+            st.title("📄 Отчёт (общий доступ)")
+            st.markdown(guest["report"])
+            st.caption("Сгенерировано MyContractAnalyzer · See what you're signing")
+            st.stop()
     st.warning("Сначала войди в аккаунт.")
     st.stop()
 
@@ -33,7 +45,7 @@ if not rows:
 
 options = {f"{r.get('title') or 'Договор'} · {fmt_dt(r['created_at'])}": r["id"] for r in rows}
 labels = list(options.keys())
-current = str(st.query_params.get("aid") or st.session_state.get("last_analysis_id") or rows[0]["id"])
+current = str(aid_q or st.session_state.get("last_analysis_id") or rows[0]["id"])
 default_idx = next((i for i, k in enumerate(labels) if str(options[k]) == current), 0)
 sel = st.selectbox("📑 Какой отчёт открыть", labels, index=default_idx)
 analysis_id = options[sel]
@@ -48,12 +60,16 @@ if m:
                else ("🟡 С осторожностью" if score <= 70 else "❌ Не подписывать без правок"))
     st.metric("🎯 Риск-скор договора", f"{score}/100", verdict)
 
-with st.expander("✏️ Переименовать отчёт"):
+with st.expander("✏️ Переименовать / поделиться"):
     cur = analysis.get("title") or (contract.get("contract_type") or "Договор")
     new_title = st.text_input("Название отчёта", value=cur, key="rename_inp")
     if st.button("💾 Сохранить название"):
         rename_analysis(analysis_id, new_title)
         st.success("Сохранено")
+    if st.button("🔗 Поделиться отчётом по ссылке"):
+        set_share(analysis_id, 1)
+        st.code(f"https://mycontractanalyzer.streamlit.app/3_result?aid={analysis_id}")
+        st.caption("Скопируй ссылку — любой человек сможет прочитать отчёт (без чата и инструментов).")
 
 with st.expander("📄 Отчёт анализа", expanded=False):
     st.markdown(analysis["report"])
@@ -87,7 +103,27 @@ if items:
             unsafe_allow_html=True,
         )
 
-with st.expander("📥 Скачать отчёт", expanded=False):
+# ===== ИНТЕРАКТИВНЫЙ ЧЕК-ЛИСТ =====
+cm = re.search(r"Чек-лист:?\*?\s*\n(.*?)(\n###|\n📌|\Z)", analysis["report"], re.S)
+cl_items = [l[2:].replace("**", "").strip() for l in (cm.group(1).splitlines() if cm else [])
+            if l.strip().startswith("- ")]
+if cl_items:
+    done = []
+    if analysis.get("checklist"):
+        try:
+            done = json.loads(analysis["checklist"])
+        except Exception:
+            done = []
+    done = (done + [False] * len(cl_items))[:len(cl_items)]
+    with st.expander(f"✅ Чек-лист перед подписанием ({sum(done)}/{len(cl_items)})", expanded=False):
+        new_done = []
+        for i, item in enumerate(cl_items):
+            new_done.append(st.checkbox(item, value=done[i], key=f"cl_{i}"))
+        if new_done != done and st.button("💾 Сохранить прогресс чек-листа"):
+            save_checklist(analysis_id, json.dumps(new_done, ensure_ascii=False))
+            st.success("Прогресс сохранён")
+
+with st.expander("📥 Скачать / послушать отчёт", expanded=False):
     c1, c2 = st.columns(2)
     with c1:
         st.download_button("📄 Скачать PDF", data=generate_report_pdf(analysis["report"], user["email"]),
@@ -98,16 +134,25 @@ with st.expander("📥 Скачать отчёт", expanded=False):
                            file_name="MyContractAnalyzer_report.docx",
                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                            use_container_width=True)
+    if st.button("🔊 Аудиоверсия отчёта"):
+        with st.spinner("Озвучиваю отчёт..."):
+            st.session_state["audio"] = generate_audio(analysis["report"])
+    if st.session_state.get("audio"):
+        st.audio(st.session_state["audio"], format="audio/mpeg")
     st.page_link("pages/7_history.py", label="📚 История проверок", use_container_width=True)
 
-has_tools = bool(st.session_state.get("nego") or st.session_state.get("whatif") or st.session_state.get("bench"))
-with st.expander("🧰 Инструменты переговоров", expanded=has_tools):
+has_tools = bool(st.session_state.get(k) for k in
+                 ("nego", "whatif", "bench", "passport", "missing", "translate"))
+with st.expander("🧰 Инструменты", expanded=has_tools):
     t1, t2, t3 = st.columns(3)
     with t1:
         if st.button("🎙 Скрипт переговоров"):
             with st.spinner("Составляю скрипт..."):
                 st.session_state["nego"] = generate_negotiation(
                     contract["source_text"], analysis["report"], user["tariff"])
+        if st.button("🪪 Паспорт договора"):
+            with st.spinner("Составляю паспорт..."):
+                st.session_state["passport"] = generate_passport(contract["source_text"])
     with t2:
         scenario = st.selectbox("Сценарий «Что если…»",
                                 ["Я просрочу платёж на 2 месяца",
@@ -120,21 +165,25 @@ with st.expander("🧰 Инструменты переговоров", expanded=
             with st.spinner("Моделирую последствия..."):
                 st.session_state["whatif"] = generate_whatif(
                     contract["source_text"], analysis["report"], scenario, user["tariff"])
+        if st.button("🕳 Чего не хватает в договоре"):
+            with st.spinner("Ищу отсутствующие пункты..."):
+                st.session_state["missing"] = generate_missing(
+                    contract["source_text"], analysis["report"], user["tariff"])
     with t3:
         if st.button("📊 Рыночный эталон"):
             with st.spinner("Сравниваю с рынком..."):
                 st.session_state["bench"] = generate_benchmark(
                     contract["source_text"], analysis["report"], user["tariff"])
+        if st.button("🌐 Перевести договор (RU↔EN)"):
+            with st.spinner("Перевожу..."):
+                st.session_state["translate"] = translate_contract(contract["source_text"])
 
-    if st.session_state.get("nego"):
-        st.subheader("🎙 Скрипт переговоров")
-        st.markdown(st.session_state["nego"])
-    if st.session_state.get("whatif"):
-        st.subheader("🎭 Что если…")
-        st.markdown(st.session_state["whatif"])
-    if st.session_state.get("bench"):
-        st.subheader("📊 Рыночный эталон")
-        st.markdown(st.session_state["bench"])
+    for key, head in [("passport", "🪪 Паспорт договора"), ("missing", "🕳 Чего не хватает"),
+                      ("nego", "🎙 Скрипт переговоров"), ("whatif", "🎭 Что если…"),
+                      ("bench", "📊 Рыночный эталон"), ("translate", "🌐 Перевод договора")]:
+        if st.session_state.get(key):
+            st.subheader(head)
+            st.markdown(st.session_state[key])
 
 has_docs = bool(st.session_state.get("redline") or st.session_state.get("letter"))
 with st.expander("📄 Redline и автописьмо", expanded=has_docs):
@@ -172,13 +221,17 @@ with st.expander("🧑‍⚖️ Проконсультироваться с юр
             save_consult_request(user["id"], analysis_id, cq, cc)
             st.toast("Заявка отправлена! Мы свяжемся с тобой.", icon="📩")
 
-with st.expander("⭐ Оценить анализ", expanded=True):
+with st.expander("⭐ Оценить анализ (1 отзыв на договор, можно изменить)", expanded=True):
+    existing = get_feedback(user["id"], analysis_id)
     rating = st.selectbox("Оценка от 1 до 5", [5, 4, 3, 2, 1],
+                          index=[5, 4, 3, 2, 1].index(existing["rating"]) if existing else 0,
                           format_func=lambda x: "⭐" * x)
-    fcomment = st.text_input("Комментарий (необязательно)", placeholder="Что можно улучшить?")
-    if st.button("Отправить отзыв", key="fb_submit"):
-        save_feedback(analysis_id, user["id"], int(rating), fcomment)
-        st.toast("Спасибо за оценку!", icon="⭐")
+    fcomment = st.text_input("Комментарий (необязательно)",
+                             value=existing["comment"] if existing else "",
+                             placeholder="Что можно улучшить?")
+    if st.button("Отправить / обновить отзыв", key="fb_submit"):
+        upsert_feedback(analysis_id, user["id"], int(rating), fcomment)
+        st.toast("Отзыв сохранён! Спасибо.", icon="⭐")
 
 st.divider()
 st.subheader("❓ Задай вопрос по договору")

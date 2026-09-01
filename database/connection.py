@@ -82,7 +82,7 @@ def ensure_schema():
     if _table_exists(conn, "users"):
         _ensure_columns(conn, "users", [("company_id", "INTEGER"), ("theme", "TEXT DEFAULT 'dark'")])
     if _table_exists(conn, "analyses"):
-        _ensure_columns(conn, "analyses", [("highlights", "TEXT"), ("title", "TEXT")])
+        _ensure_columns(conn, "analyses", [("highlights", "TEXT"), ("title", "TEXT"), ("checklist", "TEXT"), ("share", "INTEGER DEFAULT 0")])
     conn.commit()
     conn.close()
 
