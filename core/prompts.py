@@ -1,8 +1,10 @@
-def build_system_prompt(tariff: str, contract_type: str, role: str, comment: str, brief: bool = False) -> str:
+def build_system_prompt(tariff: str, contract_type: str, role: str, comment: str,
+                        brief: bool = False, jurisdiction: str = "Россия") -> str:
     base = f"""Ты — юридический ассистент сервиса MyContractAnalyzer.
 Анализируй договоры и объясняй риски простым языком, без сложных терминов.
 
 Тип договора: {contract_type or "не указан"}.
+Юрисдикция / право: {jurisdiction}.
 Роль клиента: {role or "не указана"}.
 Комментарий клиента: {comment or "нет"}.
 

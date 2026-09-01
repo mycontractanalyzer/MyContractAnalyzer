@@ -29,6 +29,9 @@ st.write(f"Тариф: **{user['tariff']}** · Осталось проверок
 contract_type = st.selectbox("Тип договора",
                              ["🤖 Авто (AI определит)", "Аренда", "Услуги/фриланс",
                               "Трудовой", "NDA", "Кредит", "Другое"])
+jurisdiction = st.selectbox("🌍 Юрисдикция (право страны)",
+                            ["Россия", "США", "Германия", "Великобритания",
+                             "Казахстан", "ОАЭ", "Другая"])
 role = st.selectbox("Твоя роль", ["Арендатор", "Арендодатель", "Исполнитель", "Заказчик",
                                   "Работник", "Работодатель", "Другая"])
 comment = st.text_area("Дополнительный комментарий или уточнение запроса (необязательно)")
@@ -88,7 +91,8 @@ if st.button("🚀 Анализировать", type="primary"):
                         st.toast(f"Тип договора: {ctype}", icon="🤖")
                     status.update(label=f"📖 AI читает договор и ищет риски (≈{est} сек)…")
                     report, model = analyze_contract(text, user["tariff"], ctype, role,
-                                                     comment, brief=(fmt == "📝 Кратко"))
+                                                     comment, brief=(fmt == "📝 Кратко"),
+                                                     jurisdiction=jurisdiction)
                     status.update(label="💾 Сохраняю отчёт…")
                     spend_checks(user["id"], len(text))
                     contract_id = save_contract(user["id"], ctype, role, text)

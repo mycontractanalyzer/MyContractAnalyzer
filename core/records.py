@@ -59,3 +59,39 @@ def set_share(analysis_id, on=1):
     conn.execute("UPDATE analyses SET share = ? WHERE id = ?", (int(on), analysis_id))
     conn.commit()
     conn.close()
+    def _ensure_usage_table(conn):
+    conn.execute("""CREATE TABLE IF NOT EXISTS lawyer_usage (
+        user_id INTEGER, day TEXT, cnt INTEGER DEFAULT 0,
+        PRIMARY KEY(user_id, day))""")
+
+
+def get_lawyer_count(user_id):
+    from datetime import datetime
+    conn = get_connection()
+    _ensure_usage_table(conn)
+    row = conn.execute(
+        "SELECT cnt FROM lawyer_usage WHERE user_id = ? AND day = ?",
+        (user_id, datetime.now().strftime("%Y-%m-%d")),
+    ).fetchone()
+    conn.close()
+    return row["cnt"] if row else 0
+
+
+def bump_lawyer_usage(user_id, limit):
+    """Возвращает (разрешено, текущий счётчик)."""
+    from datetime import datetime
+    day = datetime.now().strftime("%Y-%m-%d")
+    conn = get_connection()
+    _ensure_usage_table(conn)
+    row = conn.execute("SELECT cnt FROM lawyer_usage WHERE user_id = ? AND day = ?", (user_id, day)).fetchone()
+    cnt = row["cnt"] if row else 0
+    if cnt >= limit:
+        conn.close()
+        return False, cnt
+    if row:
+        conn.execute("UPDATE lawyer_usage SET cnt = cnt + 1 WHERE user_id = ? AND day = ?", (user_id, day))
+    else:
+        conn.execute("INSERT INTO lawyer_usage (user_id, day, cnt) VALUES (?, ?, 1)", (user_id, day))
+    conn.commit()
+    conn.close()
+    return True, cnt + 1

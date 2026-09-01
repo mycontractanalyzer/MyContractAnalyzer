@@ -25,9 +25,11 @@ def smart_compress(text: str) -> str:
     return t.strip()
 
 
-def analyze_contract(text, tariff="Free", contract_type="", role="", comment="", brief=False):
+def analyze_contract(text, tariff="Free", contract_type="", role="", comment="",
+                     brief=False, jurisdiction="Россия"):
     model = choose_model(tariff)
-    system = build_system_prompt(tariff, contract_type, role, comment, brief=brief)
+    system = build_system_prompt(tariff, contract_type, role, comment, brief=brief,
+                                 jurisdiction=jurisdiction)
     report = ask_deepseek(system, f"Вот текст договора для анализа:\n\n{smart_compress(text)}", model)
     return report, model
 
