@@ -7,6 +7,7 @@ from core.analyzer import (analyze_contract, detect_contract_type,
                            extract_highlights, smart_compress)
 from core.contracts import save_analysis, save_contract, spend_checks
 from core.file_reader import read_uploaded_file
+from core.memory import get_memory_context
 from core.records import save_highlights
 from core.ui import render_header
 from core.vision import ocr_image
@@ -90,9 +91,11 @@ if st.button("🚀 Анализировать", type="primary"):
                         ctype = detect_contract_type(text)
                         st.toast(f"Тип договора: {ctype}", icon="🤖")
                     status.update(label=f"📖 AI читает договор и ищет риски (≈{est} сек)…")
+                    memory_ctx = get_memory_context(ctype)
                     report, model = analyze_contract(text, user["tariff"], ctype, role,
                                                      comment, brief=(fmt == "📝 Кратко"),
-                                                     jurisdiction=jurisdiction)
+                                                     jurisdiction=jurisdiction,
+                                                     memory_ctx=memory_ctx)
                     status.update(label="💾 Сохраняю отчёт…")
                     spend_checks(user["id"], len(text))
                     contract_id = save_contract(user["id"], ctype, role, text)
