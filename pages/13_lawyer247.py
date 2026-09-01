@@ -3,7 +3,7 @@ import streamlit as st
 from core.extra_ai import lawyer247
 from core.records import bump_lawyer_usage, get_lawyer_count
 from core.ui import render_header
-from storage.tts import generate_audio
+from storage.tts_clean import generate_audio
 from utils.auth import get_current_user
 
 st.set_page_config(page_title="AI-юрист 24/7", page_icon="🤖")

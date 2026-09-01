@@ -7,17 +7,20 @@ import streamlit as st
 from core.analyzer import (choose_model, generate_benchmark, generate_letter,
                            generate_missing, generate_negotiation, generate_passport,
                            generate_redline, generate_whatif, translate_contract)
-from core.extra_ai import generate_precedent
 from core.contracts import get_analysis, get_contract, list_user_analyses
+from core.extra_ai import generate_precedent
 from core.feedback import get_feedback, upsert_feedback
+from core.mailer import send_report_email
 from core.prompts import build_chat_system_prompt
+from core.protocol import generate_protocol, generate_redline_notes, protocol_docx
 from core.records import (fmt_dt, rename_analysis, save_checklist,
                           save_consult_request, set_share)
 from core.ui import render_header
 from integrations.deepseek import ask_deepseek
-from storage.docx_generator import generate_lawyer_pack, generate_report_docx
+from storage.docx_generator import generate_report_docx
+from storage.pack_generator import generate_lawyer_pack
 from storage.pdf_generator import generate_report_pdf
-from storage.tts import generate_audio
+from storage.tts_clean import generate_audio
 from utils.auth import get_current_user
 
 render_header()
@@ -70,7 +73,7 @@ with st.expander("✏️ Переименовать / поделиться"):
     if st.button("🔗 Поделиться отчётом по ссылке"):
         set_share(analysis_id, 1)
         st.code(f"https://mycontractanalyzer.streamlit.app/3_result?aid={analysis_id}")
-        st.caption("Скопируй ссылку — любой человек сможет прочитать отчёт (без чата и инструментов).")
+        st.caption("Скопируй ссылку — любой человек сможет прочитать отчёт.")
 
 with st.expander("📄 Отчёт анализа", expanded=False):
     st.markdown(analysis["report"])
@@ -104,7 +107,6 @@ if items:
             unsafe_allow_html=True,
         )
 
-# ===== ИНТЕРАКТИВНЫЙ ЧЕК-ЛИСТ =====
 cm = re.search(r"Чек-лист:?\*?\s*\n(.*?)(\n###|\n📌|\Z)", analysis["report"], re.S)
 cl_items = [l[2:].replace("**", "").strip() for l in (cm.group(1).splitlines() if cm else [])
             if l.strip().startswith("- ")]
@@ -146,15 +148,35 @@ with st.expander("📥 Скачать / послушать / отправить"
         "Письмо юристу (скопируй и приложи пакет)",
         value=f"Здравствуйте!\n\nПрошу проверить договор «{analysis.get('title') or 'Договор'}» и приложенный отчёт ИИ-аналитика. Интересует заключение по рискам, доработка спорных пунктов и стоимость работы.\n\nС уважением, {user['email']}",
         height=140)
+    if st.button("🧾 Протокол разногласий (таблица DOCX)"):
+        with st.spinner("Готовлю протокол..."):
+            st.session_state["proto_rows"] = generate_protocol(
+                analysis["report"], contract["source_text"], user["tariff"])
+    if st.session_state.get("proto_rows"):
+        st.download_button(
+            "⬇️ Скачать протокол разногласий (DOCX)",
+            data=protocol_docx(st.session_state["proto_rows"], user["email"],
+                               analysis.get("title") or "Договор"),
+            file_name="protocol_raznoglasiy.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+    if st.button("📧 Отправить отчёт на почту"):
+        try:
+            pdf = generate_report_pdf(analysis["report"], user["email"])
+            if send_report_email(user["email"], pdf, analysis.get("title") or "Договор"):
+                st.toast(f"Отчёт отправлен на {user['email']}", icon="📧")
+            else:
+                st.error("Почта не настроена: добавь GMAIL_EMAIL и GMAIL_APP_PASSWORD в Secrets.")
+        except Exception:
+            st.error("Не удалось отправить. Проверь секреты и попробуй ещё раз.")
     if st.button("🔊 Аудиоверсия отчёта"):
         with st.spinner("Озвучиваю отчёт..."):
-            st.session_state["audio_v2"] = generate_audio(analysis["report"])
-    if st.session_state.get("audio_v2"):
-        st.audio(st.session_state["audio_v2"], format="audio/mpeg")
+            st.session_state["audio_v3"] = generate_audio(analysis["report"])
+    if st.session_state.get("audio_v3"):
+        st.audio(st.session_state["audio_v3"], format="audio/mpeg")
     st.page_link("pages/7_history.py", label="📚 История проверок", use_container_width=True)
 
 has_tools = bool(st.session_state.get(k) for k in
-                 ("nego", "whatif", "bench", "passport", "missing", "translate"))
+                 ("nego", "whatif", "bench", "passport", "missing", "translate", "precedent"))
 with st.expander("🧰 Инструменты", expanded=has_tools):
     t1, t2, t3 = st.columns(3)
     with t1:
@@ -221,6 +243,12 @@ with st.expander("📄 Redline и автописьмо", expanded=has_docs):
                            data=generate_report_docx(st.session_state["redline"], user["email"]),
                            file_name="redline_contract.docx",
                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        if st.button("💬 Почему такие правки"):
+            with st.spinner("Объясняю..."):
+                st.session_state["redline_notes"] = generate_redline_notes(
+                    analysis["report"], user["tariff"])
+        if st.session_state.get("redline_notes"):
+            st.markdown(st.session_state["redline_notes"])
     if st.session_state.get("letter"):
         st.text_area("Письмо (скопируй или скачай)", value=st.session_state["letter"], height=250)
         st.download_button("⬇️ Скачать письмо (.txt)",
