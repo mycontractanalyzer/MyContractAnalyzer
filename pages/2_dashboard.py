@@ -5,10 +5,11 @@ import streamlit as st
 import config
 from core.analyzer import (analyze_contract, detect_contract_type,
                            extract_highlights, smart_compress)
-from core.contracts import save_analysis, save_contract, spend_checks
+from core.contracts import (list_user_analyses, save_analysis, save_contract,
+                            spend_checks)
 from core.file_reader import read_uploaded_file
 from core.memory import get_memory_context
-from core.records import save_highlights
+from core.records import rename_analysis, save_highlights
 from core.ui import render_header
 from core.vision import ocr_image
 from database.models import init_db
@@ -100,6 +101,9 @@ if st.button("🚀 Анализировать", type="primary"):
                     spend_checks(user["id"], len(text))
                     contract_id = save_contract(user["id"], ctype, role, text)
                     analysis_id = save_analysis(user["id"], contract_id, model, report)
+                    existing = [(r.get("title") or "") for r in list_user_analyses(user["id"])]
+                    num = sum(1 for t in existing if t == ctype or t.startswith(ctype + " "))
+                    rename_analysis(analysis_id, ctype if num == 0 else f"{ctype} {num + 1}")
                     status.update(label="🗺 Составляю карту пунктов…")
                     try:
                         save_highlights(analysis_id, extract_highlights(text, user["tariff"]))
