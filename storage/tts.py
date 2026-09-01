@@ -12,11 +12,15 @@ _EMOJI = re.compile(
 
 def _clean(text: str) -> str:
     s = text or ""
-    s = re.sub(r"\*\*", "", s)                     # жирный шрифт
-    s = re.sub(r"^#{1,6}\s*", "", s, flags=re.M)   # решётки заголовков
-    s = s.replace("→", ", ").replace("•", " ")
-    s = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", s) # ссылки
-    s = _EMOJI.sub("", s)                          # эмодзи
+    s = s.replace("\r", "\n")
+    # Вычищаем ВСЕ markdown-символы в любом месте текста:
+    # # * ` | < > _ ~ и маркеры списков — голос не должен читать «решётка/звёздочка»
+    s = re.sub(r"[#*`|<>_~■▪●○◆◇•·]", " ", s)
+    s = s.replace("→", ", ")
+    s = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", s)  # ссылки [текст](url)
+    s = re.sub(r"https?://\S+", " ", s)             # голые URL
+    s = _EMOJI.sub("", s)                           # эмодзи
+    s = re.sub(r"[ \t]{2,}", " ", s)
     s = re.sub(r"\n{3,}", "\n\n", s)
     return s.strip()
 
