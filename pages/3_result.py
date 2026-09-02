@@ -164,7 +164,7 @@ with st.expander("📥 Скачать / послушать / отправить"
         try:
             pdf = generate_report_pdf(analysis["report"], user["email"])
             if send_report_email(user["email"], pdf, analysis.get("title") or "Договор"):
-                st.toast(f"Отчёт отправлен на {user['email']}", icon="📧")
+                st.success(f"📧 Отчёт отправлен на {user['email']}!")
             else:
                 st.error("Почта не настроена: добавь GMAIL_EMAIL и GMAIL_APP_PASSWORD в Secrets.")
         except Exception:
@@ -265,7 +265,7 @@ with st.expander("🧑‍⚖️ Проконсультироваться с юр
             st.error("Опиши вопрос")
         else:
             save_consult_request(user["id"], analysis_id, cq, cc)
-            st.toast("Заявка отправлена! Мы свяжемся с тобой.", icon="📩")
+            st.success("📩 Заявка отправлена! Мы свяжемся с тобой.")
 
 with st.expander("🔍 Поиск по пункту: введи номер — получи разбор", expanded=False):
     q = st.text_input("Номер пункта", placeholder="Например: 5.8 или 4.j")
@@ -300,7 +300,7 @@ with st.expander("⭐ Оценить анализ (1 отзыв на догов�
                              placeholder="Что можно улучшить?")
     if st.button("Отправить / обновить отзыв", key="fb_submit"):
         upsert_feedback(analysis_id, user["id"], int(rating), fcomment)
-        st.toast("Отзыв сохранён! Спасибо.", icon="⭐")
+        st.success("⭐ Отзыв сохранён! Спасибо.")
 
 st.divider()
 st.subheader("❓ Задай вопрос по договору")
