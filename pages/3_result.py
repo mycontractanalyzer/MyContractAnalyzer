@@ -58,7 +58,7 @@ analysis_id = options[sel]
 analysis = get_analysis(analysis_id)
 contract = get_contract(analysis["contract_id"])
 
-m = re.search(r"Риск-скор[^0-9]*(\d{1,3})\s*/\s*100", analysis["report"])
+m = re.search(r"(?:Риск-скор|Risk score)[^0-9]*(\d{1,3})\s*/\s*100", analysis["report"])
 if m:
     score = int(m.group(1))
     verdict = ("✅ Можно подписывать" if score <= 30
@@ -108,7 +108,7 @@ if items:
             unsafe_allow_html=True,
         )
 
-cm = re.search(r"Чек-лист:?\*?\s*\n(.*?)(\n###|\n📌|\Z)", analysis["report"], re.S)
+cm = re.search(r"(?:Чек-лист|Checklist):?\*?\s*\n(.*?)(\n###|\n|\Z)", analysis["report"], re.S)
 cl_items = [l[2:].replace("**", "").strip() for l in (cm.group(1).splitlines() if cm else [])
             if l.strip().startswith("- ")]
 if cl_items:
