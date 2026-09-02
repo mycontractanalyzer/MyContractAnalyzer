@@ -1,9 +1,14 @@
 [theme]
 base = "dark"
-primaryColor = "#f0b429"
+primaryColor = "#F0b429"
+backgroundColor = "#05060A"
+secondaryBackgroundColor = "#0E1219"
+textColor = "#E6E9F0"
+font = "sans serif"
 
 [client]
 showSidebarNavigation = false
+toolbarMode = "minimal"
 
 [server]
 enableStaticServing = true

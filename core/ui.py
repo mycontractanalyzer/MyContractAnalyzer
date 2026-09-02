@@ -38,7 +38,6 @@ a {color:#ffd166 !important;}
 ::selection {background:rgba(240,180,41,.35);color:#fff;}
 h2::after {content:"";display:block;width:56px;height:3px;border-radius:99px;margin-top:8px;background:linear-gradient(90deg,#f0b429,transparent);}
 
-/* ---- живой фон: два «дышащих» орба ---- */
 .mca-bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;background:none !important;animation:none !important;opacity:1 !important;}
 .mca-bg::before,.mca-bg::after{content:"";position:fixed;border-radius:50%;filter:blur(120px);pointer-events:none;}
 .mca-bg::before{width:60vw;height:60vw;left:-18vw;top:-22vw;background:radial-gradient(circle,rgba(240,180,41,.17),transparent 62%);animation:mcaOrb1 18s ease-in-out infinite alternate;}
@@ -50,7 +49,6 @@ h2::after {content:"";display:block;width:56px;height:3px;border-radius:99px;mar
 @keyframes mcaShine{to{background-position:200% center;}}
 @keyframes mcaGlow{0%,100%{box-shadow:0 0 45px rgba(240,180,41,.22);}50%{box-shadow:0 0 90px rgba(240,180,41,.5);}}
 
-/* лесенка появления блоков */
 section.main .stVerticalBlock > *{animation:mcaFadeUp .6s cubic-bezier(.22,1,.36,1) both;}
 section.main .stVerticalBlock > *:nth-child(2){animation-delay:.07s;}
 section.main .stVerticalBlock > *:nth-child(3){animation-delay:.14s;}
@@ -60,7 +58,6 @@ section.main .stVerticalBlock > *:nth-child(6){animation-delay:.35s;}
 section.main .stVerticalBlock > *:nth-child(7){animation-delay:.42s;}
 section.main .stVerticalBlock > *:nth-child(8){animation-delay:.49s;}
 
-/* ---- герой ---- */
 .mca-hero-wrap{display:flex;align-items:center;justify-content:center;gap:46px;margin:20px auto 42px;animation:mcaFadeUp .9s cubic-bezier(.22,1,.36,1) both;}
 .mca-logo{width:200px;height:200px;border-radius:50%;object-fit:cover;animation:mcaGlow 4.5s ease-in-out infinite;}
 .mca-hero-fallback{font-size:100px;}
@@ -72,20 +69,17 @@ box-shadow:0 24px 80px rgba(0,0,0,.5);backdrop-filter:blur(8px);}
 -webkit-background-clip:text;background-clip:text;color:transparent !important;animation:mcaShine 7s linear infinite;}
 .mca-slogan{margin-top:12px;color:#f5c044;font-size:13px;letter-spacing:6px;text-transform:uppercase;font-weight:800;}
 
-/* ---- карточки ---- */
 div[data-testid="stVerticalBlockBorderWrapper"]{border-radius:22px !important;border:1px solid rgba(255,255,255,.09) !important;
 background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015)) !important;
 box-shadow:0 12px 44px rgba(0,0,0,.35) !important;transition:transform .3s ease,border-color .3s ease,box-shadow .3s ease !important;}
 div[data-testid="stVerticalBlockBorderWrapper"]:hover{transform:translateY(-4px);border-color:rgba(240,180,41,.5) !important;box-shadow:0 18px 60px rgba(240,180,41,.12) !important;}
 
-/* ---- кнопки ---- */
 div.stButton>button,div.stDownloadButton>button{border-radius:14px !important;border:none !important;
 background:linear-gradient(135deg,#ffd166,#f0a71b 55%,#dd8f12) !important;color:#181004 !important;font-weight:800 !important;
 box-shadow:0 6px 22px rgba(240,167,27,.22) !important;transition:transform .22s ease,box-shadow .22s ease,filter .22s ease !important;}
 div.stButton>button:hover,div.stDownloadButton>button:hover{transform:translateY(-2px);box-shadow:0 12px 34px rgba(240,167,27,.45) !important;filter:brightness(1.06);}
 div.stButton>button:active{transform:translateY(0) scale(.99);}
 
-/* ---- поля ввода ---- */
 div[data-testid="stTextInput"] input,div[data-testid="stTextArea"] textarea,
 div[data-testid="stSelectbox"] > div,div[data-testid="stNumberInput"] input{
 background:rgba(255,255,255,.05) !important;border:1px solid rgba(255,255,255,.12) !important;border-radius:12px !important;
@@ -95,7 +89,6 @@ div[data-testid="stSelectbox"] > div:focus-within,div[data-testid="stNumberInput
 border-color:rgba(240,180,41,.75) !important;box-shadow:0 0 0 4px rgba(240,180,41,.14) !important;background:rgba(255,255,255,.07) !important;}
 input[type="radio"],input[type="checkbox"]{accent-color:#f0b429;}
 
-/* ---- экспандеры / вкладки / метрики ---- */
 div[data-testid="stExpander"]{border:1px solid rgba(255,255,255,.09) !important;border-radius:16px !important;background:rgba(255,255,255,.025) !important;transition:border-color .25s ease !important;}
 div[data-testid="stExpander"]:hover{border-color:rgba(240,180,41,.4) !important;}
 div[data-testid="stExpander"] summary{font-weight:700;color:#e8ebf2;}
@@ -106,7 +99,6 @@ div[data-testid="stMetric"]{background:linear-gradient(180deg,rgba(240,180,41,.1
 div[data-testid="stMetric"] label{color:#ffd166 !important;}
 div[data-testid="stMetric"] [data-testid="stMetricValue"]{color:#fff !important;}
 
-/* ---- алерты / цитаты / код / прогресс / меню ---- */
 div[data-testid="stError"],div[data-testid="stWarning"],div[data-testid="stSuccess"],div[data-testid="stInfo"]{border-radius:14px !important;}
 blockquote{border-left:3px solid #f0b429 !important;background:rgba(240,180,41,.07) !important;border-radius:0 12px 12px 0 !important;padding:10px 18px !important;color:#d9dde6 !important;}
 pre{border-radius:14px !important;border:1px solid rgba(255,255,255,.08) !important;}
@@ -115,7 +107,6 @@ div[data-testid="stProgress"] > div > div{background:linear-gradient(90deg,#ffd1
 div[data-testid="stPopover"] button{border-radius:12px !important;border:1px solid rgba(240,180,41,.4) !important;background:rgba(240,180,41,.08) !important;transition:all .25s ease !important;}
 div[data-testid="stPopover"] button:hover{background:rgba(240,180,41,.16) !important;box-shadow:0 0 20px rgba(240,180,41,.25) !important;}
 
-/* ---- скроллбар ---- */
 ::-webkit-scrollbar{width:10px;height:10px;}
 ::-webkit-scrollbar-thumb{background:rgba(240,180,41,.35);border-radius:99px;}
 ::-webkit-scrollbar-thumb:hover{background:rgba(240,180,41,.55);}
@@ -123,7 +114,6 @@ div[data-testid="stPopover"] button:hover{background:rgba(240,180,41,.16) !impor
 
 @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important;}}
 
-/* ---- мобильная версия ---- */
 @media (max-width:720px){
   .mca-hero-wrap{flex-direction:column;gap:16px;margin:8px 8px 24px;}
   .mca-logo{width:112px;height:112px;}
