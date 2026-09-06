@@ -11,7 +11,23 @@ if not user or user["email"] not in config.ADMIN_EMAILS:
     st.warning("⛔ Доступ только для администратора.")
     st.stop()
 
-st.title("📚 Загрузчик законов")
+st.title("⚡ Автозагрузка пакета законов")
+st.caption("Источник — свободная Викитека (ru.wikisource.org). Тексты законов — общественное "
+           "достояние. Редакции могут отставать от актуальных — важное сверяй с pravo.gov.ru.")
+
+if st.button("📦 Загрузить базовый пакет (ГК, ГПК, ТК, ЗоЗПП, 152-ФЗ, 40-ФЗ, СК, КоАП, АПК)"):
+    from core.laws_autoload import DEFAULT_PACK, autoload_law
+    for prefix, title, query in DEFAULT_PACK:
+        with st.status(f"Загружаю: {title}…") as status:
+            n = autoload_law(prefix, title, query)
+            if n:
+                status.update(label=f"{title} — статей: {n}", state="complete")
+            else:
+                status.update(label=f"{title} — не найдено в Викитеке", state="error")
+    st.success("Готово! Анализ теперь цитирует статьи из полных текстов.")
+
+st.divider()
+st.title("📚 Ручная загрузка (для любого другого закона)")
 st.caption("Открой закон на consultant.ru или pravo.gov.ru, выдели весь текст (Ctrl+A), "
            "скопируй (Ctrl+C) и вставь ниже — сервис сам разобьёт его на статьи.")
 
@@ -22,6 +38,6 @@ text = st.text_area("Полный текст закона", height=300)
 if st.button("📥 Разбить на статьи и сохранить"):
     if text.strip():
         n = ingest_law_text(prefix.strip(), title.strip(), text)
-        st.success(f"✅ Сохранено статей: {n}. Теперь анализ будет цитировать их автоматически.")
+        st.success(f"✅ Сохранено статей: {n}.")
     else:
         st.warning("Сначала вставь текст закона.")

@@ -1,5 +1,6 @@
 import hashlib
 import os
+import random
 import re
 import secrets
 
@@ -28,6 +29,15 @@ def is_valid_email(email: str) -> bool:
     return re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email or "") is not None
 
 
+def _ensure_auth_columns(conn):
+    cols = [r["name"] for r in conn.execute("PRAGMA table_info(users)").fetchall()]
+    if "verified" not in cols:
+        conn.execute("ALTER TABLE users ADD COLUMN verified INTEGER DEFAULT 0")
+        conn.execute("ALTER TABLE users ADD COLUMN verify_code TEXT DEFAULT ''")
+        conn.execute("UPDATE users SET verified = 1")
+        conn.commit()
+
+
 def _issue_token(user_id):
     token = secrets.token_hex(16)
     conn = get_connection()
@@ -52,6 +62,7 @@ def register_user(email, password, password2):
         return False, "Пароли не совпадают"
 
     conn = get_connection()
+    _ensure_auth_columns(conn)
     try:
         conn.execute(
             "INSERT INTO users (email, password_hash) VALUES (?, ?)",
@@ -61,18 +72,60 @@ def register_user(email, password, password2):
     except Exception:
         conn.close()
         return False, "Пользователь с таким email уже существует"
+    code = f"{random.randint(0, 999999):06d}"
+    conn.execute("UPDATE users SET verified = 0, verify_code = ? WHERE email = ?", (code, email))
+    conn.commit()
     conn.close()
-    return True, "Успешная регистрация!"
+    from core.mailer import send_code_email
+    if send_code_email(email, code):
+        return True, "Код подтверждения отправлен на почту"
+    return True, "Аккаунт создан, но письмо не ушло — проверь GMAIL-секреты"
+
+
+def verify_email(email, code):
+    email = (email or "").strip().lower()
+    conn = get_connection()
+    _ensure_auth_columns(conn)
+    row = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+    if row is None:
+        conn.close()
+        return False, "Пользователь не найден"
+    if (row["verify_code"] or "") and row["verify_code"] == (code or "").strip():
+        conn.execute("UPDATE users SET verified = 1, verify_code = '' WHERE email = ?", (email,))
+        conn.commit()
+        conn.close()
+        return True, "Почта подтверждена! Теперь войдите во вкладке «Вход»."
+    conn.close()
+    return False, "Неверный код"
+
+
+def resend_code(email):
+    email = (email or "").strip().lower()
+    conn = get_connection()
+    _ensure_auth_columns(conn)
+    row = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+    if row is None:
+        conn.close()
+        return False, "Пользователь не найден"
+    code = f"{random.randint(0, 999999):06d}"
+    conn.execute("UPDATE users SET verify_code = ? WHERE email = ?", (code, email))
+    conn.commit()
+    conn.close()
+    from core.mailer import send_code_email
+    return send_code_email(email, code), "Код отправлен повторно"
 
 
 def login_user(email, password):
     email = (email or "").strip().lower()
     conn = get_connection()
+    _ensure_auth_columns(conn)
     row = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
     conn.close()
 
     if row is None or not verify_password(password, row["password_hash"]):
         return False, "Неверный email или пароль"
+    if not row["verified"]:
+        return False, "Почта не подтверждена. Введите код из письма: вкладка «Регистрация» → блок «У меня есть код»."
 
     st.session_state["user_id"] = row["id"]
     _sync_url(_issue_token(row["id"]))
@@ -110,7 +163,7 @@ def delete_user(user_id):
     conn.execute("DELETE FROM analyses WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM contracts WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM payments WHERE user_id = ?", (user_id,))
-    conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    conn.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
     conn.commit()
     conn.close()
 
