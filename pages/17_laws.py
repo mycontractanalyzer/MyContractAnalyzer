@@ -12,21 +12,20 @@ if not user or user["email"] not in config.ADMIN_EMAILS:
     st.stop()
 
 st.title("⚡ Автозагрузка пакета законов")
-st.caption("Источник — свободная Викитека (ru.wikisource.org). Тексты законов — общественное "
-           "достояние. Редакции могут отставать от актуальных — важное сверяй с pravo.gov.ru. "
-           "Автообновление базы настроено по расписанию (каждый понедельник в 5:00).")
+st.caption("Источники: **ru.wikisource.org** (основной) + **pravo.gov.ru** (запасной, официальный). "
+           "Автообновление базы работает по расписанию (каждый понедельник в 5:00).")
 
 if st.button("📦 Загрузить базовый пакет (ГК, ГПК, ТК, ЗоЗПП, 152-ФЗ, 40-ФЗ, СК, КоАП, АПК)"):
     from core.laws_autoload import DEFAULT_PACK, autoload_law
     for prefix, title, cands in DEFAULT_PACK:
         with st.status(f"Загружаю: {title}…") as status:
-            n, err = autoload_law(prefix, title, cands)
+            n, err, source = autoload_law(prefix, title, cands)
             if err:
                 status.update(label=f"{title} — ОШИБКА: {err}", state="error")
             elif n:
-                status.update(label=f"{title} — статей: {n}", state="complete")
+                status.update(label=f"{title} — статей: {n} (источник: {source})", state="complete")
             else:
-                status.update(label=f"{title} — не найдено в Викитеке", state="error")
+                status.update(label=f"{title} — не найдено", state="error")
     st.success("Готово! Анализ теперь цитирует статьи из полных текстов.")
 
 st.divider()
