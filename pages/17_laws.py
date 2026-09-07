@@ -20,9 +20,11 @@ if st.button("📦 Загрузить базовый пакет (ГК, ГПК, �
     for prefix, title, query in DEFAULT_PACK:
         with st.status(f"Загружаю: {title}…") as status:
             n = autoload_law(prefix, title, query)
-            if n:
+            if n is None:
+                status.update(label=f"{title} — ошибка запроса к источнику (см. логи сервера)", state="error")
+            elif n:
                 status.update(label=f"{title} — статей: {n}", state="complete")
-            else:
+            elif n == 0:
                 status.update(label=f"{title} — не найдено в Викитеке", state="error")
     st.success("Готово! Анализ теперь цитирует статьи из полных текстов.")
 
