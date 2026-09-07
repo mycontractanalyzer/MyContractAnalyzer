@@ -137,7 +137,8 @@ div[data-testid="stPopover"] button:hover{background:rgba(240,180,41,.16) !impor
 
 def inject_style():
     st.markdown(
-        PREMIUM_CSS + THEME_CSS + '<div class="mca-bg"></div>',
+        PREMIUM_CSS + THEME_CSS + '<div class="mca-bg"></div>'
+        '<a class="mca-support-bubble" href="/14_support">💬 Поддержка</a>',
         unsafe_allow_html=True)
 
 
@@ -155,7 +156,6 @@ def render_menu():
         st.page_link("pages/7_history.py", label="📚 История", use_container_width=True)
         st.page_link("pages/8_compare.py", label="🆚 Сравнение версий", use_container_width=True)
         st.page_link("pages/10_lawyers.py", label="🧑‍️ Юристы", use_container_width=True)
-        st.page_link("pages/11_library.py", label="🧱 Библиотека пунктов", use_container_width=True)
         st.page_link("pages/12_auto.py", label="🚗 Мир Автовладельца", use_container_width=True)
         st.page_link("pages/13_lawyer247.py", label="🤖 AI-юрист 24/7", use_container_width=True)
         st.page_link("pages/15_podcasts.py", label="🎧 Подкасты", use_container_width=True)
