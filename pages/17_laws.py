@@ -13,13 +13,14 @@ if not user or user["email"] not in config.ADMIN_EMAILS:
 
 st.title("⚡ Автозагрузка пакета законов")
 st.caption("Источник — свободная Викитека (ru.wikisource.org). Тексты законов — общественное "
-           "достояние. Редакции могут отставать от актуальных — важное сверяй с pravo.gov.ru.")
+           "достояние. Редакции могут отставать от актуальных — важное сверяй с pravo.gov.ru. "
+           "Автообновление базы настроено по расписанию (каждый понедельник в 5:00).")
 
 if st.button("📦 Загрузить базовый пакет (ГК, ГПК, ТК, ЗоЗПП, 152-ФЗ, 40-ФЗ, СК, КоАП, АПК)"):
     from core.laws_autoload import DEFAULT_PACK, autoload_law
-    for prefix, title, query in DEFAULT_PACK:
+    for prefix, title, cands in DEFAULT_PACK:
         with st.status(f"Загружаю: {title}…") as status:
-            n, err = autoload_law(prefix, title, query)
+            n, err = autoload_law(prefix, title, cands)
             if err:
                 status.update(label=f"{title} — ОШИБКА: {err}", state="error")
             elif n:

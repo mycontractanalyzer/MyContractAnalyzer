@@ -16,6 +16,8 @@ a {color:#ffd166 !important;}
 ::selection {background:rgba(240,180,41,.35);color:#fff;}
 h2::after {content:"";display:block;width:56px;height:3px;border-radius:99px;margin-top:8px;background:linear-gradient(90deg,#f0b429,transparent);}
 
+*:focus{outline:none !important;}
+
 .mca-bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;}
 .mca-bg::before,.mca-bg::after{content:"";position:fixed;border-radius:50%;filter:blur(120px);pointer-events:none;}
 .mca-bg::before{width:60vw;height:60vw;left:-18vw;top:-22vw;background:radial-gradient(circle,rgba(240,180,41,.17),transparent 62%);animation:mcaOrb1 18s ease-in-out infinite alternate;}
@@ -68,10 +70,11 @@ div.stButton>button:active{transform:translateY(0) scale(.99);}
 div[data-testid="stTextInput"] input,div[data-testid="stTextArea"] textarea,
 div[data-testid="stSelectbox"] > div,div[data-testid="stNumberInput"] input{
 background:rgba(255,255,255,.05) !important;border:1px solid rgba(255,255,255,.12) !important;border-radius:12px !important;
-color:#eef1f6 !important;outline:none !important;transition:border-color .2s ease,box-shadow .2s ease,background .2s ease !important;}
+color:#eef1f6 !important;outline:none !important;box-shadow:none !important;
+transition:border-color .2s ease,background .2s ease !important;}
 div[data-testid="stTextInput"] input:focus,div[data-testid="stTextArea"] textarea:focus,
 div[data-testid="stSelectbox"] > div:focus-within,div[data-testid="stNumberInput"] input:focus{
-outline:none !important;border-color:rgba(240,180,41,.6) !important;box-shadow:0 0 0 3px rgba(240,180,41,.15) !important;}
+outline:none !important;box-shadow:none !important;border-color:rgba(240,180,41,.8) !important;}
 input[type="radio"],input[type="checkbox"]{accent-color:#f0b429;}
 
 div[data-testid="stExpander"]{border:1px solid rgba(255,255,255,.09) !important;border-radius:16px !important;background:rgba(255,255,255,.025) !important;}
@@ -96,7 +99,7 @@ div[data-testid="stPopover"] button:hover{background:rgba(240,180,41,.12) !impor
 ::-webkit-scrollbar-thumb{background:rgba(240,180,41,.35);border-radius:99px;}
 ::-webkit-scrollbar-track{background:transparent;}
 
-/* ================= HOMEPAGE v7 ================= */
+/* ================= HOMEPAGE v8 ================= */
 .mca-hero-sub{margin:6px auto 26px;font-size:18px;color:#c9ced9;max-width:680px;text-align:center;line-height:1.6;}
 .mca-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin:36px 0;}
 .mca-stat{padding:22px 18px;text-align:center;border-radius:18px;position:relative;overflow:hidden;
@@ -144,12 +147,13 @@ border:1px solid rgba(255,255,255,.10);backdrop-filter:blur(8px);}
 .mca-review-author{font-size:13px;color:#ffd166;font-weight:700;margin-bottom:8px;}
 .mca-review > div:last-child{color:#c9ced9;font-size:14.5px;line-height:1.6;font-style:italic;}
 
-.mca-faq{padding:18px 22px;margin-bottom:10px;border-radius:14px;
-background:linear-gradient(160deg,rgba(255,255,255,.04),rgba(255,255,255,.01));
-border:1px solid rgba(255,255,255,.08);transition:all .25s ease;}
-.mca-faq:hover{border-color:rgba(240,180,41,.35);transform:translateX(2px);}
-.mca-faq-q{font-weight:700;color:#ffd166;font-size:15.5px;margin-bottom:8px;}
-.mca-faq > div:last-child{color:#c9ced9;font-size:14.5px;line-height:1.6;}
+.mca-faq{padding:20px 24px 20px 22px;margin-bottom:12px;border-radius:16px;border-left:3px solid rgba(240,180,41,.6);
+background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.012));
+border-top:1px solid rgba(255,255,255,.07);border-right:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);
+transition:all .25s ease;position:relative;overflow:hidden;}
+.mca-faq:hover{border-left-color:#ffd166;transform:translateX(3px);box-shadow:0 10px 34px rgba(240,167,27,.12);}
+.mca-faq-q{font-weight:800;color:#ffd166;font-size:16px;margin-bottom:10px;font-family:'Unbounded',sans-serif;}
+.mca-faq > div:last-child{color:#c9ced9;font-size:14.5px;line-height:1.65;}
 
 .mca-section-head{text-align:center;margin:24px 0 8px;}
 .mca-section-head h2{font-size:32px !important;margin:0 !important;
@@ -160,14 +164,6 @@ background:linear-gradient(92deg,#fff,#ffd97a 50%,#fff);background-size:200%;
 
 hr{border:none !important;height:1px !important;margin:40px 0 !important;
 background:linear-gradient(90deg,transparent,rgba(240,180,41,.35),transparent) !important;}
-
-.mca-support-bubble{position:fixed;bottom:24px;right:24px;z-index:99999;display:flex;align-items:center;gap:10px;
-background:linear-gradient(135deg,#ffd166,#f0a71b);color:#181004 !important;text-decoration:none !important;
-font-weight:800 !important;padding:14px 22px;border-radius:999px;font-size:15px;cursor:pointer;
-box-shadow:0 12px 34px rgba(240,167,27,.5), inset 0 1px 0 rgba(255,255,255,.5);
-transition:transform .22s ease, box-shadow .22s ease;animation:mcaFadeUp .8s .4s cubic-bezier(.22,1,.36,1) both;}
-.mca-support-bubble svg{display:block;}
-.mca-support-bubble:hover{transform:translateY(-4px) scale(1.04);box-shadow:0 18px 48px rgba(240,167,27,.65);color:#181004 !important;}
 
 @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important;}}
 @media (max-width:720px){
@@ -183,12 +179,19 @@ transition:transform .22s ease, box-shadow .22s ease;animation:mcaFadeUp .8s .4s
   div[data-testid="stHorizontalBlock"] > div{width:100% !important;}
   h1{font-size:24px !important;} h2{font-size:20px !important;} h3{font-size:17px !important;}
   .mca-section-head h2{font-size:24px !important;}
-  .mca-support-bubble{bottom:14px;right:14px;padding:12px 18px;font-size:14px;}
 }
 @media (min-width:721px) and (max-width:1024px){
   .mca-logo{width:150px;height:150px;}
   .mca-hero-box{padding:20px 28px;}
   .mca-hero-box h1{font-size:27px;}
 }
+.mca-support-bubble{position:fixed;bottom:24px;right:24px;z-index:99999;display:flex;align-items:center;gap:10px;
+background:linear-gradient(135deg,#ffd166,#f0a71b);color:#181004 !important;text-decoration:none !important;
+font-weight:800 !important;padding:14px 22px;border-radius:999px;font-size:15px;cursor:pointer;
+box-shadow:0 12px 34px rgba(240,167,27,.5), inset 0 1px 0 rgba(255,255,255,.5);
+transition:transform .22s ease, box-shadow .22s ease;animation:mcaFadeUp .8s .4s cubic-bezier(.22,1,.36,1) both;}
+.mca-support-bubble svg{display:block;}
+.mca-support-bubble:hover{transform:translateY(-4px) scale(1.04);box-shadow:0 18px 48px rgba(240,167,27,.65);color:#181004 !important;}
+@media (max-width:720px){.mca-support-bubble{bottom:14px;right:14px;padding:12px 18px;font-size:14px;}}
 </style>
 """

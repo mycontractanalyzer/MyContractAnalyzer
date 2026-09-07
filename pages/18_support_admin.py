@@ -13,7 +13,7 @@ if not user or user["email"] not in config.ADMIN_EMAILS:
     st.stop()
 
 st.title("📨 Поддержка (обращения)")
-st.caption("Здесь видны все сообщения с формы поддержки. Ответ уйдёт пользователю на email.")
+st.caption("Все обращения пользователей. Каждое подписано email и датой. Ответ уходит на почту клиента.")
 
 conn = get_connection()
 conn.execute("""CREATE TABLE IF NOT EXISTS support_messages (
@@ -25,22 +25,30 @@ cols = [r["name"] for r in conn.execute("PRAGMA table_info(support_messages)").f
 if "replied" not in cols:
     conn.execute("ALTER TABLE support_messages ADD COLUMN replied INTEGER DEFAULT 0")
     conn.commit()
-rows = conn.execute("SELECT * FROM support_messages ORDER BY id DESC").fetchall()
+
+search = st.text_input("🔍 Поиск по email", "")
+if search.strip():
+    rows = conn.execute(
+        "SELECT * FROM support_messages WHERE email LIKE ? ORDER BY id DESC",
+        (f"%{search.strip()}%",)).fetchall()
+else:
+    rows = conn.execute("SELECT * FROM support_messages ORDER BY id DESC").fetchall()
 conn.close()
 
 if not rows:
-    st.info("Пока обращений нет.")
+    st.info("Обращений пока нет." if not search.strip() else "Ничего не найдено по этому email.")
     st.stop()
 
+st.caption(f"Обращений: {len(rows)}")
 for r in rows:
     with st.container(border=True):
-        c1, c2 = st.columns([3, 1])
+        c1, c2 = st.columns([4, 1])
         with c1:
-            st.markdown(f"**{r['email']}** · {r['topic']} · {r['created_at']}")
+            st.markdown(f"👤 **{r['email']}** · 📅 {r['created_at']} · 🏷 {r['topic']}")
             st.write(r["message"])
         with c2:
             st.markdown("✅ Отвечено" if r["replied"] else "🔴 Новое")
-        with st.expander("✍️ Ответить"):
+        with st.expander("✍️ Открыть ответ"):
             answer = st.text_area("Текст ответа", key=f"ans_{r['id']}", height=120)
             if st.button("📧 Отправить на email", key=f"send_{r['id']}"):
                 ok = _send(r["email"],

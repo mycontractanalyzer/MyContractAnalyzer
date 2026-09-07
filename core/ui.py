@@ -77,7 +77,7 @@ def render_hero():
     else:
         logo = _logo_base64()
         logo_html = (f'<img class="mca-logo" src="data:image/png;base64,{logo}" alt="logo"/>'
-                     if logo else '<span class="mca-hero-fallback">️</span>')
+                     if logo else '<span class="mca-hero-fallback">⚖️</span>')
     st.markdown(f"""
 <div class="mca-hero-wrap">
   {logo_html}
