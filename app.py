@@ -31,7 +31,7 @@ st.markdown(
     '<div class="mca-stats">'
     '<div class="mca-stat"><div class="mca-stat-value">10K+</div><div class="mca-stat-label">Проверок</div></div>'
     '<div class="mca-stat"><div class="mca-stat-value">60 сек</div><div class="mca-stat-label">Среднее время</div></div>'
-    '<div class="mca-stat"><div class="mca-stat-value">15+</div><div class="mca-stat-label">Типов договоров</div></div>'
+    '<div class="mca-stat"><div class="mca-stat-value">∞</div><div class="mca-stat-label">Любые договоры</div></div>'
     '<div class="mca-stat"><div class="mca-stat-value">24/7</div><div class="mca-stat-label">Доступ</div></div>'
     "</div>",
     unsafe_allow_html=True,

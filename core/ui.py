@@ -165,6 +165,7 @@ def render_menu():
         if user and user["email"] in config.ADMIN_EMAILS:
             st.page_link("pages/6_admin.py", label=t("menu_admin"), use_container_width=True)
             st.page_link("pages/17_laws.py", label="📚 Загрузчик законов", use_container_width=True)
+            st.page_link("pages/18_support_admin.py", label="📨 Поддержка (обращения)", use_container_width=True)
         if user:
             if st.button("🚪 Выйти", key="menu_logout", use_container_width=True):
                 from utils.auth import logout_user

@@ -13,9 +13,8 @@ st.caption("Отвечаем обычно в течение часа, ежедн
 conn = get_connection()
 conn.execute("""CREATE TABLE IF NOT EXISTS support_messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT,
-    topic TEXT,
-    message TEXT,
+    email TEXT, topic TEXT, message TEXT,
+    replied INTEGER DEFAULT 0,
     created_at TEXT DEFAULT (datetime('now')))""")
 conn.commit()
 conn.close()
