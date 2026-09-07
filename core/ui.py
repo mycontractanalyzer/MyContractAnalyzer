@@ -170,6 +170,9 @@ def render_menu():
                 from utils.auth import logout_user
                 logout_user()
                 st.switch_page("app.py")
+
+
+def render_header():
     inject_style()
     render_menu()
 
