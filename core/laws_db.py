@@ -17,27 +17,25 @@ def _ensure_table(conn):
 
 
 def seed_laws_if_empty():
-    from core.laws_fulltext import FULL_TEXT
-    from core.laws_seed import LAWS
     conn = get_connection()
     _ensure_table(conn)
     cnt = conn.execute("SELECT COUNT(*) AS c FROM laws").fetchone()["c"]
     if cnt == 0:
-        conn.executemany(
-            "INSERT OR IGNORE INTO laws (code, title, essence, tags, category, full_text) "
-            "VALUES (?,?,?,?,?,?)",
-            [(c, t, e, tg, cat, FULL_TEXT.get(c, "")) for (c, t, e, tg, cat) in LAWS])
-        conn.commit()
-    else:
-        for code, txt in FULL_TEXT.items():
-            conn.execute(
-                "UPDATE laws SET full_text = ? WHERE code = ? "
-                "AND (full_text IS NULL OR full_text = '')", (txt, code))
-        conn.commit()
+        # Сид-файлы опциональны: база обычно заполнена автозагрузчиком
+        try:
+            from core.laws_fulltext import FULL_TEXT
+            from core.laws_seed import LAWS
+        except Exception:
+            FULL_TEXT, LAWS = {}, []
+        if LAWS:
+            conn.executemany(
+                "INSERT OR IGNORE INTO laws (code, title, essence, tags, category, full_text) "
+                "VALUES (?,?,?,?,?,?)",
+                [(c, t, e, tg, cat, FULL_TEXT.get(c, "")) for (c, t, e, tg, cat) in LAWS])
+            conn.commit()
     conn.close()
 
 
-# Ключевые темы → список тегов (для точного поиска)
 TOPIC_TAGS = {
     "аренд": ["гк", "аренд", "жилищ"],
     "увол": ["тк", "увольн", "трудов"],
@@ -71,7 +69,6 @@ TOPIC_TAGS = {
 
 
 def _extract_keywords(text: str):
-    """Вытаскивает ключевые слова и темы из текста договора."""
     t = (text or "").lower()
     words = set(w for w in re.split(r"[^а-яёa-z0-9-]+", t) if len(w) >= 4)
     themes = set()
@@ -91,11 +88,9 @@ def search_laws(query: str, limit: int = 12):
     for r in rows:
         score = 0
         tags_low = (r["tags"] or "").lower()
-        # тематический буст (сильный)
         for t in themes:
             if t in tags_low:
                 score += 5
-        # тэги
         for tag in (r["tags"] or "").split(","):
             tag = tag.strip().lower()
             if tag and len(tag) >= 4 and tag in (query or "").lower():
@@ -117,7 +112,10 @@ def search_laws(query: str, limit: int = 12):
 
 
 def laws_context_block(query: str, limit: int = 12, max_chars: int = 700) -> str:
-    items = search_laws(query, limit=limit)
+    try:
+        items = search_laws(query, limit=limit)
+    except Exception:
+        return ""
     if not items:
         return ""
     lines = []

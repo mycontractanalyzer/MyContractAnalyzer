@@ -16,12 +16,18 @@ from integrations.deepseek import ask_deepseek
 
 PAID_TIERS = ("Standard", "Pro", "Business", "Business Pro")
 
-# Режимы анализа → модель + температура
 DEPTH_CONFIG = {
     "brief":      {"model_key": "free", "temp": 0.3, "max_tokens": 1500},
     "standard":   {"model_key": "free", "temp": 0.2, "max_tokens": 3500},
     "detailed":   {"model_key": "paid", "temp": 0.2, "max_tokens": 6000},
 }
+
+LAWYER247_SYSTEM = (
+    "Ты — опытный российский юрист-консультант MyContractAnalyzer. Отвечай по существу, "
+    "структурно и понятно для неюриста. При возможности ссылайся на конкретные статьи "
+    "законов РФ из предоставленной правовой базы и цитируй их дословно. Если вопрос не "
+    "юридический — вежливо откажись. Язык ответа — язык вопроса."
+)
 
 
 def choose_model(tariff: str) -> str:
@@ -29,7 +35,6 @@ def choose_model(tariff: str) -> str:
 
 
 def _pick_model_for_depth(tariff: str, depth: str) -> str:
-    """Краткий/стандартный — дешёвая модель. Развёрнутый — pro (только если тариф платный)."""
     cfg = DEPTH_CONFIG.get(depth, DEPTH_CONFIG["standard"])
     if cfg["model_key"] == "paid" and tariff in PAID_TIERS:
         return config.MODEL_PAID
@@ -47,8 +52,8 @@ def _get_api_key():
     return st.secrets.get("DEEPSEEK_API_KEY") or getattr(config, "DEEPSEEK_API_KEY", "")
 
 
-def _stream_deepseek(system: str, user_msg: str, model: str, max_tokens: int = 3500, temperature: float = 0.2):
-    """Стриминг-генератор: выдаёт токены ответа по мере поступления."""
+def _stream_deepseek(system: str, user_msg: str, model: str,
+                     max_tokens: int = 3500, temperature: float = 0.2):
     api_key = _get_api_key()
     if not api_key:
         yield "[Ошибка: API ключ DeepSeek не настроен]"
@@ -92,12 +97,10 @@ def _stream_deepseek(system: str, user_msg: str, model: str, max_tokens: int = 3
 
 def analyze_contract(text, tariff="Free", contract_type="", role="", comment="",
                      depth="standard", jurisdiction="Россия", memory_ctx=""):
-    """Нестриминговая версия (для обратной совместимости)."""
     model = _pick_model_for_depth(tariff, depth)
     system = build_system_prompt(tariff, contract_type, role, comment,
                                  brief=(depth == "brief"),
                                  jurisdiction=jurisdiction, memory_ctx=memory_ctx)
-    # Подтягиваем релевантные законы из базы
     laws_ctx = laws_context_block(text, limit=12)
     if laws_ctx:
         system = system + "\n\n" + laws_ctx
@@ -108,7 +111,6 @@ def analyze_contract(text, tariff="Free", contract_type="", role="", comment="",
 
 def analyze_contract_stream(text, tariff="Free", contract_type="", role="", comment="",
                             depth="standard", jurisdiction="Россия", memory_ctx=""):
-    """Стриминговая версия: возвращает (generator, model)."""
     cfg = DEPTH_CONFIG.get(depth, DEPTH_CONFIG["standard"])
     model = _pick_model_for_depth(tariff, depth)
     system = build_system_prompt(tariff, contract_type, role, comment,
@@ -198,22 +200,15 @@ def generate_benchmark(text, report, tariff):
 
 
 def lawyer247_stream(question: str, history: list, tariff: str):
-    """Стриминг-версия AI-юриста 24/7."""
-    from core.extra_ai import build_lawyer247_system
-    system = build_lawyer247_system() if hasattr(__import__("core.extra_ai", fromlist=["build_lawyer247_system"]), "build_lawyer247_system") else (
-        "Ты — опытный российский юрист. Отвечай кратко, по делу, со ссылками на статьи законов РФ. "
-        "Если вопрос не юридический — вежливо откажись. Язык ответа — русский."
-    )
-    # История: только последние 5 сообщений
-    msgs = []
-    for q, a in (history or [])[-5:]:
-        msgs.append({"role": "user", "content": q})
-        msgs.append({"role": "assistant", "content": a})
-    msgs.append({"role": "user", "content": question})
-    # Формируем user message
-    user_msg = "\n".join([f"{m['role']}: {m['content']}" for m in msgs])
-    model = choose_model(tariff)
+    system = LAWYER247_SYSTEM
     laws_ctx = laws_context_block(question, limit=6)
     if laws_ctx:
         system = system + "\n\n" + laws_ctx
+    msgs = []
+    for q, a in (history or [])[-5:]:
+        msgs.append(f"КЛИЕНТ: {q}")
+        msgs.append(f"ЮРИСТ: {a}")
+    msgs.append(f"КЛИЕНТ: {question}")
+    user_msg = "\n\n".join(msgs)
+    model = choose_model(tariff)
     return _stream_deepseek(system, user_msg, model, max_tokens=1200, temperature=0.3), model
