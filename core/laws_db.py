@@ -37,24 +37,76 @@ def seed_laws_if_empty():
     conn.close()
 
 
-def search_laws(query: str, limit: int = 6):
+# Ключевые темы → список тегов (для точного поиска)
+TOPIC_TAGS = {
+    "аренд": ["гк", "аренд", "жилищ"],
+    "увол": ["тк", "увольн", "трудов"],
+    "зарплат": ["тк", "зарплат", "оплат"],
+    "отпуск": ["тк", "отпуск"],
+    "неустойк": ["гк", "неустойк", "пеня", "процент"],
+    "штраф": ["гк", "коап", "штраф"],
+    "ответствен": ["гк", "ответствен"],
+    "персональн": ["152-фз", "персональн"],
+    "согласие": ["152-фз", "согласие"],
+    "страх": ["40-фз", "осаго", "страхов"],
+    "потребител": ["зозпп", "потребител"],
+    "возврат": ["зозпп", "возврат", "предоплат"],
+    "качеств": ["зозпп", "гк", "качеств", "недостатк"],
+    "договор": ["гк", "договор"],
+    "подряд": ["гк", "подряд"],
+    "услуг": ["гк", "услуг"],
+    "поставк": ["гк", "поставк"],
+    "хранени": ["гк", "хранени"],
+    "заемн": ["тк", "заемн"],
+    "суд": ["гпк", "апк", "подсудност"],
+    "претензи": ["гк", "претензи"],
+    "расторж": ["гк", "расторж"],
+    "форс-мажор": ["гк", "форс", "непреодолим"],
+    "моральн": ["зозпп", "гк", "моральн"],
+    "наслед": ["гк", "наслед"],
+    "семейн": ["ск", "семейн", "брак", "алимент"],
+    "ребенк": ["ск", "ребенк", "детей"],
+    "авторск": ["гк", "авторск", "интеллектуальн"],
+}
+
+
+def _extract_keywords(text: str):
+    """Вытаскивает ключевые слова и темы из текста договора."""
+    t = (text or "").lower()
+    words = set(w for w in re.split(r"[^а-яёa-z0-9-]+", t) if len(w) >= 4)
+    themes = set()
+    for key, tags in TOPIC_TAGS.items():
+        if key in t:
+            themes.update(tags)
+    return words, themes
+
+
+def search_laws(query: str, limit: int = 12):
     seed_laws_if_empty()
-    q = (query or "").lower()
-    words = set(w for w in re.split(r"[^а-яёa-z0-9]+", q) if len(w) >= 5)
+    words, themes = _extract_keywords(query)
     conn = get_connection()
     rows = conn.execute("SELECT code, title, essence, tags, full_text FROM laws").fetchall()
     conn.close()
     scored = []
     for r in rows:
         score = 0
+        tags_low = (r["tags"] or "").lower()
+        # тематический буст (сильный)
+        for t in themes:
+            if t in tags_low:
+                score += 5
+        # тэги
         for tag in (r["tags"] or "").split(","):
-            tag = tag.strip()
-            if tag and len(tag) >= 4 and tag in q:
-                score += 2
+            tag = tag.strip().lower()
+            if tag and len(tag) >= 4 and tag in (query or "").lower():
+                score += 3
         ft = (r["full_text"] or "").lower()
         ti = (r["title"] or "").lower()
+        es = (r["essence"] or "").lower()
         for w in words:
             if w in ti:
+                score += 4
+            elif w in es:
                 score += 2
             elif w in ft:
                 score += 1
@@ -64,8 +116,8 @@ def search_laws(query: str, limit: int = 6):
     return [dict(r) for _, r in scored[:limit]]
 
 
-def laws_context_block(query: str, limit: int = 6, max_chars: int = 900) -> str:
-    items = search_laws(query)
+def laws_context_block(query: str, limit: int = 12, max_chars: int = 700) -> str:
+    items = search_laws(query, limit=limit)
     if not items:
         return ""
     lines = []
@@ -74,8 +126,11 @@ def laws_context_block(query: str, limit: int = 6, max_chars: int = 900) -> str:
         if quote:
             if len(quote) > max_chars:
                 quote = quote[:max_chars] + "… (приведены ключевые части статьи)"
-            lines.append(f"- {i['code']} — {i['title']}. Формулировка: «{quote}»")
+            lines.append(f"- {i['code']} — {i['title']}. ДОСЛОВНАЯ ФОРМУЛИРОВКА: «{quote}»")
         else:
             lines.append(f"- {i['code']} — {i['title']}: {i['essence']}")
-    return ("ПРАВОВАЯ БАЗА СЕРВИСА (проверенные нормы; при упоминании статьи "
-            "цитируй формулировку дословно и указывай её номер):\n" + "\n".join(lines))
+    return ("ПРАВОВАЯ БАЗА (проверенные нормы РФ). ОБЯЗАТЕЛЬНОЕ ПРАВИЛО: "
+            "если в анализе упоминаешь статью из этого списка — ПРИВЕДИ её ДОСЛОВНУЮ "
+            "формулировку в кавычках и укажи номер (например: «согласно ст. 16 ЗоЗПП: "
+            "«...дословная цитата...»»). Если статья не подходит — не выдумывай.\n"
+            + "\n".join(lines))

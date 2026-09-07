@@ -3,7 +3,7 @@ import re
 import streamlit as st
 
 import config
-from core.analyzer import (analyze_contract, detect_contract_type,
+from core.analyzer import (analyze_contract_stream, detect_contract_type,
                            extract_highlights, smart_compress)
 from core.contracts import (list_user_analyses, save_analysis, save_contract,
                             spend_checks)
@@ -38,7 +38,16 @@ role = st.selectbox("Твоя роль", ["Арендатор", "Арендод�
                                   "Работник", "Работодатель", "Другая"])
 comment = st.text_area("Дополнительный комментарий или уточнение запроса (необязательно)")
 
-fmt = st.radio("Формат отчёта", ["📖 Развёрнуто", "📝 Кратко"], horizontal=True)
+depth = st.radio(
+    "⚙️ Глубина анализа",
+    ["⚡ Краткий (5-15 сек)", "⚙️ Стандарт (20-40 сек)", "🔬 Развёрнутый (1-2 мин)"],
+    horizontal=True,
+    help="Краткий — только топ-3 риска и вердикт. Стандарт — полный отчёт со статьями законов. "
+         "Развёрнутый — максимум деталей, цитат и рекомендаций (рекомендуется для больших договоров).",
+)
+depth_key = {"⚡ Краткий (5-15 сек)": "brief",
+             "⚙️ Стандарт (20-40 сек)": "standard",
+             "🔬 Развёрнутый (1-2 мин)": "detailed"}[depth]
 
 source = st.radio("Как загрузить договор",
                   ["Вставить текст", "Загрузить файл (TXT / PDF / DOCX)",
@@ -71,9 +80,7 @@ else:
 
 if text.strip():
     lang = "Русский 🇷🇺" if re.search(r"[а-яА-ЯёЁ]", text) else "Английский 🇬🇧"
-    compressed = smart_compress(text)
-    saved = max(0, 100 - int(len(compressed) / max(1, len(text)) * 100))
-    st.caption(f"🌐 Язык: {lang} · ✂️ Сжатие экономит ~{saved}% токенов · ⏱ Анализ: ~{15 + min(60, (len(text) // 2000) * 5)} сек")
+    st.caption(f"🌐 Язык: {lang} · 📏 Длина: {len(text)} символов")
 
 if st.button("🚀 Анализировать", type="primary"):
     if not text.strip():
@@ -84,20 +91,23 @@ if st.button("🚀 Анализировать", type="primary"):
             st.error(f"Недостаточно проверок (нужно {cost}). Выбери тариф.")
             st.page_link("pages/4_pricing.py", label="💳 Тарифы")
         else:
-            est = 15 + min(60, (len(text) // 2000) * 5)
             ctype = contract_type
             try:
-                with st.status(f"⏱ Анализирую… осталось примерно {est} сек", expanded=True) as status:
+                with st.status("⏱ Начинаю анализ…", expanded=True) as status:
                     if ctype.startswith("🤖"):
                         status.update(label="🤖 Определяю тип договора…")
                         ctype = detect_contract_type(text)
                         st.toast(f"Тип договора: {ctype}", icon="🤖")
-                    status.update(label=f"📖 AI читает договор и ищет риски (≈{est} сек)…")
+
+                    status.update(label="📖 AI читает договор (ответ будет печататься в реальном времени)…")
                     memory_ctx = get_memory_context(ctype)
-                    report, model = analyze_contract(text, user["tariff"], ctype, role,
-                                                     comment, brief=(fmt == "📝 Кратко"),
-                                                     jurisdiction=jurisdiction,
-                                                     memory_ctx=memory_ctx)
+                    stream_gen, model = analyze_contract_stream(
+                        text, user["tariff"], ctype, role, comment,
+                        depth=depth_key, jurisdiction=jurisdiction, memory_ctx=memory_ctx,
+                    )
+                    # Стримим ответ в реальном времени
+                    report = st.write_stream(stream_gen)
+
                     status.update(label="💾 Сохраняю отчёт…")
                     spend_checks(user["id"], len(text))
                     contract_id = save_contract(user["id"], ctype, role, text)
@@ -105,15 +115,16 @@ if st.button("🚀 Анализировать", type="primary"):
                     existing = [(r.get("title") or "") for r in list_user_analyses(user["id"])]
                     num = sum(1 for t in existing if t == ctype or t.startswith(ctype + " "))
                     rename_analysis(analysis_id, ctype if num == 0 else f"{ctype} {num + 1}")
+
                     status.update(label="🗺 Составляю карту пунктов…")
                     try:
                         save_highlights(analysis_id, extract_highlights(text, user["tariff"]))
                     except Exception:
                         pass
                     status.update(label="✅ Анализ готов!", state="complete")
-            except Exception:
-                st.error("AI сейчас недоступен. Проверка НЕ списана — попробуй позже.")
+            except Exception as e:
+                st.error(f"AI сейчас недоступен ({type(e).__name__}). Проверка НЕ списана — попробуй позже.")
                 st.stop()
             st.session_state["last_analysis_id"] = analysis_id
-            st.success("✅ Анализ готов! Отчёт собран.")
+            st.success("✅ Анализ готов! Отчёт собран с цитатами законов.")
             st.page_link("pages/3_result.py", label="📊 СМОТРЕТЬ ОТЧЁТ", use_container_width=True)

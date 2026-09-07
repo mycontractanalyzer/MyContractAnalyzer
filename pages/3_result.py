@@ -76,9 +76,11 @@ with st.expander("✏️ Переименовать / поделиться"):
         st.code(f"https://mycontractanalyzer.streamlit.app/3_result?aid={analysis_id}")
         st.caption("Скопируй ссылку — любой человек сможет прочитать отчёт.")
 
-with st.expander("📄 Отчёт анализа", expanded=False):
-    st.markdown(analysis["report"])
+# ========== ОТЧЁТ (всегда раскрыт) ==========
+st.subheader("📄 Отчёт анализа")
+st.markdown(analysis["report"])
 
+# ========== КАРТА ПУНКТОВ (всегда видна, не в expander) ==========
 items = []
 if analysis.get("highlights"):
     try:
@@ -87,26 +89,39 @@ if analysis.get("highlights"):
         items = []
 
 if items:
-    with st.expander("🗺 Карта пунктов и подсветка", expanded=False):
-        st.caption("Красное — опасные пункты, жёлтое — стоит уточнить.")
-        for it in items:
-            if it.get("level") == "red":
-                st.error(f"**{it.get('quote')}**\n\n{it.get('reason', '')}")
-            else:
-                st.warning(f"**{it.get('quote')}**\n\n{it.get('reason', '')}")
-        escaped = _html.escape(contract["source_text"])
-        for it in items:
-            q = _html.escape(it.get("quote", ""))
-            if q and q in escaped:
-                cls = "mca-hl-red" if it.get("level") == "red" else "mca-hl-yellow"
-                escaped = escaped.replace(q, f'<mark class="{cls}">{q}</mark>', 1)
-        st.markdown(
-            "<style>.mca-contract{white-space:pre-wrap;font-size:13px;line-height:1.6;}"
-            ".mca-hl-red{background:rgba(255,77,79,.4);color:inherit;padding:0 2px;border-radius:3px;}"
-            ".mca-hl-yellow{background:rgba(240,180,41,.4);color:inherit;padding:0 2px;border-radius:3px;}</style>"
-            f'<div class="mca-contract">{escaped}</div>',
-            unsafe_allow_html=True,
-        )
+    st.divider()
+    st.subheader("🗺 Карта пунктов договора")
+    st.caption("🔴 Красные — опасные пункты (не подписывать без правок). 🟡 Жёлтые — стоит уточнить у контрагента.")
+
+    red = [it for it in items if it.get("level") == "red"]
+    yellow = [it for it in items if it.get("level") != "red"]
+
+    if red:
+        st.markdown(f"### 🔴 Критические риски ({len(red)})")
+        for it in red:
+            st.error(f"**{it.get('quote')}**\n\n{it.get('reason', '')}")
+    if yellow:
+        st.markdown(f"### 🟡 Стоит уточнить ({len(yellow)})")
+        for it in yellow:
+            st.warning(f"**{it.get('quote')}**\n\n{it.get('reason', '')}")
+
+    st.divider()
+    st.subheader("📑 Договор с подсветкой рисков")
+    escaped = _html.escape(contract["source_text"])
+    for it in items:
+        q = _html.escape(it.get("quote", ""))
+        if q and q in escaped:
+            cls = "mca-hl-red" if it.get("level") == "red" else "mca-hl-yellow"
+            escaped = escaped.replace(q, f'<mark class="{cls}">{q}</mark>', 1)
+    st.markdown(
+        "<style>.mca-contract{white-space:pre-wrap;font-size:13px;line-height:1.6;"
+        "padding:18px;border-radius:16px;background:rgba(255,255,255,.03);"
+        "border:1px solid rgba(255,255,255,.08);}"
+        ".mca-hl-red{background:rgba(255,77,79,.4);color:inherit;padding:0 2px;border-radius:3px;}"
+        ".mca-hl-yellow{background:rgba(240,180,41,.4);color:inherit;padding:0 2px;border-radius:3px;}</style>"
+        f'<div class="mca-contract">{escaped}</div>',
+        unsafe_allow_html=True,
+    )
 
 cm = re.search(r"(?:Чек-лист|Checklist):?\*?\s*\n(.*?)(\n###|\n|\Z)", analysis["report"], re.S)
 cl_items = [l[2:].replace("**", "").strip() for l in (cm.group(1).splitlines() if cm else [])
