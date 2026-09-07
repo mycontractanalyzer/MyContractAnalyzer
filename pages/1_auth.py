@@ -9,9 +9,7 @@ render_header()
 user = get_current_user()
 
 if user:
-    st.success(f"Вы вошли как **{user['email']}**")
-    st.page_link("pages/5_profile.py", label="👤 Открыть личный кабинет", use_container_width=True)
-    st.stop()
+    st.switch_page("pages/5_profile.py")
 
 st.title("🔐 Вход и регистрация")
 
@@ -23,9 +21,8 @@ with tab_login:
     if st.button("Войти", key="login_btn"):
         ok, msg = login_user(email, password)
         if ok:
-            st.success("👋 Успешный вход! Добро пожаловать.")
             st.toast("👋 Успешный вход!", icon="✅")
-            st.page_link("pages/5_profile.py", label="👤 Открыть личный кабинет", use_container_width=True)
+            st.switch_page("pages/5_profile.py")
         else:
             st.error(msg)
     if st.button("Забыли пароль?", key="forgot_btn"):
@@ -46,8 +43,14 @@ with tab_reg:
                 ok, msg = verify_email(pending, code)
                 if ok:
                     st.session_state.pop("verify_pending", None)
-                    st.success(msg)
+                    from database.connection import get_connection
+                    conn = get_connection()
+                    row = conn.execute("SELECT id FROM users WHERE email = ?", (pending,)).fetchone()
+                    conn.close()
+                    if row:
+                        st.session_state["user_id"] = row["id"]
                     st.toast("✅ Почта подтверждена!", icon="🎉")
+                    st.switch_page("pages/5_profile.py")
                 else:
                     st.error(msg)
         with c2:
@@ -67,4 +70,4 @@ with tab_reg:
             st.rerun()
         else:
             st.error(msg)
-    st.info("Регистрация: создать аккаунт → ввести код из письма → войти во вкладке «Вход».")
+    st.info("Регистрация: создать аккаунт → ввести код из письма → попадёшь в личный кабинет.")

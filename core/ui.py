@@ -145,10 +145,12 @@ def render_menu():
     user = get_session_user()
     with st.popover("☰"):
         st.page_link("app.py", label=t("menu_home"), use_container_width=True)
-        st.page_link("pages/1_auth.py", label=t("menu_auth"), use_container_width=True)
+        if user:
+            st.page_link("pages/5_profile.py", label="👤 Личный кабинет", use_container_width=True)
+        else:
+            st.page_link("pages/1_auth.py", label=t("menu_auth"), use_container_width=True)
         st.page_link("pages/2_dashboard.py", label=t("menu_upload"), use_container_width=True)
         st.page_link("pages/3_result.py", label=t("menu_chat"), use_container_width=True)
-        st.page_link("pages/5_profile.py", label=t("menu_profile"), use_container_width=True)
         st.page_link("pages/7_settings.py", label="⚙️ Настройки", use_container_width=True)
         st.page_link("pages/7_history.py", label="📚 История", use_container_width=True)
         st.page_link("pages/8_compare.py", label="🆚 Сравнение версий", use_container_width=True)
@@ -162,9 +164,12 @@ def render_menu():
             st.page_link("pages/9_company.py", label="🏢 Команда", use_container_width=True)
         if user and user["email"] in config.ADMIN_EMAILS:
             st.page_link("pages/6_admin.py", label=t("menu_admin"), use_container_width=True)
-
-
-def render_header():
+            st.page_link("pages/17_laws.py", label="📚 Загрузчик законов", use_container_width=True)
+        if user:
+            if st.button("🚪 Выйти", key="menu_logout", use_container_width=True):
+                from utils.auth import logout_user
+                logout_user()
+                st.switch_page("app.py")
     inject_style()
     render_menu()
 
