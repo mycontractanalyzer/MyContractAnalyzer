@@ -7,6 +7,14 @@ ART_RE = re.compile(r"Статья\s+(\d+(?:[.\-]\d+)*)", re.I)
 
 def ingest_law_text(prefix: str, title: str, text: str) -> int:
     conn = get_connection()
+    conn.execute("""CREATE TABLE IF NOT EXISTS laws (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT UNIQUE,
+        title TEXT,
+        essence TEXT,
+        tags TEXT,
+        category TEXT,
+        full_text TEXT DEFAULT '')""")
     cols = [r["name"] for r in conn.execute("PRAGMA table_info(laws)").fetchall()]
     if "full_text" not in cols:
         conn.execute("ALTER TABLE laws ADD COLUMN full_text TEXT DEFAULT ''")
