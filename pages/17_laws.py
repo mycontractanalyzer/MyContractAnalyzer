@@ -19,12 +19,12 @@ if st.button("📦 Загрузить базовый пакет (ГК, ГПК, �
     from core.laws_autoload import DEFAULT_PACK, autoload_law
     for prefix, title, query in DEFAULT_PACK:
         with st.status(f"Загружаю: {title}…") as status:
-            n = autoload_law(prefix, title, query)
-            if n is None:
-                status.update(label=f"{title} — ошибка запроса к источнику (см. логи сервера)", state="error")
+            n, err = autoload_law(prefix, title, query)
+            if err:
+                status.update(label=f"{title} — ОШИБКА: {err}", state="error")
             elif n:
                 status.update(label=f"{title} — статей: {n}", state="complete")
-            elif n == 0:
+            else:
                 status.update(label=f"{title} — не найдено в Викитеке", state="error")
     st.success("Готово! Анализ теперь цитирует статьи из полных текстов.")
 

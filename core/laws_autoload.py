@@ -28,37 +28,26 @@ DEFAULT_PACK = [
 
 
 def _search_title(query: str):
-    try:
-        r = requests.get(
-            WIKI_API,
-            params={"action": "query", "list": "search", "srsearch": query,
-                    "srlimit": 1, "format": "json"},
-            headers=HEADERS, timeout=30)
-        r.raise_for_status()
-        hits = r.json().get("query", {}).get("search", [])
-        if hits:
-            return hits[0]["title"]
-    except Exception as e:
-        log.exception("wikisource search failed: %s", e)
-    try:
-        r = requests.get(
-            WIKI_API,
-            params={"action": "parse", "page": query, "prop": "text", "format": "json"},
-            headers=HEADERS, timeout=60)
-        if "parse" in r.json():
-            return query
-    except Exception as e:
-        log.exception("wikisource parse fallback failed: %s", e)
-    return None
+    r = requests.get(
+        WIKI_API,
+        params={"action": "query", "list": "search", "srsearch": query,
+                "srlimit": 1, "format": "json"},
+        headers=HEADERS, timeout=30)
+    r.raise_for_status()
+    hits = r.json().get("query", {}).get("search", [])
+    return hits[0]["title"] if hits else None
 
 
 def _fetch_text(title: str):
     r = requests.get(
         WIKI_API,
         params={"action": "parse", "page": title, "prop": "text", "format": "json"},
-        headers=HEADERS, timeout=120)
+        headers=HEADERS, timeout=180)
     r.raise_for_status()
-    raw = r.json()["parse"]["text"]["*"]
+    data = r.json()
+    if "parse" not in data:
+        raise RuntimeError(f"API error: {str(data.get('error', {}))[:200]}")
+    raw = data["parse"]["text"]["*"]
     text = re.sub(r"<[^>]+>", "\n", raw)
     return html.unescape(text)
 
@@ -67,11 +56,12 @@ def autoload_law(prefix: str, title: str, search_query: str):
     try:
         found = _search_title(search_query)
         if not found:
-            return 0
+            return 0, "не найдено в поиске Викитеки"
         text = _fetch_text(found)
         if not text:
-            return 0
-        return ingest_law_text(prefix, title, text)
-    except Exception:
+            return 0, "пустой текст страницы"
+        n = ingest_law_text(prefix, title, text)
+        return n, None
+    except Exception as e:
         log.exception("autoload_law failed for %s", title)
-        return None
+        return 0, f"{type(e).__name__}: {str(e)[:150]}"
