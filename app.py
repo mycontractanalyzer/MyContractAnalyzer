@@ -17,29 +17,28 @@ render_hero()
 render_menu()
 
 st.markdown(
-    '<p class="mca-hero-sub">Нейросеть, обученная на тысячах юридических текстов, '
-    "читает твой договор целиком и объясняет каждый риск простым языком. "
-    "Подписывай уверенно — или требуй правок.</p>",
+    '<p class="mca-hero-sub">Нейросеть, обученная на юридических текстах, читает твой договор '
+    "целиком и объясняет каждый риск простым языком. Подписывай уверенно — или требуй правок.</p>",
     unsafe_allow_html=True,
 )
 _, cta_col, _ = st.columns([1, 2, 1])
 with cta_col:
-    if st.button("🚀 Проверить договор за 60 секунд", use_container_width=True, key="cta_top"):
+    if st.button("🚀 Проверить договор", use_container_width=True, key="cta_top"):
         st.switch_page("pages/2_dashboard.py")
 
 st.markdown(
     '<div class="mca-stats">'
-    '<div class="mca-stat"><div class="mca-stat-value">10K+</div><div class="mca-stat-label">Проверок</div></div>'
-    '<div class="mca-stat"><div class="mca-stat-value">60 сек</div><div class="mca-stat-label">Среднее время</div></div>'
-    '<div class="mca-stat"><div class="mca-stat-value">∞</div><div class="mca-stat-label">Любые договоры</div></div>'
+    '<div class="mca-stat"><div class="mca-stat-value">0 ₽</div><div class="mca-stat-label">Первая проверка</div></div>'
     '<div class="mca-stat"><div class="mca-stat-value">24/7</div><div class="mca-stat-label">Доступ</div></div>'
+    '<div class="mca-stat"><div class="mca-stat-value">РФ</div><div class="mca-stat-label">Данные в России</div></div>'
+    '<div class="mca-stat"><div class="mca-stat-value">PDF</div><div class="mca-stat-label">Готовый отчёт</div></div>'
     "</div>",
     unsafe_allow_html=True,
 )
 
 st.markdown(
     '<div class="mca-section-head"><h2>Как это работает</h2>'
-    "<p>Три простых шага от загруженного файла до готового отчёта</p></div>",
+    "<p>Три простых шага от файла до готового отчёта</p></div>",
     unsafe_allow_html=True,
 )
 s1, s2, s3 = st.columns(3)
@@ -55,7 +54,7 @@ with s2:
     st.markdown(
         '<div class="mca-step"><div class="mca-step-num">2</div>'
         "<h3>Получи риск-скор</h3>"
-        "<p>AI за минуту оценит договор по 100-балльной шкале, найдёт скрытые риски "
+        "<p>AI оценит договор по 100-балльной шкале, найдёт скрытые риски "
         "и объяснит каждый из них простым языком.</p></div>",
         unsafe_allow_html=True,
     )
