@@ -26,9 +26,8 @@
 
   <section id="adminBox" class="glass p-6 hidden border-amber-500/40">
     <h2 class="font-bold mb-3">🛠 Админ-панель</h2>
-    <p class="text-sm text-white/60 mb-4">Статистика, загрузчик законов и обращения поддержки живут в админ-разделе старой версии. Кнопка откроет её уже залогиненной в твой аккаунт — дальше меню ☰ → «Админка», «Загрузчик законов», «Поддержка (обращения)».</p>
-    <a id="admLink" href="#" class="btn-primary text-sm">🛠 Открыть админку (старый интерфейс)</a>
-    <p class="text-xs text-white/40 mt-3">Нативная админка нового UI появится после бета-недели.</p>
+    <p class="text-sm text-white/60 mb-4">Статистика сервиса, обращения пользователей с ответами на почту и управление базой законов — прямо в новом интерфейсе.</p>
+    <a href="/admin.html" class="btn-primary text-sm">🛠 Открыть админ-панель</a>
   </section>
 
   <section class="glass p-6">
@@ -55,12 +54,6 @@
     </form>
     <div id="supMsg" class="mt-3 text-sm"></div>
   </section>
-
-  <section class="glass p-6">
-    <h2 class="font-bold mb-3">📦 Старые инструменты</h2>
-    <p class="text-sm text-white/60">Удаление аккаунта, история проверок, сравнение версий и прочие инструменты старой версии:</p>
-    <a href="/old/" class="btn-ghost text-sm mt-3 inline-flex">Открыть старую версию</a>
-  </section>
 </main>
 
 <div id="siteFooter"></div>
@@ -76,10 +69,7 @@ fetch('/api/me', {headers: {'Authorization': 'Bearer ' + token}})
     document.getElementById('meBox').innerHTML =
       '<p><b>Email:</b> ' + mcaEsc(u.email) + '</p><p><b>Тариф:</b> ' + mcaEsc(u.tariff) +
       '</p><p><b>Проверок осталось:</b> ' + u.checks_left + '</p>';
-    if (u.email === ADMIN_EMAIL) {
-      document.getElementById('adminBox').classList.remove('hidden');
-      document.getElementById('admLink').href = '/old/?t=' + encodeURIComponent(token);
-    }
+    if (u.email === ADMIN_EMAIL) document.getElementById('adminBox').classList.remove('hidden');
   })
   .catch(() => location.href = '/auth.html#login');
 

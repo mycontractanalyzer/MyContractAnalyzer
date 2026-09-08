@@ -25,8 +25,8 @@
       <label class="dropzone block" id="dz">
         <span class="dz-icon">📂</span>
         <b>Перетащи файл сюда или кликни для выбора</b>
-        <span class="block text-sm text-white/50 mt-1">TXT · MD · PDF · DOCX — сервер распознает текст</span>
-        <input id="fileInput" type="file" accept=".txt,.md,.pdf,.docx">
+        <span class="block text-sm text-white/50 mt-1">TXT · MD · PDF · DOCX · PNG/JPG (фото распознаётся OCR)</span>
+        <input id="fileInput" type="file" accept=".txt,.md,.pdf,.docx,.png,.jpg,.jpeg">
       </label>
 
       <div class="flex flex-wrap items-center gap-3">
@@ -98,14 +98,21 @@ async function handleFile(f){
     msg.textContent = '✅ ' + f.name;
     return;
   }
-  msg.textContent = '⏳ Сервер читает файл…';
+  const isImage = low.endsWith('.png') || low.endsWith('.jpg') || low.endsWith('.jpeg');
+  const url = isImage ? '/api/upload_ocr' : '/api/upload';
+  msg.textContent = isImage ? '⏳ Распознаю текст с фото…' : '⏳ Сервер читает файл…';
   try {
     const fd = new FormData();
     fd.append('file', f);
-    const r = await fetch('/api/upload', {method: 'POST', headers: {'Authorization': 'Bearer ' + token}, body: fd});
+    const r = await fetch(url, {method: 'POST', headers: {'Authorization': 'Bearer ' + token}, body: fd});
     const d = await r.json();
-    if (r.ok) { ta.value = d.text; ta.dispatchEvent(new Event('input')); msg.textContent = '✅ ' + f.name + ' (' + d.chars + ' символов)'; }
-    else { msg.textContent = '❌ ' + (d.detail || 'Не удалось прочитать файл'); }
+    if (r.ok) {
+      ta.value = d.text;
+      ta.dispatchEvent(new Event('input'));
+      msg.textContent = '✅ ' + f.name + ' (' + d.chars + ' символов)';
+    } else {
+      msg.textContent = '❌ ' + (d.detail || 'Не удалось прочитать файл');
+    }
   } catch (err) { msg.textContent = '❌ Сеть недоступна'; }
 }
 
@@ -173,7 +180,7 @@ async function loadHistory(){
     const list = await r.json();
     document.getElementById('historyList').innerHTML = list.map(a =>
       '<a href="/report.html?id=' + a.id + '" class="hist block">' +
-      '<div class="font-semibold text-sm">' + (a.type || 'Договор') + ' · #' + a.id + '</div>' +
+      '<div class="font-semibold text-sm">' + mcaEsc(a.title || a.type || 'Договор') + ' · #' + a.id + '</div>' +
       '<div class="text-xs text-white/50 mt-1">' + (a.created_at || '') + '</div></a>').join('')
       || '<p class="text-white/50 text-sm">Пока пусто.</p>';
   } catch(e) {}

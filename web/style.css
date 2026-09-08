@@ -80,3 +80,4 @@ footer.site{border-top:1px solid var(--line);background:rgba(255,255,255,.02);po
 .f-col a{display:block;padding:.25rem 0;color:rgba(255,255,255,.6);transition:color .2s}
 .f-col a:hover{color:#ffd166}
 .logo-img{width:42px;height:42px;border-radius:50%;object-fit:cover;box-shadow:0 6px 18px rgba(240,167,27,.45);flex:none;background:radial-gradient(circle at 30% 25%,#ffd166,#f0a71b 55%,#8a5a00)}
+#pricing .glass-hover:hover .btn-ghost,#pricing .glass-hover:hover .btn-primary{background:linear-gradient(135deg,#ffd166,#f0a71b 60%,#dd8f12);color:#181004;border-color:transparent;box-shadow:0 10px 30px rgba(240,167,27,.35)}

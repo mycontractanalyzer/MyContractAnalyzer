@@ -56,7 +56,7 @@ function mcaFooter(){
     '<footer class="site mt-20"><div class="max-w-6xl mx-auto px-6 py-12 grid gap-8 text-sm md:grid-cols-[1.5fr_1fr_1fr_1fr]">'
     + '<div class="min-w-0"><div class="flex items-center gap-3 font-bold text-lg mb-3 font-display flex-wrap"><img src="/logo.png" class="logo-img" alt="⚖️"><span class="break-words">MyContractAnalyzer</span></div>'
     + '<p class="text-white/50">Сервис ИИ-анализа договоров. Результаты носят информационный характер и не являются юридической консультацией.</p></div>'
-    + '<div class="f-col min-w-0"><div class="font-bold mb-3 text-white">Продукт</div><a href="/analyze.html">Анализ договора</a><a href="/lawyer.html">ИИ-юрист 24/7</a><a href="/content.html">Знания и подкасты</a><a href="/old/">Старая версия</a></div>'
+    + '<div class="f-col min-w-0"><div class="font-bold mb-3 text-white">Продукт</div><a href="/analyze.html">Анализ договора</a><a href="/lawyer.html">ИИ-юрист 24/7</a><a href="/content.html">Знания и подкасты</a><a href="/#pricing">Тарифы</a></div>'
     + '<div class="f-col min-w-0"><div class="font-bold mb-3 text-white">Документы</div><a href="/offer.html">Оферта</a><a href="/privacy.html">Политика конфиденциальности</a><a href="/consent.html">Согласие на обработку ПДн</a></div>'
     + '<div class="f-col min-w-0"><div class="font-bold mb-3 text-white">Контакты</div><a href="/profile.html">Поддержка в кабинете</a><a href="mailto:support@mycontractanalyzer.ru">support@mycontractanalyzer.ru</a></div>'
     + '</div><div class="border-t border-white/5 py-6 text-center text-xs text-white/40">© 2026 MyContractAnalyzer · See what you\'re signing</div></footer>';

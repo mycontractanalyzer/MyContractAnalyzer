@@ -14,19 +14,30 @@
 
 <main class="max-w-6xl mx-auto px-6 py-10 grid lg:grid-cols-4 gap-8 relative z-10">
   <section class="lg:col-span-3">
+    <div id="pubNote" class="hidden mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-sm">
+      📄 Отчёт открыт по ссылке владельца в режиме чтения. Сгенерировано MyContractAnalyzer — <a href="/auth.html#signup" class="text-amber-400 underline">проверь и свой договор</a>.
+    </div>
     <div id="scoreBadge" class="mb-6"></div>
+
+    <div id="actionsRow" class="flex flex-wrap gap-3 mb-6">
+      <button id="shareBtn" class="btn-ghost text-sm">🔗 Поделиться по ссылке</button>
+      <button id="renameBtn" class="btn-ghost text-sm">✏️ Переименовать</button>
+      <button id="emailBtn" class="btn-ghost text-sm">📧 Отправить на почту (PDF)</button>
+      <span id="shareMsg" class="text-sm text-white/60 self-center"></span>
+    </div>
+
     <div class="flex flex-wrap gap-2 mb-6 text-sm">
       <button data-tab="report" class="tab-btn on">📄 Отчёт</button>
-      <button data-tab="contract" class="tab-btn">📑 Договор с подсветкой</button>
-      <button data-tab="tools" class="tab-btn">🧰 Инструменты</button>
-      <button data-tab="search" class="tab-btn">🔍 Поиск по пункту</button>
-      <button data-tab="feedback" class="tab-btn">⭐ Отзыв</button>
+      <button data-tab="contract" class="tab-btn" id="tabContractBtn">📑 Договор с подсветкой</button>
+      <button data-tab="tools" class="tab-btn" id="tabToolsBtn">🧰 Инструменты</button>
+      <button data-tab="search" class="tab-btn" id="tabSearchBtn">🔍 Поиск по пункту</button>
+      <button data-tab="feedback" class="tab-btn" id="tabFeedbackBtn">⭐ Отзыв</button>
     </div>
 
     <div id="tab-report" class="pane">
       <div id="cards"></div>
       <div id="reportBody" class="text-sm leading-relaxed mt-4 glass p-6"></div>
-      <div class="flex flex-wrap gap-3 mt-8">
+      <div id="dlRow" class="flex flex-wrap gap-3 mt-8">
         <button id="dlPdf" class="btn-primary text-sm">📄 Скачать PDF</button>
         <button id="dlDocx" class="btn-ghost text-sm">📝 Скачать DOCX</button>
         <button id="dlProto" class="btn-ghost text-sm">🧾 Протокол разногласий (DOCX)</button>
@@ -67,7 +78,7 @@
     </div>
   </section>
 
-  <aside>
+  <aside id="sideHist">
     <h2 class="font-bold mb-4">📚 Мои отчёты</h2>
     <div id="historyList" class="space-y-2"></div>
   </aside>
@@ -77,7 +88,8 @@
 
 <script>
 const token = mcaToken();
-if (!token) location.href = '/auth.html#login';
+const isAuth = !!token;
+const H = isAuth ? {'Authorization': 'Bearer ' + token} : {};
 const params = new URLSearchParams(location.search);
 let aid = params.get('id');
 let reportRaw = '', contractText = '';
@@ -89,11 +101,7 @@ document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => {
   document.getElementById('tab-' + b.dataset.tab).classList.remove('hidden');
 });
 
-async function loadReport(id){
-  aid = id;
-  const r = await fetch('/api/analyses/' + id, {headers: {'Authorization': 'Bearer ' + token}});
-  if (!r.ok) { alert('Отчёт не найден'); return; }
-  const detail = await r.json();
+function paint(detail){
   reportRaw = (detail.report || '').split('HIGHLIGHTS_JSON:')[0];
   const m = reportRaw.match(/Риск-скор:\s*(\d{1,3})\/100/);
   if (m) {
@@ -118,25 +126,91 @@ async function loadReport(id){
   } catch(e) {}
   document.getElementById('cards').innerHTML = cards;
   document.getElementById('reportBody').innerHTML = mcaMd(reportRaw);
+}
 
-  const rc = await fetch('/api/analyses/' + id + '/contract', {headers: {'Authorization': 'Bearer ' + token}});
-  if (rc.ok) {
-    const cd = await rc.json();
-    contractText = cd.text || '';
-    let html = mcaEsc(contractText);
-    try {
-      const hl = JSON.parse(detail.highlights || '[]');
-      hl.forEach(x => {
-        const q = mcaEsc(x.quote);
-        if (q && html.includes(q)) {
-          const st = x.level === 'red' ? 'background:#7f1d1d;padding:0 2px;border-radius:3px' : 'background:#78350f;padding:0 2px;border-radius:3px';
-          html = html.replace(q, '<mark style="' + st + '">' + q + '</mark>');
-        }
-      });
-    } catch(e) {}
-    document.getElementById('contractBody').innerHTML = html;
-  }
+async function loadContract(id){
+  const rc = await fetch('/api/analyses/' + id + '/contract', {headers: H});
+  if (!rc.ok) return;
+  const cd = await rc.json();
+  contractText = cd.text || '';
+  let html = mcaEsc(contractText);
+  try {
+    const r = await fetch('/api/analyses/' + id, {headers: H});
+    const d = await r.json();
+    const hl = JSON.parse(d.highlights || '[]');
+    hl.forEach(x => {
+      const q = mcaEsc(x.quote);
+      if (q && html.includes(q)) {
+        const st = x.level === 'red' ? 'background:#7f1d1d;padding:0 2px;border-radius:3px' : 'background:#78350f;padding:0 2px;border-radius:3px';
+        html = html.replace(q, '<mark style="' + st + '">' + q + '</mark>');
+      }
+    });
+  } catch(e) {}
+  document.getElementById('contractBody').innerHTML = html;
+}
+
+async function loadReport(id){
+  aid = id;
+  const r = await fetch('/api/analyses/' + id, {headers: H});
+  if (!r.ok) { alert('Отчёт не найден'); return; }
+  paint(await r.json());
+  loadContract(id);
   history.replaceState(null, '', '/report.html?id=' + id);
+}
+
+async function loadHistory(){
+  const r = await fetch('/api/analyses', {headers: H});
+  const list = await r.json();
+  document.getElementById('historyList').innerHTML = list.map(a =>
+    '<button data-id="' + a.id + '" class="hist">' +
+    '<div class="font-semibold text-sm">' + mcaEsc(a.title || a.type || 'Договор') + ' · #' + a.id + '</div>' +
+    '<div class="text-xs text-white/50 mt-1">' + (a.created_at || '') + '</div></button>').join('')
+    || '<p class="text-white/50 text-sm">Пока пусто.</p>';
+  document.querySelectorAll('#historyList button').forEach(b => b.onclick = () => loadReport(b.dataset.id));
+  if (!aid && list.length) aid = list[0].id;
+  if (aid) loadReport(aid);
+}
+
+async function init(){
+  if (!isAuth) {
+    document.getElementById('sideHist').style.display = 'none';
+    document.getElementById('dlRow').style.display = 'none';
+    document.getElementById('actionsRow').style.display = 'none';
+    ['tabToolsBtn','tabSearchBtn','tabFeedbackBtn','tabContractBtn'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.remove();
+    });
+    const r = await fetch('/api/public/analyses/' + aid);
+    if (!r.ok) {
+      document.getElementById('scoreBadge').innerHTML =
+        '<div class="glass p-6 text-sm">🔒 Этот отчёт приватный или ссылка недействительна. <a class="text-amber-400 underline" href="/auth.html#login">Войди</a>, чтобы смотреть свои отчёты.</div>';
+      return;
+    }
+    document.getElementById('pubNote').classList.remove('hidden');
+    paint(await r.json());
+    return;
+  }
+  document.getElementById('shareBtn').onclick = async () => {
+    const r = await fetch('/api/analyses/' + aid + '/share', {method: 'POST', headers: H});
+    const d = await r.json();
+    if (r.ok) {
+      try { await navigator.clipboard.writeText(d.url); } catch(e) {}
+      document.getElementById('shareMsg').textContent = '✅ Ссылка скопирована: ' + d.url;
+    }
+  };
+  document.getElementById('renameBtn').onclick = async () => {
+    const t = prompt('Новое название отчёта:');
+    if (!t) return;
+    await fetch('/api/analyses/' + aid + '/rename', {method: 'POST',
+      headers: {'Content-Type': 'application/json', ...H}, body: JSON.stringify({title: t})});
+    loadHistory();
+  };
+  document.getElementById('emailBtn').onclick = async () => {
+    const b = document.getElementById('emailBtn');
+    b.textContent = '⏳ Отправляю…';
+    const r = await fetch('/api/analyses/' + aid + '/email', {method: 'POST', headers: H});
+    b.textContent = r.ok ? '✅ Отправлено на почту' : '❌ Ошибка отправки';
+  };
+  loadHistory();
 }
 
 const TOOLS = [
@@ -152,7 +226,7 @@ document.querySelectorAll('#toolButtons button').forEach(b => b.onclick = async 
   out.textContent = '⏳ Генерирую… (может занять до минуты)';
   try {
     const r = await fetch('/api/tools/' + b.dataset.tool, {
-      method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+      method: 'POST', headers: {'Content-Type': 'application/json', ...H},
       body: JSON.stringify({analysis_id: +aid, scenario: document.getElementById('scenario').value})
     });
     const d = await r.json();
@@ -173,7 +247,7 @@ document.getElementById('clauseBtn').onclick = () => {
 
 document.getElementById('fbBtn').onclick = async () => {
   const r = await fetch('/api/feedback', {
-    method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+    method: 'POST', headers: {'Content-Type': 'application/json', ...H},
     body: JSON.stringify({analysis_id: +aid, rating: +document.getElementById('fbRating').value,
                           comment: document.getElementById('fbComment').value})
   });
@@ -184,19 +258,7 @@ document.getElementById('dlPdf').onclick = () => mcaDownload('/api/analyses/' + 
 document.getElementById('dlDocx').onclick = () => mcaDownload('/api/analyses/' + aid + '/docx', 'report_' + aid + '.docx');
 document.getElementById('dlProto').onclick = () => mcaDownload('/api/analyses/' + aid + '/protocol', 'protocol_' + aid + '.docx');
 
-async function loadHistory(){
-  const r = await fetch('/api/analyses', {headers: {'Authorization': 'Bearer ' + token}});
-  const list = await r.json();
-  document.getElementById('historyList').innerHTML = list.map(a =>
-    '<button data-id="' + a.id + '" class="hist">' +
-    '<div class="font-semibold text-sm">' + (a.type || 'Договор') + ' · #' + a.id + '</div>' +
-    '<div class="text-xs text-white/50 mt-1">' + (a.created_at || '') + '</div></button>').join('')
-    || '<p class="text-white/50 text-sm">Пока пусто.</p>';
-  document.querySelectorAll('#historyList button').forEach(b => b.onclick = () => loadReport(b.dataset.id));
-  if (!aid && list.length) aid = list[0].id;
-  if (aid) loadReport(aid);
-}
-mcaNav(); mcaFooter(); loadHistory();
+mcaNav(); mcaFooter(); init();
 </script>
 </body>
 </html>
