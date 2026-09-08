@@ -59,10 +59,6 @@ def render_menu():
             st.page_link("pages/17_laws.py", label="📚 Загрузчик законов", use_container_width=True)
             st.page_link("pages/18_support_admin.py", label="📨 Поддержка (обращения)", use_container_width=True)
         if user:
-            with st.expander("🔖 Запомнить устройство"):
-                st.caption("Сохрани эту ссылку в закладки / на главный экран — "
-                           "по ней ты входишь без пароля:")
-                st.code(f"http://185.171.82.207/?t={user['token']}")
             if st.button("🚪 Выйти", key="menu_logout", use_container_width=True):
                 from utils.auth import forget_device, logout_user
                 logout_user()

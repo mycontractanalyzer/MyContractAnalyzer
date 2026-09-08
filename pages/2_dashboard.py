@@ -3,7 +3,7 @@ import re
 import streamlit as st
 
 import config
-from core.analyzer import (analyze_contract_stream, detect_contract_type,
+from core.analyzer import (analyze_contract, analyze_contract_stream, detect_contract_type,
                            extract_highlights, smart_compress)
 from core.contracts import (list_user_analyses, save_analysis, save_contract,
                             spend_checks)
@@ -104,6 +104,15 @@ if st.button("🚀 Анализировать", type="primary"):
                         text, user["tariff"], ctype, role, comment,
                         depth=depth_key, jurisdiction=jurisdiction, memory_ctx=memory_ctx)
                     report = st.write_stream(stream_gen)
+
+                    if not report or len(report.strip()) < 200:
+                        status.update(label="🔄 Стрим не удался — повторяю в обычном режиме…")
+                        report, model = analyze_contract(
+                            text, user["tariff"], ctype, role, comment,
+                            depth=depth_key, jurisdiction=jurisdiction,
+                            memory_ctx=memory_ctx)
+                    if not report or len(report.strip()) < 200:
+                        raise RuntimeError("AI вернул пустой отчёт")
 
                     from core.analyzer import split_report_highlights
                     report, hl_json = split_report_highlights(report)
