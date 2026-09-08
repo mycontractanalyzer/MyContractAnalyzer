@@ -68,7 +68,6 @@ def _extract_keywords(text: str):
 
 
 def _best_excerpt(ft: str, words, max_chars: int = 450) -> str:
-    """Находит внутри полного текста закона статью, максимально релевантную договору."""
     ft_low = ft.lower()
     best_pos, best_score = -1, 0
     for m in re.finditer(r"статья\s+\d+[.\d]*", ft_low):
@@ -85,7 +84,7 @@ def _best_excerpt(ft: str, words, max_chars: int = 450) -> str:
     return ft[best_pos:best_pos + max_chars]
 
 
-def search_laws(query: str, limit: int = 8):
+def search_laws(query: str, limit: int = 10):
     seed_laws_if_empty()
     words, themes = _extract_keywords(query)
     conn = get_connection()
@@ -95,6 +94,8 @@ def search_laws(query: str, limit: int = 8):
     stage1 = []
     for r in rows:
         score = 0
+        if r["full_text"]:
+            score += 5
         tags_low = (r["tags"] or "").lower()
         ti = (r["title"] or "").lower()
         es = (r["essence"] or "").lower()
@@ -125,18 +126,20 @@ def search_laws(query: str, limit: int = 8):
 
 def laws_context_block(query: str, limit: int = 8, max_chars: int = 450) -> str:
     try:
-        items = search_laws(query, limit=limit)
+        items = search_laws(query, limit=limit + 4)
     except Exception:
         return ""
     if not items:
         return ""
     words, _ = _extract_keywords(query)
+    with_ft = [i for i in items if (i.get("full_text") or "").strip()]
+    only_es = [i for i in items if not (i.get("full_text") or "").strip()]
     lines = []
-    for i in items[:limit]:
-        ft = (i.get("full_text") or "").strip()
-        if ft:
-            excerpt = _best_excerpt(ft, words, max_chars)
-            lines.append(f"- {i['code']} — {i['title']}. ДОСЛОВНО: «{excerpt}»")
-        else:
-            lines.append(f"- {i['code']} — {i['title']}: {i['essence']}")
+    for i in with_ft[:6]:
+        excerpt = _best_excerpt(i["full_text"].strip(), words, max_chars)
+        lines.append(f"- {i['code']} — {i['title']}. ДОСЛОВНО: «{excerpt}»")
+    for i in only_es[:3]:
+        lines.append(f"- {i['code']} — {i['title']}: {i['essence']}")
+    if not lines:
+        return ""
     return ("ПРАВОВАЯ БАЗА (нормы РФ):\n" + "\n".join(lines))
