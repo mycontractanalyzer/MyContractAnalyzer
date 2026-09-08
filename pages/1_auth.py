@@ -26,7 +26,7 @@ with tab_login:
                 u = get_session_user()
                 if u and u.get("token"):
                     save_token_to_device(u["token"])
-            st.toast("👋 Успешный вход!", icon="✅")
+            st.session_state["flash_msg"] = "👋 Успешный вход! Добро пожаловать."
             st.switch_page("pages/5_profile.py")
         else:
             st.error(msg)
@@ -54,7 +54,7 @@ with tab_reg:
                     conn.close()
                     if row:
                         st.session_state["user_id"] = row["id"]
-                    st.toast("✅ Почта подтверждена!", icon="🎉")
+                    st.session_state["flash_msg"] = "🎉 Почта подтверждена! Добро пожаловать."
                     st.switch_page("pages/5_profile.py")
                 else:
                     st.error(msg)

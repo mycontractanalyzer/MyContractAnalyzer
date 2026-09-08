@@ -71,16 +71,15 @@ def render_header():
     render_menu()
     from utils.auth import remember_bridge
     remember_bridge()
+    flash = st.session_state.pop("flash_msg", None)
+    if flash:
+        st.toast(flash, icon="✅")
 
 
 def render_hero():
-    static_path = os.path.join(os.path.dirname(__file__), "..", "static", "logo_small.png")
-    if os.path.exists(static_path):
-        logo_html = '<img class="mca-logo" src="app/static/logo_small.png" alt="logo"/>'
-    else:
-        logo = _logo_base64()
-        logo_html = (f'<img class="mca-logo" src="data:image/png;base64,{logo}" alt="logo"/>'
-                     if logo else '<span class="mca-hero-fallback">⚖️</span>')
+    logo = _logo_base64()
+    logo_html = (f'<img class="mca-logo" src="data:image/png;base64,{logo}" alt="logo"/>'
+                 if logo else '<span class="mca-hero-fallback">⚖️</span>')
     st.markdown(f"""
 <div class="mca-hero-wrap">
   {logo_html}
