@@ -40,7 +40,7 @@ function mcaNav(){
   el.innerHTML =
     '<nav class="sticky top-0 z-50 backdrop-blur-xl bg-[#0b0d12]/75 border-b border-white/5">'
     + '<div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between gap-4">'
-    + '<a href="/" class="flex items-center gap-3 font-bold text-lg font-display"><img src="/logo.png" class="logo-img" alt="⚖️">MyContractAnalyzer</a>'
+    + '<a href="/" class="flex items-center gap-3 font-bold text-lg font-display min-w-0"><img src="/logo.png" class="logo-img" alt="⚖️"><span class="break-words">MyContractAnalyzer</span></a>'
     + '<div class="hidden lg:flex items-center gap-1 text-sm">'
     + '<a href="/#features" class="nav-link">Возможности</a>'
     + '<a href="/#how" class="nav-link">Как работает</a>'
@@ -53,12 +53,12 @@ function mcaFooter(){
   var el = document.getElementById('siteFooter');
   if (!el) return;
   el.innerHTML =
-    '<footer class="site mt-20"><div class="max-w-6xl mx-auto px-6 py-12 grid md:grid-cols-4 gap-8 text-sm">'
-    + '<div><div class="flex items-center gap-3 font-bold text-lg mb-3 font-display"><img src="/logo.png" class="logo-img" alt="⚖️">MyContractAnalyzer</div>'
+    '<footer class="site mt-20"><div class="max-w-6xl mx-auto px-6 py-12 grid gap-8 text-sm md:grid-cols-[1.5fr_1fr_1fr_1fr]">'
+    + '<div class="min-w-0"><div class="flex items-center gap-3 font-bold text-lg mb-3 font-display flex-wrap"><img src="/logo.png" class="logo-img" alt="⚖️"><span class="break-words">MyContractAnalyzer</span></div>'
     + '<p class="text-white/50">Сервис ИИ-анализа договоров. Результаты носят информационный характер и не являются юридической консультацией.</p></div>'
-    + '<div class="f-col"><div class="font-bold mb-3 text-white">Продукт</div><a href="/analyze.html">Анализ договора</a><a href="/lawyer.html">ИИ-юрист 24/7</a><a href="/content.html">Знания и подкасты</a><a href="/old/">Старая версия</a></div>'
-    + '<div class="f-col"><div class="font-bold mb-3 text-white">Документы</div><a href="/offer.html">Оферта</a><a href="/privacy.html">Политика конфиденциальности</a><a href="/consent.html">Согласие на обработку ПДн</a></div>'
-    + '<div class="f-col"><div class="font-bold mb-3 text-white">Контакты</div><a href="/profile.html">Поддержка в кабинете</a><a href="mailto:support@mycontractanalyzer.ru">support@mycontractanalyzer.ru</a></div>'
+    + '<div class="f-col min-w-0"><div class="font-bold mb-3 text-white">Продукт</div><a href="/analyze.html">Анализ договора</a><a href="/lawyer.html">ИИ-юрист 24/7</a><a href="/content.html">Знания и подкасты</a><a href="/old/">Старая версия</a></div>'
+    + '<div class="f-col min-w-0"><div class="font-bold mb-3 text-white">Документы</div><a href="/offer.html">Оферта</a><a href="/privacy.html">Политика конфиденциальности</a><a href="/consent.html">Согласие на обработку ПДн</a></div>'
+    + '<div class="f-col min-w-0"><div class="font-bold mb-3 text-white">Контакты</div><a href="/profile.html">Поддержка в кабинете</a><a href="mailto:support@mycontractanalyzer.ru">support@mycontractanalyzer.ru</a></div>'
     + '</div><div class="border-t border-white/5 py-6 text-center text-xs text-white/40">© 2026 MyContractAnalyzer · See what you\'re signing</div></footer>';
 }
 
