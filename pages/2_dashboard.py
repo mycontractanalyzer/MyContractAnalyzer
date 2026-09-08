@@ -32,7 +32,6 @@ if not user:
 
 st.write(f"Тариф: **{user['tariff']}** · Осталось проверок: **{user['checks_left']}**")
 
-# ---------- обработка остановки из прерванного запуска ----------
 if st.session_state.get("analysis_running") and st.session_state.get("stop_btn"):
     pct = st.session_state.get("analysis_pct", 0)
     partial = st.session_state.get("partial_report", "") or ""
@@ -55,7 +54,6 @@ if st.session_state.get("analysis_running") and st.session_state.get("stop_btn")
         st.info(f"⏹ Анализ остановлен на {pct}% (меньше 25%) — проверка НЕ списана.")
     st.stop()
 
-# ---------- форма ----------
 contract_type = st.selectbox("Тип договора",
                              ["🤖 Авто (AI определит)", "Аренда", "Услуги/фриланс",
                               "Трудовой", "NDA", "Кредит", "Другое"])
@@ -105,10 +103,9 @@ else:
                 st.error("Не удалось распознать фото. Попробуй более чёткий снимок.")
 
 if text.strip():
-    lang = "Русский 🇷" if re.search(r"[а-яА-ЯёЁ]", text) else "Английский 🇬🇧"
+    lang = "Русский 🇷🇺" if re.search(r"[а-яА-ЯёЁ]", text) else "Английский 🇬🇧"
     st.caption(f"🌐 Язык: {lang} · 📏 Длина: {len(text)} символов")
 
-# ---------- запуск анализа ----------
 if st.button("🚀 Анализировать", type="primary"):
     if not text.strip():
         st.error("Пока пусто — вставь текст, загрузи файл или фото.")
@@ -186,9 +183,8 @@ if st.button("🚀 Анализировать", type="primary"):
 
                 st.session_state["analysis_running"] = False
                 st.session_state["last_analysis_id"] = analysis_id
-                st.session_state["flash_msg"] = "✅ Анализ готов! Отчёт собран."
-                st.page_link("pages/3_result.py", label="📊 СМОТРЕТЬ ОТЧЁТ",
-                             use_container_width=True)
+                st.session_state["flash_msg"] = "✅ Отчёт готов!"
+                st.switch_page("pages/3_result.py")
             except Exception as e:
                 log.exception("analysis failed")
                 st.session_state["analysis_running"] = False

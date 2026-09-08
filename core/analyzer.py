@@ -16,10 +16,12 @@ from integrations.deepseek import ask_deepseek
 
 PAID_TIERS = ("Standard", "Pro", "Business", "Business Pro")
 
+MODEL_CHAT = "deepseek-chat"  # быстрая и дешёвая модель; reasoner не используем
+
 DEPTH_CONFIG = {
-    "brief":    {"model_key": "free", "temp": 0.3, "max_tokens": 700},
-    "standard": {"model_key": "free", "temp": 0.2, "max_tokens": 1800},
-    "detailed": {"model_key": "paid", "temp": 0.2, "max_tokens": 4500},
+    "brief":    {"model_key": "chat", "temp": 0.3, "max_tokens": 700},
+    "standard": {"model_key": "chat", "temp": 0.2, "max_tokens": 1800},
+    "detailed": {"model_key": "chat", "temp": 0.2, "max_tokens": 4500},
 }
 
 LAWYER247_SYSTEM = (
@@ -32,7 +34,7 @@ LAWYER247_SYSTEM = (
 RUBRIC = """
 ОБЯЗАТЕЛЬНЫЕ ТРЕБОВАНИЯ К ОТЧЁТУ (нарушение = брак):
 1) ПЕРВАЯ строка: «Риск-скор: N/100», где N = min(100, 12*(число красных рисков) + 5*(число жёлтых рисков) + (10, если затронуты данные/жизнь детей или здоровье, иначе 0)).
-2) «❗ Осторожно:» — красные риски; «🟡 Следует уточнить:» — жёлтые; в КАЖДОМ пункте этих разделов добавь строку «⚖️ Обоснование:» со статьёй ИЗ ПРАВОВОЙ БАЗЫ (номер + дословная цитата в кавычках). Статьи вне базы НЕ выдумывать; если подходящей нет — пиши «⚖️ Обоснование: сверь редакцию на pravo.gov.ru».
+2) «❗ Осторожно:» — красные риски; «🟡 Следует уточнить:» — жёлтые; в КАЖДОМ пункте этих разделов добавь строку «⚖️ Обоснование:» со статьёй ИЗ ПРАВОВОЙ БАЗЫ (номер + дословная цитата в кавычках). Вне базы статьи НЕ выдумывать; если подходящей нет — пиши «⚖️ Обоснование: норма в базе сервиса не найдена».
 3) «✅ Чек-лист:» (список через «- »), «📌 Краткий вывод:», «💬 Вопросы, которые стоит задать второй стороне:».
 4) ПОСЛЕДНИМ блоком отчёта выведи строку «HIGHLIGHTS_JSON:» и сразу за ней ОДНУ строку валидного JSON-массива: [{"quote":"дословная выдержка из договора","level":"red|yellow","reason":"почему опасно"}] (до 10 элементов). Никакого текста после JSON.
 """
@@ -44,9 +46,6 @@ CITATION_TASK = """
 
 ПРАВОВАЯ БАЗА:
 """
-
-
-MODEL_CHAT = "deepseek-chat"  # быстрая и дешёвая; reasoner не используем
 
 
 def choose_model(tariff: str) -> str:
@@ -69,7 +68,6 @@ def _get_api_key():
 
 
 def split_report_highlights(report: str):
-    """Отделяет блок HIGHLIGHTS_JSON от отчёта. Возвращает (чистый_отчёт, json_строка|None)."""
     m = re.search(r"HIGHLIGHTS_JSON:\s*(\[.*\])\s*$", report or "", re.S)
     if not m:
         m = re.search(r"HIGHLIGHTS_JSON:\s*(\[.*\])", report or "", re.S)
@@ -139,7 +137,7 @@ def _user_message_with_laws(text: str, depth: str) -> str:
     body = f"ДОГОВОР (режим {depth}):\n\n{smart_compress(text)}"
     if depth == "brief":
         return body
-    laws = laws_context_block(text, limit=6, max_chars=400)
+    laws = laws_context_block(text, limit=6, max_chars=450)
     if laws:
         return CITATION_TASK + laws + "\n\n" + body
     return body
@@ -170,7 +168,7 @@ def analyze_contract_stream(text, tariff="Free", contract_type="", role="", comm
 def detect_contract_type(text):
     raw = ask_deepseek(
         "Определи тип договора. Верни ОДНО слово из списка: Аренда, Трудовой, Услуги, NDA, Кредит, Другое. Без пояснений.",
-        text[:3000], config.MODEL_FREE)
+        text[:3000], MODEL_CHAT)
     low = (raw or "").strip().lower()
     for k in ["аренда", "трудовой", "услуги", "nda", "кредит", "другое"]:
         if k in low:
@@ -179,7 +177,7 @@ def detect_contract_type(text):
 
 
 def generate_passport(text):
-    return ask_deepseek(build_passport_prompt(), f"ДОГОВОР:\n\n{text[:20000]}", config.MODEL_FREE)
+    return ask_deepseek(build_passport_prompt(), f"ДОГОВОР:\n\n{text[:20000]}", MODEL_CHAT)
 
 
 def generate_missing(text, report, tariff):
@@ -188,7 +186,7 @@ def generate_missing(text, report, tariff):
 
 
 def translate_contract(text):
-    return ask_deepseek(build_translate_prompt(), text[:15000], config.MODEL_FREE)
+    return ask_deepseek(build_translate_prompt(), text[:15000], MODEL_CHAT)
 
 
 def _parse_json_list(raw: str):
@@ -204,7 +202,7 @@ def _parse_json_list(raw: str):
 
 def extract_highlights(text, tariff="Free"):
     raw = ask_deepseek(build_highlights_prompt(),
-                       f"Текст договора:\n\n{smart_compress(text)[:30000]}", config.MODEL_FREE)
+                       f"Текст договора:\n\n{smart_compress(text)[:30000]}", MODEL_CHAT)
     items = []
     for it in _parse_json_list(raw)[:10]:
         if isinstance(it, dict) and it.get("quote"):
@@ -251,6 +249,5 @@ def lawyer247_stream(question: str, history: list, tariff: str):
         msgs.append(f"КЛИЕНТ: {q}")
         msgs.append(f"ЮРИСТ: {a}")
     msgs.append(f"КЛИЕНТ: {question}")
-    model = choose_model(tariff)
-    return _stream_deepseek(system, "\n\n".join(msgs), model,
-                            max_tokens=900, temperature=0.3), model
+    return _stream_deepseek(system, "\n\n".join(msgs), MODEL_CHAT,
+                            max_tokens=900, temperature=0.3), MODEL_CHAT

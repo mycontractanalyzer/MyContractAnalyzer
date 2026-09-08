@@ -83,18 +83,16 @@ with st.expander("✏️ Переименовать / поделиться"):
         st.success("Сохранено")
     if st.button("🔗 Поделиться отчётом по ссылке"):
         set_share(analysis_id, 1)
-        st.code(f"https://mycontractanalyzer.streamlit.app/3_result?aid={analysis_id}")
+        st.code(f"http://185.171.82.207/3_result?aid={analysis_id}")
         st.caption("Скопируй ссылку — любой человек сможет прочитать отчёт.")
 
-# ========== ОТЧЁТ (всегда раскрыт) ==========
 st.subheader("📄 Отчёт анализа")
 if (analysis["report"] or "").strip():
     st.markdown(analysis["report"])
 else:
-    st.warning("Этот отчёт сохранился пустым (сбой стриминга). Удали запись в «📚 История» "
-               "и прогони договор ещё раз — теперь включена автостраховка от пустых отчётов.")
+    st.warning("Этот отчёт сохранился пустым (сбой стриминга). Прогони договор ещё раз — "
+               "теперь включена автостраховка от пустых отчётов.")
 
-# ========== КАРТА ПУНКТОВ (всегда видна, не в expander) ==========
 items = []
 if analysis.get("highlights"):
     try:
@@ -105,11 +103,9 @@ if analysis.get("highlights"):
 if items:
     st.divider()
     st.subheader("🗺 Карта пунктов договора")
-    st.caption("🔴 Красные — опасные пункты (не подписывать без правок). 🟡 Жёлтые — стоит уточнить у контрагента.")
-
+    st.caption("🔴 Красные — опасные пункты. 🟡 Жёлтые — стоит уточнить у контрагента.")
     red = [it for it in items if it.get("level") == "red"]
     yellow = [it for it in items if it.get("level") != "red"]
-
     if red:
         st.markdown(f"### 🔴 Критические риски ({len(red)})")
         for it in red:
@@ -119,23 +115,23 @@ if items:
         for it in yellow:
             st.warning(f"**{it.get('quote')}**\n\n{it.get('reason', '')}")
 
-    st.divider()
-    st.subheader("📑 Договор с подсветкой рисков")
     escaped = _html.escape(contract["source_text"])
     for it in items:
         q = _html.escape(it.get("quote", ""))
         if q and q in escaped:
             cls = "mca-hl-red" if it.get("level") == "red" else "mca-hl-yellow"
             escaped = escaped.replace(q, f'<mark class="{cls}">{q}</mark>', 1)
-    st.markdown(
-        "<style>.mca-contract{white-space:pre-wrap;font-size:13px;line-height:1.6;"
-        "padding:18px;border-radius:16px;background:rgba(255,255,255,.03);"
-        "border:1px solid rgba(255,255,255,.08);}"
-        ".mca-hl-red{background:rgba(255,77,79,.4);color:inherit;padding:0 2px;border-radius:3px;}"
-        ".mca-hl-yellow{background:rgba(240,180,41,.4);color:inherit;padding:0 2px;border-radius:3px;}</style>"
-        f'<div class="mca-contract">{escaped}</div>',
-        unsafe_allow_html=True,
+    hl_html = (
+        "<html><head><meta charset='utf-8'><title>Договор с подсветкой рисков</title>"
+        "<style>body{font-family:Arial;font-size:14px;line-height:1.6;white-space:pre-wrap;}"
+        ".mca-hl-red{background:#ffd6d6;padding:0 2px;}"
+        ".mca-hl-yellow{background:#fff3c4;padding:0 2px;}</style></head>"
+        f"<body><div>{escaped}</div></body></html>"
     )
+    st.download_button("📑 Скачать договор с подсветкой рисков (HTML)",
+                       data=hl_html.encode("utf-8"),
+                       file_name="contract_highlights.html",
+                       mime="text/html")
 
 cm = re.search(r"(?:Чек-лист|Checklist):?\*?\s*\n(.*?)(\n###|\n|\Z)", analysis["report"], re.S)
 cl_items = [l[2:].replace("**", "").strip() for l in (cm.group(1).splitlines() if cm else [])
@@ -174,28 +170,13 @@ with st.expander("📥 Скачать / послушать / отправить"
         file_name="lawyer_pack.docx",
         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         use_container_width=True)
-    st.text_area(
-        "Письмо юристу (скопируй и приложи пакет)",
-        value=f"Здравствуйте!\n\nПрошу проверить договор «{analysis.get('title') or 'Договор'}» и приложенный отчёт ИИ-аналитика. Интересует заключение по рискам, доработка спорных пунктов и стоимость работы.\n\nС уважением, {user['email']}",
-        height=140)
-    if st.button("🧾 Протокол разногласий (таблица DOCX)"):
-        with st.spinner("Готовлю протокол..."):
-            st.session_state["proto_rows"] = generate_protocol(
-                analysis["report"], contract["source_text"], user["tariff"])
-    if st.session_state.get("proto_rows"):
-        st.download_button(
-            "⬇️ Скачать протокол разногласий (DOCX)",
-            data=protocol_docx(st.session_state["proto_rows"], user["email"],
-                               analysis.get("title") or "Договор"),
-            file_name="protocol_raznoglasiy.docx",
-            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-    if st.button("📧 Отправить отчёт на почту"):
+    if st.button(" Отправить отчёт на почту"):
         try:
             pdf = generate_report_pdf(analysis["report"], user["email"])
             if send_report_email(user["email"], pdf, analysis.get("title") or "Договор"):
                 st.success(f"📧 Отчёт отправлен на {user['email']}!")
             else:
-                st.error("Почта не настроена: добавь GMAIL_EMAIL и GMAIL_APP_PASSWORD в Secrets.")
+                st.error("Почта не настроена: проверь GMAIL-секреты на сервере.")
         except Exception:
             st.error("Не удалось отправить. Проверь секреты и попробуй ещё раз.")
     if st.button("🔊 Аудиоверсия отчёта"):
