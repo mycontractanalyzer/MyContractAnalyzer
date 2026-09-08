@@ -48,6 +48,7 @@ TOPIC_TAGS = {
     "форс-мажор": ["гк", "форс", "непреодолим"], "моральн": ["зозпп", "моральн"],
     "семейн": ["ск", "семейн"], "ребенк": ["ск", "ребенк", "детей"],
     "авторск": ["гк", "авторск"], "исключительн": ["гк", "авторск"],
+    "залог": ["гк", "залог"], "имуществ": ["гк", "имуществ"],
 }
 
 
@@ -64,6 +65,24 @@ def _extract_keywords(text: str):
         if key in t:
             themes.update(tags)
     return uniq[:80], themes
+
+
+def _best_excerpt(ft: str, words, max_chars: int = 450) -> str:
+    """Находит внутри полного текста закона статью, максимально релевантную договору."""
+    ft_low = ft.lower()
+    best_pos, best_score = -1, 0
+    for m in re.finditer(r"статья\s+\d+[.\d]*", ft_low):
+        pos = m.start()
+        window = ft_low[pos:pos + 1500]
+        score = sum(1 for w in words if w in window)
+        if score > best_score:
+            best_score = score
+            best_pos = pos
+        if best_score >= 6:
+            break
+    if best_pos < 0 or best_score == 0:
+        return ft[:max_chars]
+    return ft[best_pos:best_pos + max_chars]
 
 
 def search_laws(query: str, limit: int = 8):
@@ -93,7 +112,6 @@ def search_laws(query: str, limit: int = 8):
         if score:
             stage1.append((score, r))
     stage1.sort(key=lambda x: -x[0])
-    # этап 2: уточняем по полному тексту только топ-40
     refined = []
     for score, r in stage1[:40]:
         ft = (r["full_text"] or "").lower()
@@ -105,20 +123,20 @@ def search_laws(query: str, limit: int = 8):
     return [dict(r) for _, r in refined[:limit]]
 
 
-def laws_context_block(query: str, limit: int = 8, max_chars: int = 500) -> str:
+def laws_context_block(query: str, limit: int = 8, max_chars: int = 450) -> str:
     try:
         items = search_laws(query, limit=limit)
     except Exception:
         return ""
     if not items:
         return ""
+    words, _ = _extract_keywords(query)
     lines = []
     for i in items[:limit]:
-        quote = (i.get("full_text") or "").strip()
-        if quote:
-            if len(quote) > max_chars:
-                quote = quote[:max_chars] + "… (ключевые части статьи)"
-            lines.append(f"- {i['code']} — {i['title']}. ДОСЛОВНО: «{quote}»")
+        ft = (i.get("full_text") or "").strip()
+        if ft:
+            excerpt = _best_excerpt(ft, words, max_chars)
+            lines.append(f"- {i['code']} — {i['title']}. ДОСЛОВНО: «{excerpt}»")
         else:
             lines.append(f"- {i['code']} — {i['title']}: {i['essence']}")
     return ("ПРАВОВАЯ БАЗА (нормы РФ):\n" + "\n".join(lines))

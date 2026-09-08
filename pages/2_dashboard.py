@@ -169,7 +169,6 @@ if st.button("🚀 Анализировать", type="primary"):
 
                 report, hl_json = split_report_highlights(report)
                 bar.progress(100, text="Договор анализируется… 100%")
-                live.markdown(report)
 
                 spend_checks(user["id"], len(text))
                 contract_id = save_contract(user["id"], ctype, role, text)

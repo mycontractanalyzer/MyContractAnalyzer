@@ -12,8 +12,8 @@ if not user or user["email"] not in config.ADMIN_EMAILS:
     st.stop()
 
 st.title("⚡ Автозагрузка пакета законов")
-st.caption("Источники: ru.wikisource.org (основной) + pravo.gov.ru (запасной). "
-           "Автообновление базы — каждый понедельник в 5:00 по cron.")
+st.caption("Источник — свободная Викитека (открытые тексты законов). "
+           "Автообновление базы — каждый понедельник в 5:00.")
 
 if st.button("📦 Загрузить базовый пакет (ГК, ГПК, ТК, ЗоЗПП, 152-ФЗ, 40-ФЗ, СК, КоАП, АПК)"):
     from core.laws_autoload import DEFAULT_PACK, autoload_law

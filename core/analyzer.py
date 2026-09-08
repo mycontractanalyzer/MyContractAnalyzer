@@ -46,15 +46,15 @@ CITATION_TASK = """
 """
 
 
+MODEL_CHAT = "deepseek-chat"  # быстрая и дешёвая; reasoner не используем
+
+
 def choose_model(tariff: str) -> str:
-    return config.MODEL_PAID if tariff in PAID_TIERS else config.MODEL_FREE
+    return MODEL_CHAT
 
 
 def _pick_model_for_depth(tariff: str, depth: str) -> str:
-    cfg = DEPTH_CONFIG.get(depth, DEPTH_CONFIG["standard"])
-    if cfg["model_key"] == "paid" and tariff in PAID_TIERS:
-        return config.MODEL_PAID
-    return config.MODEL_FREE
+    return MODEL_CHAT
 
 
 def smart_compress(text: str) -> str:
