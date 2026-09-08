@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyContractAnalyzer — See what you're signing</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}</style>
+</head>
+<body class="bg-[#0f1115] text-[#eef1f6] min-h-screen">
+<nav class="border-b border-white/10">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+    <a href="#/" class="flex items-center gap-3 font-bold text-lg"><span class="text-2xl">⚖️</span>MyContractAnalyzer</a>
+    <div id="navAuth" class="flex items-center gap-3"></div>
+  </div>
+</nav>
+
+<section id="view-home" class="max-w-4xl mx-auto px-6 py-20 text-center">
+  <div class="inline-block px-4 py-1 rounded-full bg-amber-500/10 text-amber-400 text-sm mb-6">⚖️ AI-юрист для твоих договоров</div>
+  <h1 class="text-5xl md:text-6xl font-bold mb-6">See what you're signing</h1>
+  <p class="text-xl text-white/70 mb-10 max-w-2xl mx-auto">Загрузи договор — получи за 30 секунд разбор рисков со ссылками на статьи ГК РФ, ТК РФ и ЗоЗПП.</p>
+  <div class="flex flex-wrap justify-center gap-4">
+    <a href="#/signup" class="px-8 py-4 rounded-2xl bg-amber-500 text-black font-semibold text-lg hover:bg-amber-400">🚀 Начать бесплатно</a>
+    <a href="/" class="px-8 py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-lg">Старая версия</a>
+  </div>
+  <div class="grid md:grid-cols-3 gap-6 mt-20 text-left">
+    <div class="p-6 rounded-2xl bg-white/5 border border-white/10"><div class="text-3xl mb-3">⚡</div><h3 class="font-bold mb-2">30 секунд</h3><p class="text-white/60">Живой стриминг анализа в реальном времени.</p></div>
+    <div class="p-6 rounded-2xl bg-white/5 border border-white/10"><div class="text-3xl mb-3">📚</div><h3 class="font-bold mb-2">2600+ статей</h3><p class="text-white/60">База законов РФ с дословными цитатами в отчёте.</p></div>
+    <div class="p-6 rounded-2xl bg-white/5 border border-white/10"><div class="text-3xl mb-3">🗺</div><h3 class="font-bold mb-2">Карта рисков</h3><p class="text-white/60">Красные и жёлтые пункты с подсветкой в тексте.</p></div>
+  </div>
+</section>
+
+<section id="view-login" class="hidden max-w-md mx-auto px-6 py-20">
+  <form id="loginForm" class="p-8 rounded-2xl bg-white/5 border border-white/10">
+    <h1 class="text-2xl font-bold mb-6">🔐 Вход</h1>
+    <label class="block mb-4"><span class="text-white/70 text-sm">Email</span>
+      <input name="email" type="email" required class="mt-1 w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none"></label>
+    <label class="block mb-6"><span class="text-white/70 text-sm">Пароль</span>
+      <input name="password" type="password" required class="mt-1 w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none"></label>
+    <button class="w-full py-3 rounded-xl bg-amber-500 text-black font-semibold hover:bg-amber-400">Войти</button>
+    <div id="loginMsg" class="mt-4 text-sm"></div>
+    <p class="mt-4 text-sm text-white/60 text-center">Нет аккаунта? <a href="#/signup" class="text-amber-400 underline">Регистрация</a></p>
+  </form>
+</section>
+
+<section id="view-signup" class="hidden max-w-md mx-auto px-6 py-20">
+  <form id="signupForm" class="p-8 rounded-2xl bg-white/5 border border-white/10">
+    <h1 class="text-2xl font-bold mb-6">✨ Регистрация</h1>
+    <label class="block mb-4"><span class="text-white/70 text-sm">Email</span>
+      <input name="email" type="email" required class="mt-1 w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none"></label>
+    <label class="block mb-4"><span class="text-white/70 text-sm">Пароль</span>
+      <input name="password" type="password" required minlength="6" class="mt-1 w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none"></label>
+    <label class="block mb-6"><span class="text-white/70 text-sm">Повторите пароль</span>
+      <input name="password2" type="password" required minlength="6" class="mt-1 w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none"></label>
+    <button class="w-full py-3 rounded-xl bg-amber-500 text-black font-semibold hover:bg-amber-400">Создать аккаунт</button>
+    <div id="signupMsg" class="mt-4 text-sm"></div>
+    <p class="mt-4 text-sm text-white/60 text-center">Уже есть аккаунт? <a href="#/login" class="text-amber-400 underline">Войти</a></p>
+  </form>
+  <form id="verifyForm" class="hidden mt-6 p-8 rounded-2xl bg-white/5 border border-white/10">
+    <h2 class="text-xl font-bold mb-4">📧 Подтверждение почты</h2>
+    <label class="block mb-4"><span class="text-white/70 text-sm">Email</span>
+      <input name="vemail" type="email" required class="mt-1 w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none"></label>
+    <label class="block mb-6"><span class="text-white/70 text-sm">Код из письма</span>
+      <input name="code" required class="mt-1 w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none"></label>
+    <button class="w-full py-3 rounded-xl bg-amber-500 text-black font-semibold hover:bg-amber-400">Подтвердить</button>
+    <div id="verifyMsg" class="mt-4 text-sm"></div>
+  </form>
+</section>
+
+<section id="view-cabinet" class="hidden max-w-4xl mx-auto px-6 py-12">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-2xl font-bold">👤 Личный кабинет</h1>
+    <button id="logoutBtn" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10">Выйти</button>
+  </div>
+  <div id="profile" class="p-6 rounded-2xl bg-white/5 border border-white/10"></div>
+  <div class="mt-6 p-6 rounded-2xl bg-white/5 border border-white/10">
+    <h2 class="font-bold mb-3">🚧 В разработке</h2>
+    <p class="text-white/70">Загрузка договоров и отчёты на новом UI появятся в шаге 3.</p>
+    <p class="mt-3 text-sm text-white/50">Пока: <a href="/" class="text-amber-400 underline">старая версия сайта</a>.</p>
+  </div>
+</section>
+
+<footer class="border-t border-white/10 py-8 text-center text-white/40 text-sm">© 2026 MyContractAnalyzer</footer>
+
+<script>
+const API = '/api';
+function token(){ return localStorage.getItem('mca_token'); }
+function show(view){
+  ['home','login','signup','cabinet'].forEach(v => {
+    document.getElementById('view-'+v).classList.toggle('hidden', v !== view);
+  });
+  document.getElementById('navAuth').innerHTML = token()
+    ? '<a href="#/cabinet" class="px-4 py-2 rounded-xl bg-amber-500 text-black font-semibold">Кабинет</a>'
+    : '<a href="#/login" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10">Войти</a><a href="#/signup" class="px-4 py-2 rounded-xl bg-amber-500 text-black font-semibold hover:bg-amber-400">Регистрация</a>';
+}
+async function loadProfile(){
+  try {
+    const r = await fetch(API + '/me', {headers:{'Authorization':'Bearer ' + token()}});
+    if (!r.ok) throw 0;
+    const u = await r.json();
+    document.getElementById('profile').innerHTML =
+      '<p><b>Email:</b> ' + u.email + '</p><p class="mt-2"><b>Тариф:</b> ' + u.tariff +
+      '</p><p class="mt-2"><b>Проверок осталось:</b> ' + u.checks_left + '</p>';
+  } catch(e){ localStorage.removeItem('mca_token'); location.hash = '#/login'; }
+}
+function route(){
+  const h = location.hash.replace('#/','') || 'home';
+  if (h === 'cabinet' && !token()) { location.hash = '#/login'; return; }
+  if (h === 'cabinet') loadProfile();
+  show(h);
+}
+document.getElementById('logoutBtn').onclick = () => { localStorage.removeItem('mca_token'); location.hash = '#/'; };
+document.getElementById('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const msg = document.getElementById('loginMsg');
+  const fd = new FormData(e.target);
+  msg.textContent = 'Загрузка…'; msg.className = 'mt-4 text-sm text-white/70';
+  try {
+    const r = await fetch(API + '/login', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email: fd.get('email'), password: fd.get('password')})});
+    const d = await r.json();
+    if (r.ok && d.token) { localStorage.setItem('mca_token', d.token); location.hash = '#/cabinet'; }
+    else { msg.textContent = '❌ ' + (d.detail || 'Ошибка входа'); msg.className = 'mt-4 text-sm text-red-400'; }
+  } catch(err){ msg.textContent = '❌ Сеть недоступна'; msg.className = 'mt-4 text-sm text-red-400'; }
+});
+document.getElementById('signupForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const msg = document.getElementById('signupMsg');
+  const fd = new FormData(e.target);
+  msg.textContent = 'Загрузка…'; msg.className = 'mt-4 text-sm text-white/70';
+  try {
+    const r = await fetch(API + '/register', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email: fd.get('email'), password: fd.get('password'), password2: fd.get('password2')})});
+    const d = await r.json();
+    if (r.ok) {
+      msg.textContent = '📧 Код отправлен на почту — введи его ниже.';
+      msg.className = 'mt-4 text-sm text-green-400';
+      document.getElementById('verifyForm').classList.remove('hidden');
+      document.getElementById('verifyForm').vemail.value = fd.get('email');
+    } else { msg.textContent = '❌ ' + (d.detail || 'Ошибка регистрации'); msg.className = 'mt-4 text-sm text-red-400'; }
+  } catch(err){ msg.textContent = '❌ Сеть недоступна'; msg.className = 'mt-4 text-sm text-red-400'; }
+});
+document.getElementById('verifyForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const msg = document.getElementById('verifyMsg');
+  const fd = new FormData(e.target);
+  msg.textContent = 'Проверяю…'; msg.className = 'mt-4 text-sm text-white/70';
+  try {
+    const r = await fetch(API + '/verify', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email: fd.get('vemail'), code: fd.get('code')})});
+    if (r.ok) { msg.textContent = '✅ Почта подтверждена! Теперь войди.'; msg.className = 'mt-4 text-sm text-green-400'; }
+    else { msg.textContent = '❌ Неверный код'; msg.className = 'mt-4 text-sm text-red-400'; }
+  } catch(err){ msg.textContent = '❌ Сеть недоступна'; msg.className = 'mt-4 text-sm text-red-400'; }
+});
+window.addEventListener('hashchange', route);
+route();
+</script>
+</body>
+</html>
