@@ -7,22 +7,11 @@
 <meta name="description" content="Проверь договор за 30 секунд: риски, цитаты статей ГК РФ, ТК РФ, ЗоЗПП и чек-лист правок. See what you're signing.">
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="/style.css">
+<script src="/ui.js"></script>
 </head>
 <body class="min-h-screen">
 <div class="orb orb-a"></div><div class="orb orb-b"></div>
-
-<nav class="sticky top-0 z-50 backdrop-blur-xl bg-[#0b0d12]/70 border-b border-white/5">
-  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-    <a href="/" class="flex items-center gap-3 font-bold text-lg font-display">⚖️ MyContractAnalyzer</a>
-    <div class="hidden md:flex items-center gap-6 text-sm text-white/70">
-      <a href="#features" class="hover:text-white">Возможности</a>
-      <a href="#how" class="hover:text-white">Как работает</a>
-      <a href="#pricing" class="hover:text-white">Тарифы</a>
-      <a href="#faq" class="hover:text-white">FAQ</a>
-    </div>
-    <div id="navAuth" class="flex items-center gap-2 text-sm"></div>
-  </div>
-</nav>
+<div id="siteNav"></div>
 
 <header class="max-w-6xl mx-auto px-6 pt-20 pb-16 grid lg:grid-cols-2 gap-12 items-center relative z-10">
   <div>
@@ -33,8 +22,11 @@
       <a href="/auth.html#signup" class="btn-primary">🚀 Проверить договор бесплатно</a>
       <a href="#how" class="btn-ghost">Как это работает</a>
     </div>
-    <div class="flex flex-wrap gap-6 mt-10 text-sm text-white/60">
-      <span>✅ 2600+ статей в базе</span><span>⚡ ответ за ~30 сек</span><span>🔒 данные в России</span>
+    <div class="flex flex-wrap gap-3 mt-10">
+      <span class="chip">✅ 2600+ статей в базе</span>
+      <span class="chip">⚡ ответ за ~30 сек</span>
+      <span class="chip">🔒 данные в России</span>
+      <span class="chip">📄 PDF/DOCX в один клик</span>
     </div>
   </div>
   <div class="glass p-6 glass-hover">
@@ -74,9 +66,9 @@
 <section id="how" class="max-w-6xl mx-auto px-6 py-16 relative z-10">
   <h2 class="text-3xl font-bold text-center mb-12 grad-text">Три шага до спокойной подписи</h2>
   <div class="grid md:grid-cols-3 gap-6">
-    <div class="glass p-6 reveal"><div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-black font-extrabold flex items-center justify-center text-xl mb-4">1</div><h3 class="font-bold mb-2">Загрузи договор</h3><p class="text-sm text-white/60">TXT, PDF или DOCX — или просто вставь текст. Черновик сохраняется автоматически.</p></div>
-    <div class="glass p-6 reveal"><div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-black font-extrabold flex items-center justify-center text-xl mb-4">2</div><h3 class="font-bold mb-2">Смотри стрим разбора</h3><p class="text-sm text-white/60">ИИ выделяет риски, цитирует статьи и считает риск-скор по прозрачной формуле.</p></div>
-    <div class="glass p-6 reveal"><div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-black font-extrabold flex items-center justify-center text-xl mb-4">3</div><h3 class="font-bold mb-2">Действуй</h3><p class="text-sm text-white/60">Чек-лист правок, письмо контрагенту, протокол разногласий — всё в один клик.</p></div>
+    <div class="glass glass-hover p-6 reveal"><div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-black font-extrabold flex items-center justify-center text-xl mb-4">1</div><h3 class="font-bold mb-2">Загрузи договор</h3><p class="text-sm text-white/60">TXT, PDF или DOCX — или просто вставь текст. Черновик сохраняется автоматически.</p></div>
+    <div class="glass glass-hover p-6 reveal"><div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-black font-extrabold flex items-center justify-center text-xl mb-4">2</div><h3 class="font-bold mb-2">Смотри стрим разбора</h3><p class="text-sm text-white/60">ИИ выделяет риски, цитирует статьи и считает риск-скор по прозрачной формуле.</p></div>
+    <div class="glass glass-hover p-6 reveal"><div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-black font-extrabold flex items-center justify-center text-xl mb-4">3</div><h3 class="font-bold mb-2">Действуй</h3><p class="text-sm text-white/60">Чек-лист правок, письмо контрагенту, протокол разногласий — всё в один клик.</p></div>
   </div>
 </section>
 
@@ -84,10 +76,26 @@
   <h2 class="text-3xl font-bold text-center mb-3 grad-text">Тарифы</h2>
   <p class="text-center text-white/60 mb-12">Оплата подключается после бета-недели — сейчас все проверки бесплатны для тестеров</p>
   <div class="grid md:grid-cols-4 gap-5">
-    <div class="glass glass-hover p-6 reveal"><h3 class="font-bold">Free</h3><div class="text-3xl font-extrabold my-3">0 ₽</div><ul class="text-sm text-white/60 space-y-2"><li>3 проверки</li><li>Базовый отчёт</li></ul></div>
-    <div class="glass glass-hover p-6 reveal"><h3 class="font-bold">Light</h3><div class="text-3xl font-extrabold my-3">300 ₽<span class="text-sm text-white/50">/мес</span></div><ul class="text-sm text-white/60 space-y-2"><li>30 проверок</li><li>Все инструменты</li></ul></div>
-    <div class="glass glass-hover p-6 reveal border-amber-500/40"><div class="badge mb-2 text-xs">Хит</div><h3 class="font-bold">Pro</h3><div class="text-3xl font-extrabold my-3">600 ₽<span class="text-sm text-white/50">/мес</span></div><ul class="text-sm text-white/60 space-y-2"><li>100 проверок</li><li>ИИ-юрист 24/7</li></ul></div>
-    <div class="glass glass-hover p-6 reveal"><h3 class="font-bold">Business</h3><div class="text-3xl font-extrabold my-3">900 ₽<span class="text-sm text-white/50">/мес</span></div><ul class="text-sm text-white/60 space-y-2"><li>300 проверок</li><li>Команда и отчёты</li></ul></div>
+    <div class="glass glass-hover p-6 reveal flex flex-col">
+      <h3 class="font-bold">Free</h3><div class="text-3xl font-extrabold my-3">0 ₽</div>
+      <ul class="text-sm text-white/60 space-y-2 mb-6"><li>3 проверки</li><li>Базовый отчёт и риск-скор</li><li>Карта рисков</li></ul>
+      <a href="/auth.html#signup" class="btn-ghost w-full text-sm mt-auto">Начать</a>
+    </div>
+    <div class="glass glass-hover p-6 reveal flex flex-col">
+      <h3 class="font-bold">Light</h3><div class="text-3xl font-extrabold my-3">300 ₽<span class="text-sm text-white/50">/мес</span></div>
+      <ul class="text-sm text-white/60 space-y-2 mb-6"><li>30 проверок</li><li>Все 9 инструментов</li><li>PDF / DOCX отчёты</li></ul>
+      <a href="/auth.html#signup" class="btn-ghost w-full text-sm mt-auto">Выбрать</a>
+    </div>
+    <div class="glass glass-hover p-6 reveal flex flex-col border-amber-500/40">
+      <div class="badge mb-2 text-xs">Хит</div><h3 class="font-bold">Pro</h3><div class="text-3xl font-extrabold my-3">600 ₽<span class="text-sm text-white/50">/мес</span></div>
+      <ul class="text-sm text-white/60 space-y-2 mb-6"><li>100 проверок</li><li>ИИ-юрист 24/7</li><li>Протокол разногласий</li></ul>
+      <a href="/auth.html#signup" class="btn-primary w-full text-sm mt-auto">Выбрать</a>
+    </div>
+    <div class="glass glass-hover p-6 reveal flex flex-col">
+      <h3 class="font-bold">Business</h3><div class="text-3xl font-extrabold my-3">900 ₽<span class="text-sm text-white/50">/мес</span></div>
+      <ul class="text-sm text-white/60 space-y-2 mb-6"><li>300 проверок</li><li>Команда до 5 человек</li><li>Приоритетная поддержка</li></ul>
+      <a href="/auth.html#signup" class="btn-ghost w-full text-sm mt-auto">Выбрать</a>
+    </div>
   </div>
 </section>
 
@@ -108,53 +116,7 @@
   </div>
 </section>
 
-<footer class="site">
-  <div class="max-w-6xl mx-auto px-6 py-12 grid md:grid-cols-4 gap-8 text-sm">
-    <div>
-      <div class="font-bold text-lg mb-3 font-display">⚖️ MyContractAnalyzer</div>
-      <p class="text-white/50">Сервис ИИ-анализа договоров. Результаты носят информационный характер и не являются юридической консультацией.</p>
-    </div>
-    <div>
-      <div class="font-bold mb-3">Продукт</div>
-      <ul class="space-y-2 text-white/60">
-        <li><a href="/analyze.html" class="hover:text-white">Анализ договора</a></li>
-        <li><a href="/lawyer.html" class="hover:text-white">ИИ-юрист 24/7</a></li>
-        <li><a href="/content.html" class="hover:text-white">Знания и подкасты</a></li>
-        <li><a href="/old/" class="hover:text-white">Старая версия</a></li>
-      </ul>
-    </div>
-    <div>
-      <div class="font-bold mb-3">Документы</div>
-      <ul class="space-y-2 text-white/60">
-        <li><a href="/offer.html" class="hover:text-white">Пользовательское соглашение (оферта)</a></li>
-        <li><a href="/privacy.html" class="hover:text-white">Политика конфиденциальности</a></li>
-        <li><a href="/consent.html" class="hover:text-white">Согласие на обработку ПДн</a></li>
-      </ul>
-    </div>
-    <div>
-      <div class="font-bold mb-3">Контакты</div>
-      <ul class="space-y-2 text-white/60">
-        <li><a href="/profile.html" class="hover:text-white">Поддержка в кабинете</a></li>
-        <li>Email: [EMAIL]</li>
-      </ul>
-    </div>
-  </div>
-  <div class="border-t border-white/5 py-6 text-center text-xs text-white/40">© 2026 MyContractAnalyzer · See what you're signing</div>
-</footer>
-
-<script>
-const token = () => localStorage.getItem('mca_token');
-function nav(){
-  document.getElementById('navAuth').innerHTML = token()
-    ? '<a href="/analyze.html" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10">Анализ</a>' +
-      '<a href="/lawyer.html" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10">ИИ-юрист</a>' +
-      '<a href="/profile.html" class="px-3 py-2 rounded-xl bg-amber-500 text-black font-semibold">Кабинет</a>'
-    : '<a href="/auth.html#login" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10">Войти</a>' +
-      '<a href="/auth.html#signup" class="px-3 py-2 rounded-xl bg-amber-500 text-black font-semibold hover:bg-amber-400">Регистрация</a>';
-}
-const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add('on'); }), {threshold: .12});
-document.querySelectorAll('.reveal').forEach(el => io.observe(el));
-nav();
-</script>
+<div id="siteFooter"></div>
+<script>mcaNav(); mcaFooter(); mcaReveal();</script>
 </body>
 </html>

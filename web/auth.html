@@ -6,17 +6,19 @@
 <title>Вход и регистрация — MyContractAnalyzer</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="/style.css">
+<script src="/ui.js"></script>
 </head>
-<body class="min-h-screen flex items-center justify-center px-4">
+<body class="min-h-screen flex flex-col items-center justify-center px-4 py-10">
 <div class="orb orb-a"></div><div class="orb orb-b"></div>
-<div class="glass p-8 w-full max-w-md relative z-10">
-  <a href="/" class="flex items-center gap-2 font-bold mb-6 font-display">⚖️ MyContractAnalyzer</a>
 
+<a href="/" class="flex items-center gap-3 font-bold text-lg font-display mb-8 relative z-10"><span class="logo-badge">⚖️</span>MyContractAnalyzer</a>
+
+<div class="glass p-8 w-full max-w-md relative z-10">
   <div id="boxLogin">
     <h1 class="text-2xl font-bold mb-6">🔐 Вход</h1>
     <form id="loginForm" class="space-y-4">
-      <input name="email" type="email" required placeholder="Email" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none">
-      <input name="password" type="password" required placeholder="Пароль" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none">
+      <input name="email" type="email" required placeholder="Email" class="input">
+      <input name="password" type="password" required placeholder="Пароль" class="input">
       <button class="btn-primary w-full">Войти</button>
     </form>
     <div id="loginMsg" class="mt-4 text-sm"></div>
@@ -26,9 +28,9 @@
   <div id="boxSignup" class="hidden">
     <h1 class="text-2xl font-bold mb-6">✨ Регистрация</h1>
     <form id="signupForm" class="space-y-4">
-      <input name="email" type="email" required placeholder="Email" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none">
-      <input name="password" type="password" required minlength="6" placeholder="Пароль (мин. 6 символов)" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none">
-      <input name="password2" type="password" required minlength="6" placeholder="Повторите пароль" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none">
+      <input name="email" type="email" required placeholder="Email" class="input">
+      <input name="password" type="password" required minlength="6" placeholder="Пароль (мин. 6 символов)" class="input">
+      <input name="password2" type="password" required minlength="6" placeholder="Повторите пароль" class="input">
       <label class="flex items-start gap-2 text-xs text-white/60"><input type="checkbox" required checked class="mt-0.5 accent-amber-500">
         Принимаю <a href="/offer.html" class="underline text-amber-400">оферту</a> и <a href="/privacy.html" class="underline text-amber-400">политику конфиденциальности</a>, даю <a href="/consent.html" class="underline text-amber-400">согласие на обработку ПДн</a></label>
       <button class="btn-primary w-full">Создать аккаунт</button>
@@ -40,13 +42,15 @@
   <div id="boxVerify" class="hidden">
     <h1 class="text-2xl font-bold mb-6">📧 Код из письма</h1>
     <form id="verifyForm" class="space-y-4">
-      <input name="vemail" type="email" required placeholder="Email" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none">
-      <input name="code" required placeholder="6-значный код" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none">
+      <input name="vemail" type="email" required placeholder="Email" class="input">
+      <input name="code" required placeholder="6-значный код" class="input">
       <button class="btn-primary w-full">Подтвердить</button>
     </form>
     <div id="verifyMsg" class="mt-4 text-sm"></div>
   </div>
 </div>
+
+<p class="mt-6 text-xs text-white/40 relative z-10">© 2026 MyContractAnalyzer · <a href="/offer.html" class="underline">оферта</a> · <a href="/privacy.html" class="underline">политика</a></p>
 
 <script>
 function show(v){
