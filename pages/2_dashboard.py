@@ -42,8 +42,6 @@ depth = st.radio(
     "⚙️ Глубина анализа",
     ["⚡ Краткий (5-15 сек)", "⚙️ Стандарт (20-40 сек)", "🔬 Развёрнутый (1-2 мин)"],
     horizontal=True,
-    help="Краткий — только топ-3 риска и вердикт. Стандарт — полный отчёт со статьями законов. "
-         "Развёрнутый — максимум деталей, цитат и рекомендаций (рекомендуется для больших договоров).",
 )
 depth_key = {"⚡ Краткий (5-15 сек)": "brief",
              "⚙️ Стандарт (20-40 сек)": "standard",
@@ -92,6 +90,7 @@ if st.button("🚀 Анализировать", type="primary"):
             st.page_link("pages/4_pricing.py", label="💳 Тарифы")
         else:
             ctype = contract_type
+            analysis_id = None
             try:
                 with st.status("⏱ Начинаю анализ…", expanded=True) as status:
                     if ctype.startswith("🤖"):
@@ -99,13 +98,11 @@ if st.button("🚀 Анализировать", type="primary"):
                         ctype = detect_contract_type(text)
                         st.toast(f"Тип договора: {ctype}", icon="🤖")
 
-                    status.update(label="📖 AI читает договор (ответ будет печататься в реальном времени)…")
+                    status.update(label="📖 AI читает договор — ответ печатается в реальном времени…")
                     memory_ctx = get_memory_context(ctype)
                     stream_gen, model = analyze_contract_stream(
                         text, user["tariff"], ctype, role, comment,
-                        depth=depth_key, jurisdiction=jurisdiction, memory_ctx=memory_ctx,
-                    )
-                    # Стримим ответ в реальном времени
+                        depth=depth_key, jurisdiction=jurisdiction, memory_ctx=memory_ctx)
                     report = st.write_stream(stream_gen)
 
                     status.update(label="💾 Сохраняю отчёт…")
@@ -123,9 +120,12 @@ if st.button("🚀 Анализировать", type="primary"):
                             save_highlights(analysis_id, extract_highlights(hl_text, user["tariff"]))
                         except Exception:
                             pass
+
                     status.update(label="✅ Анализ готов!", state="complete")
+            except Exception as e:
                 st.error(f"AI сейчас недоступен ({type(e).__name__}). Проверка НЕ списана — попробуй позже.")
                 st.stop()
+
             st.session_state["last_analysis_id"] = analysis_id
-            st.success("✅ Анализ готов! Отчёт собран с цитатами законов.")
+            st.session_state["flash_msg"] = "✅ Анализ готов! Отчёт собран."
             st.page_link("pages/3_result.py", label="📊 СМОТРЕТЬ ОТЧЁТ", use_container_width=True)
