@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Профиль — MyContractAnalyzer</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}</style>
+</head>
+<body class="bg-[#0f1115] text-[#eef1f6] min-h-screen">
+<nav class="border-b border-white/10">
+  <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+    <a href="/new/" class="flex items-center gap-3 font-bold text-lg"><span class="text-2xl">⚖️</span>MyContractAnalyzer</a>
+    <div class="flex gap-2 text-sm">
+      <a href="/new/analyze.html" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10">Анализ</a>
+      <a href="/new/#/cabinet" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10">Кабинет</a>
+      <button id="logoutBtn" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10">Выйти</button>
+    </div>
+  </div>
+</nav>
+
+<main class="max-w-4xl mx-auto px-6 py-10 space-y-8">
+  <h1 class="text-3xl font-bold">⚙️ Профиль и настройки</h1>
+
+  <section class="p-6 rounded-2xl bg-white/5 border border-white/10">
+    <h2 class="font-bold mb-4">👤 Мои данные</h2>
+    <div id="meBox" class="text-sm space-y-1"></div>
+  </section>
+
+  <section class="p-6 rounded-2xl bg-white/5 border border-white/10">
+    <h2 class="font-bold mb-4">🔑 Смена пароля</h2>
+    <form id="passForm" class="grid md:grid-cols-3 gap-4">
+      <input name="old" type="password" placeholder="Текущий пароль" class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none">
+      <input name="new" type="password" placeholder="Новый пароль" minlength="6" class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none">
+      <input name="new2" type="password" placeholder="Повторите новый" minlength="6" class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none">
+      <button class="md:col-span-3 px-6 py-3 rounded-xl bg-amber-500 text-black font-semibold hover:bg-amber-400">💾 Сменить пароль</button>
+    </form>
+    <div id="passMsg" class="mt-3 text-sm"></div>
+  </section>
+
+  <section class="p-6 rounded-2xl bg-white/5 border border-white/10">
+    <h2 class="font-bold mb-4">💬 Поддержка</h2>
+    <p class="text-sm text-white/60 mb-4">Обращение попадёт администратору, ответ придёт на твой email.</p>
+    <form id="supForm" class="space-y-4">
+      <select name="topic" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10">
+        <option>Вопрос по анализу</option><option>Оплата и тарифы</option>
+        <option>Техническая проблема</option><option>Предложение</option><option>Другое</option>
+      </select>
+      <textarea name="message" rows="4" placeholder="Опиши вопрос…" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none"></textarea>
+      <button class="px-6 py-3 rounded-xl bg-amber-500 text-black font-semibold hover:bg-amber-400">📨 Отправить обращение</button>
+    </form>
+    <div id="supMsg" class="mt-3 text-sm"></div>
+  </section>
+
+  <section class="p-6 rounded-2xl bg-white/5 border border-white/10">
+    <h2 class="font-bold mb-3">📦 Удаление аккаунта и старые инструменты</h2>
+    <p class="text-sm text-white/60">Удаление аккаунта, история проверок, сравнение версий и прочие инструменты старой версии доступны здесь:</p>
+    <a href="/old/" class="inline-block mt-3 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-sm">Открыть старую версию</a>
+  </section>
+</main>
+
+<script>
+const token = localStorage.getItem('mca_token');
+if (!token) location.href = '/new/index.html#/login';
+document.getElementById('logoutBtn').onclick = () => { localStorage.removeItem('mca_token'); location.href = '/new/'; };
+fetch('/api/me', {headers: {'Authorization': 'Bearer ' + token}})
+  .then(r => r.ok ? r.json() : Promise.reject())
+  .then(u => {
+    document.getElementById('meBox').innerHTML =
+      '<p><b>Email:</b> ' + u.email + '</p><p><b>Тариф:</b> ' + u.tariff + '</p><p><b>Проверок осталось:</b> ' + u.checks_left + '</p>';
+  })
+  .catch(() => location.href = '/new/index.html#/login');
+
+document.getElementById('passForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const msg = document.getElementById('passMsg');
+  const fd = new FormData(e.target);
+  if (fd.get('new') !== fd.get('new2')) { msg.textContent = '❌ Новые пароли не совпадают'; msg.className = 'mt-3 text-sm text-red-400'; return; }
+  const r = await fetch('/api/change_password', {method: 'POST',
+    headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+    body: JSON.stringify({old: fd.get('old'), new: fd.get('new')})});
+  const d = await r.json();
+  msg.textContent = r.ok ? '✅ ' + (d.message || 'Пароль изменён') : '❌ ' + (d.detail || 'Ошибка');
+  msg.className = 'mt-3 text-sm ' + (r.ok ? 'text-green-400' : 'text-red-400');
+});
+
+document.getElementById('supForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const msg = document.getElementById('supMsg');
+  const fd = new FormData(e.target);
+  const r = await fetch('/api/support', {method: 'POST',
+    headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+    body: JSON.stringify({topic: fd.get('topic'), message: fd.get('message')})});
+  msg.textContent = r.ok ? '✅ Обращение отправлено! Ответ придёт на email.' : '❌ Ошибка отправки';
+  msg.className = 'mt-3 text-sm ' + (r.ok ? 'text-green-400' : 'text-red-400');
+});
+</script>
+</body>
+</html>
