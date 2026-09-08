@@ -653,3 +653,184 @@ def admin_consults(user=Depends(_auth)):
         rows = []
     conn.close()
     return rows
+
+
+@app.get("/api/admin/series")
+def admin_series(user=Depends(_auth)):
+    _admin(user)
+    conn = get_connection()
+    regs = [dict(r) for r in conn.execute(
+        "SELECT date(created_at) d, COUNT(*) c FROM users GROUP BY d ORDER BY d")]
+    anls = [dict(r) for r in conn.execute(
+        "SELECT date(created_at) d, COUNT(*) c FROM analyses GROUP BY d ORDER BY d")]
+    paid = conn.execute("SELECT COUNT(*) c FROM users WHERE tariff != 'Free'").fetchone()["c"]
+    try:
+        promos = [dict(r) for r in conn.execute(
+            "SELECT code, used_count FROM promocodes ORDER BY used_count DESC LIMIT 5")]
+    except Exception:
+        promos = []
+    conn.close()
+    return {"regs": regs, "anals": anls, "paid": paid, "top_promos": promos}
+
+
+class ResetPassIn(BaseModel):
+    password: str
+
+
+@app.post("/api/admin/users/{uid}/reset_password")
+def admin_reset_pass(uid: int, data: ResetPassIn, user=Depends(_auth)):
+    _admin(user)
+    from utils.auth import reset_password_admin
+    reset_password_admin(uid, data.password)
+    return {"ok": True}
+
+
+@app.post("/api/admin/users/{uid}/delete")
+def admin_delete_user(uid: int, user=Depends(_auth)):
+    _admin(user)
+    from utils.auth import delete_user
+    delete_user(uid)
+    return {"ok": True}
+
+
+class GrantIn(BaseModel):
+    tariff: str
+    promo_code: str = ""
+
+
+@app.post("/api/admin/users/{uid}/grant")
+def admin_grant(uid: int, data: GrantIn, user=Depends(_auth)):
+    _admin(user)
+    from core.tariffs import TARIFFS
+    if data.tariff not in TARIFFS:
+        raise HTTPException(400, "Неизвестный тариф")
+    conn = get_connection()
+    conn.execute("UPDATE users SET tariff = ?, checks_left = ? WHERE id = ?",
+                 (data.tariff, TARIFFS[data.tariff]["checks"], uid))
+    conn.commit()
+    conn.close()
+    msg = ""
+    if data.promo_code.strip():
+        from core.promocodes import register_discount_use
+        ok, m = register_discount_use(data.promo_code.strip(), uid)
+        if not ok:
+            msg = f"Промокод не засчитан: {m}"
+    return {"ok": True, "message": msg}
+
+
+class ChecksSetIn(BaseModel):
+    value: int
+    mode: str = "add"
+
+
+@app.post("/api/admin/users/{uid}/checks_set")
+def admin_checks_set(uid: int, data: ChecksSetIn, user=Depends(_auth)):
+    _admin(user)
+    conn = get_connection()
+    if data.mode == "set":
+        conn.execute("UPDATE users SET checks_left = ? WHERE id = ?", (max(0, data.value), uid))
+    else:
+        conn.execute("UPDATE users SET checks_left = MAX(0, checks_left + ?) WHERE id = ?",
+                     (data.value, uid))
+    conn.commit()
+    conn.close()
+    return {"ok": True}
+
+
+@app.get("/api/admin/promocodes")
+def admin_promos(user=Depends(_auth)):
+    _admin(user)
+    from core.promocodes import list_promocodes
+    return list_promocodes()
+
+
+class PromoCreateIn(BaseModel):
+    kind: str
+    checks_bonus: int = 0
+    discount_rub: int = 0
+    min_tariff: str = ""
+    expires_at: str = ""
+    custom_code: str = ""
+
+
+@app.post("/api/admin/promocodes")
+def admin_promo_create(data: PromoCreateIn, user=Depends(_auth)):
+    _admin(user)
+    from core.promocodes import create_promocode
+    ok, result = create_promocode(
+        kind=data.kind,
+        value=data.checks_bonus if data.kind == "checks" else 0,
+        discount_rub=data.discount_rub,
+        min_tariff=data.min_tariff or None,
+        checks_bonus=data.checks_bonus,
+        expires_at=data.expires_at or None,
+        custom_code=data.custom_code or None)
+    if not ok:
+        raise HTTPException(400, result)
+    return {"ok": True, "code": result}
+
+
+@app.post("/api/admin/promocodes/{code}/deactivate")
+def admin_promo_off(code: str, user=Depends(_auth)):
+    _admin(user)
+    from core.promocodes import deactivate_promocode
+    deactivate_promocode(code)
+    return {"ok": True}
+
+
+@app.post("/api/admin/promocodes/{code}/delete")
+def admin_promo_del(code: str, user=Depends(_auth)):
+    _admin(user)
+    conn = get_connection()
+    conn.execute("DELETE FROM promocodes WHERE code = ?", (code,))
+    conn.commit()
+    conn.close()
+    return {"ok": True}
+
+
+class ResetReqIn(BaseModel):
+    email: str
+
+
+@app.post("/api/reset_request")
+def reset_request(data: ResetReqIn):
+    import random
+    email = data.email.strip().lower()
+    conn = get_connection()
+    cols = [r["name"] for r in conn.execute("PRAGMA table_info(users)").fetchall()]
+    if "reset_code" not in cols:
+        conn.execute("ALTER TABLE users ADD COLUMN reset_code TEXT DEFAULT ''")
+        conn.commit()
+    row = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+    if not row:
+        conn.close()
+        return {"ok": True}
+    code = str(random.randbelow(900000) + 100000)
+    conn.execute("UPDATE users SET reset_code = ? WHERE id = ?", (code, row["id"]))
+    conn.commit()
+    conn.close()
+    _send_text_email(email, "MyContractAnalyzer — восстановление пароля",
+                     f"Ваш код для смены пароля: {code}\nЕсли вы не запрашивали сброс — проигнорируйте письмо.")
+    return {"ok": True}
+
+
+class ResetConfirmIn(BaseModel):
+    email: str
+    code: str
+    new_password: str
+
+
+@app.post("/api/reset_confirm")
+def reset_confirm(data: ResetConfirmIn):
+    email = data.email.strip().lower()
+    conn = get_connection()
+    row = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+    ok = bool(row) and (row["reset_code"] or "") == data.code.strip() and len(data.new_password) >= 6
+    if ok:
+        conn.execute("UPDATE users SET password_hash = ?, reset_code = '' WHERE id = ?",
+                     (hash_password(data.new_password), row["id"]))
+        conn.commit()
+    conn.close()
+    if not ok:
+        raise HTTPException(400, "Неверный код или пароль короче 6 символов")
+    return {"ok": True}

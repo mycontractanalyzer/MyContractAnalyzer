@@ -11,7 +11,7 @@
 <body class="min-h-screen flex flex-col items-center justify-center px-4 py-10">
 <div class="orb orb-a"></div><div class="orb orb-b"></div>
 
-<a href="/" class="flex items-center gap-3 font-bold text-lg font-display mb-8 relative z-10"><span class="logo-badge">⚖️</span>MyContractAnalyzer</a>
+<a href="/" class="flex items-center gap-3 font-bold text-lg font-display mb-8 relative z-10"><img src="/logo.png?v=2" class="logo-img" alt="⚖️">MyContractAnalyzer</a>
 
 <div class="glass p-8 w-full max-w-md relative z-10">
   <div id="boxLogin">
@@ -22,7 +22,10 @@
       <button class="btn-primary w-full">Войти</button>
     </form>
     <div id="loginMsg" class="mt-4 text-sm"></div>
-    <p class="mt-4 text-sm text-white/60">Нет аккаунта? <a href="#signup" class="text-amber-400 underline">Регистрация</a></p>
+    <div class="mt-4 flex justify-between text-sm">
+      <a href="#reset" class="text-white/60 underline hover:text-white">Забыли пароль?</a>
+      <a href="#signup" class="text-amber-400 underline">Регистрация</a>
+    </div>
   </div>
 
   <div id="boxSignup" class="hidden">
@@ -48,13 +51,26 @@
     </form>
     <div id="verifyMsg" class="mt-4 text-sm"></div>
   </div>
+
+  <div id="boxReset" class="hidden">
+    <h1 class="text-2xl font-bold mb-6">🔑 Восстановление пароля</h1>
+    <form id="resetForm" class="space-y-4">
+      <input name="remail" type="email" required placeholder="Email" class="input">
+      <button id="sendReset" class="btn-ghost w-full text-sm">📧 Прислать код на почту</button>
+      <input name="rcode" placeholder="Код из письма" class="input">
+      <input name="rpass" type="password" minlength="6" placeholder="Новый пароль (мин. 6)" class="input">
+      <button class="btn-primary w-full">💾 Сменить пароль</button>
+    </form>
+    <div id="resetMsg" class="mt-4 text-sm"></div>
+    <p class="mt-4 text-sm text-white/60"><a href="#login" class="text-amber-400 underline">← Вернуться ко входу</a></p>
+  </div>
 </div>
 
 <p class="mt-6 text-xs text-white/40 relative z-10">© 2026 MyContractAnalyzer · <a href="/offer.html" class="underline">оферта</a> · <a href="/privacy.html" class="underline">политика</a></p>
 
 <script>
 function show(v){
-  ['Login','Signup','Verify'].forEach(x =>
+  ['Login','Signup','Verify','Reset'].forEach(x =>
     document.getElementById('box'+x).classList.toggle('hidden', x.toLowerCase() !== v));
 }
 function route(){ show(location.hash.replace('#','') || 'login'); }
@@ -98,6 +114,33 @@ document.getElementById('verifyForm').addEventListener('submit', async e => {
     msg.className = 'mt-4 text-sm text-green-400';
     setTimeout(() => { location.hash = '#login'; }, 900);
   } else { msg.textContent = '❌ Неверный код'; msg.className = 'mt-4 text-sm text-red-400'; }
+});
+
+document.getElementById('sendReset').onclick = async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('resetMsg');
+  const email = document.getElementById('resetForm').remail.value;
+  const r = await fetch('/api/reset_request', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({email})});
+  msg.textContent = r.ok ? '📧 Код отправлен (если такой email существует).' : '❌ Ошибка';
+  msg.className = 'mt-4 text-sm ' + (r.ok ? 'text-green-400' : 'text-red-400');
+};
+
+document.getElementById('resetForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const msg = document.getElementById('resetMsg');
+  const fd = new FormData(e.target);
+  const r = await fetch('/api/reset_confirm', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({email: fd.get('remail'), code: fd.get('rcode'), new_password: fd.get('rpass')})});
+  if (r.ok) {
+    msg.textContent = '✅ Пароль изменён! Войди с новым паролем.';
+    msg.className = 'mt-4 text-sm text-green-400';
+    setTimeout(() => { location.hash = '#login'; }, 1200);
+  } else {
+    const d = await r.json().catch(() => ({}));
+    msg.textContent = '❌ ' + (d.detail || 'Ошибка');
+    msg.className = 'mt-4 text-sm text-red-400';
+  }
 });
 </script>
 </body>

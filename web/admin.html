@@ -16,36 +16,101 @@
   <h1 class="text-3xl font-bold mb-6">🛠 Админ-панель</h1>
 
   <div class="flex flex-wrap gap-2 mb-6 text-sm">
-    <button data-tab="stats" class="tab-btn on">📊 Статистика</button>
+    <button data-tab="dash" class="tab-btn on">📊 Дашборд</button>
     <button data-tab="users" class="tab-btn">👥 Пользователи</button>
+    <button data-tab="grant" class="tab-btn">💳 Тариф</button>
+    <button data-tab="checks" class="tab-btn">🎁 Проверки</button>
+    <button data-tab="promo" class="tab-btn">🎟 Промокоды</button>
     <button data-tab="support" class="tab-btn">📨 Обращения</button>
     <button data-tab="feedback" class="tab-btn">⭐ Отзывы</button>
-    <button data-tab="consults" class="tab-btn">🧑‍⚖️ Заявки юристу</button>
+    <button data-tab="consults" class="tab-btn">🧑⚖️ Заявки</button>
     <button data-tab="laws" class="tab-btn">📚 Законы</button>
   </div>
 
-  <section id="tab-stats" class="pane">
+  <section id="tab-dash" class="pane">
     <div id="statCards" class="grid md:grid-cols-4 gap-4 mb-8"></div>
-    <h2 class="font-bold mb-3">Последние пользователи</h2>
-    <div id="usersTable" class="glass p-4 text-sm space-y-2"></div>
+    <div class="grid md:grid-cols-2 gap-6 mb-8">
+      <div class="glass p-5"><h3 class="font-bold mb-3">Регистрации по дням</h3><div id="regsChart"></div></div>
+      <div class="glass p-5"><h3 class="font-bold mb-3">Анализы по дням</h3><div id="anlsChart"></div></div>
+    </div>
+    <div class="glass p-5"><h3 class="font-bold mb-3">Топ промокодов</h3><div id="topPromos" class="text-sm space-y-1"></div></div>
   </section>
 
   <section id="tab-users" class="pane hidden">
-    <p class="text-sm text-white/60 mb-4">Смени тариф тестеру или начисли проверки — изменения применяются мгновенно.</p>
+    <p class="text-sm text-white/60 mb-4">Сброс пароля выдаёт временный пароль; удаление стирает аккаунт безвозвратно.</p>
     <div id="usersList" class="space-y-3"></div>
   </section>
 
-  <section id="tab-support" class="pane hidden">
-    <div id="supportList" class="space-y-4"></div>
+  <section id="tab-grant" class="pane hidden">
+    <div class="glass p-6 max-w-xl space-y-4">
+      <label class="block text-sm"><span class="text-white/70">Пользователь</span>
+        <select id="grantEmail" class="input mt-1"></select></label>
+      <label class="block text-sm"><span class="text-white/70">Тариф (проверки начислятся по тарифу)</span>
+        <select id="grantTariff" class="input mt-1">
+          <option>Free</option><option>Light</option><option>Standard</option>
+          <option>Pro</option><option>Business</option><option>Business Pro</option>
+        </select></label>
+      <label class="block text-sm"><span class="text-white/70">Промокод скидки (если клиент оплатил с ним)</span>
+        <input id="grantPromo" class="input mt-1" placeholder="Необязательно"></label>
+      <button id="grantBtn" class="btn-primary text-sm">Выдать</button>
+      <div id="grantMsg" class="text-sm"></div>
+    </div>
   </section>
 
-  <section id="tab-feedback" class="pane hidden">
-    <div id="feedbackList" class="space-y-3"></div>
+  <section id="tab-checks" class="pane hidden">
+    <div class="glass p-6 max-w-xl space-y-4">
+      <label class="block text-sm"><span class="text-white/70">Пользователь</span>
+        <select id="checksEmail" class="input mt-1"></select></label>
+      <label class="block text-sm"><span class="text-white/70">Количество</span>
+        <input id="checksNum" type="number" value="10" min="0" max="100000" class="input mt-1"></label>
+      <div class="flex gap-3 text-sm">
+        <label class="chip cursor-pointer has-[:checked]:border-amber-500 has-[:checked]:bg-amber-500/10"><input type="radio" name="cmode" value="add" checked class="accent-amber-500 mr-1">Добавить к текущим</label>
+        <label class="chip cursor-pointer has-[:checked]:border-amber-500 has-[:checked]:bg-amber-500/10"><input type="radio" name="cmode" value="set" class="accent-amber-500 mr-1">Установить ровно</label>
+      </div>
+      <button id="checksBtn" class="btn-primary text-sm">🎁 Выдать проверки</button>
+      <div id="checksMsg" class="text-sm"></div>
+    </div>
   </section>
 
-  <section id="tab-consults" class="pane hidden">
-    <div id="consultsList" class="space-y-3"></div>
+  <section id="tab-promo" class="pane hidden">
+    <div class="glass p-6 max-w-2xl space-y-4 mb-8">
+      <h3 class="font-bold">➕ Создать промокод</h3>
+      <div class="flex flex-wrap gap-3 text-sm">
+        <label class="chip cursor-pointer has-[:checked]:border-amber-500 has-[:checked]:bg-amber-500/10"><input type="radio" name="pcode_mode" value="auto" checked class="accent-amber-500 mr-1">🎲 Сгенерировать</label>
+        <label class="chip cursor-pointer has-[:checked]:border-amber-500 has-[:checked]:bg-amber-500/10"><input type="radio" name="pcode_mode" value="custom" class="accent-amber-500 mr-1">✏️ Свой код</label>
+      </div>
+      <input id="pCustom" class="input" placeholder="Свой код (например START250)" style="display:none">
+      <div class="flex flex-wrap gap-3 text-sm">
+        <label class="chip cursor-pointer has-[:checked]:border-amber-500 has-[:checked]:bg-amber-500/10"><input type="radio" name="pkind" value="checks" checked class="accent-amber-500 mr-1">🎁 На проверки</label>
+        <label class="chip cursor-pointer has-[:checked]:border-amber-500 has-[:checked]:bg-amber-500/10"><input type="radio" name="pkind" value="discount" class="accent-amber-500 mr-1">💰 На скидку, ₽</label>
+      </div>
+      <div class="grid md:grid-cols-3 gap-4 text-sm">
+        <label class="block"><span class="text-white/70">Проверок бонусом</span><input id="pChecks" type="number" value="10" min="0" class="input mt-1"></label>
+        <label class="block"><span class="text-white/70">Скидка, ₽</span><input id="pRub" type="number" value="250" min="0" step="50" class="input mt-1"></label>
+        <label class="block"><span class="text-white/70">Только для тарифа</span>
+          <select id="pTariff" class="input mt-1"><option value="">Любой</option><option>Light</option><option>Standard</option><option>Pro</option><option>Business</option><option>Business Pro</option></select></label>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4 text-sm">
+        <label class="block"><span class="text-white/70">Срок действия</span>
+          <select id="pDur" class="input mt-1">
+            <option value="30">1 месяц</option><option value="90">3 месяца</option>
+            <option value="180">6 месяцев</option><option value="365">12 месяцев</option>
+            <option value="730">24 месяца</option><option value="0">♾ Неограниченно</option>
+            <option value="exact">🎯 Точное время</option>
+          </select></label>
+        <label class="block"><span class="text-white/70">Точная дата (если выбрано)</span>
+          <input id="pExact" type="datetime-local" class="input mt-1"></label>
+      </div>
+      <button id="pCreate" class="btn-primary text-sm">🎟 Создать промокод</button>
+      <div id="pMsg" class="text-sm"></div>
+    </div>
+    <h3 class="font-bold mb-3">📋 Все промокоды</h3>
+    <div id="promoList" class="space-y-3"></div>
   </section>
+
+  <section id="tab-support" class="pane hidden"><div id="supportList" class="space-y-4"></div></section>
+  <section id="tab-feedback" class="pane hidden"><div id="feedbackList" class="space-y-3"></div></section>
+  <section id="tab-consults" class="pane hidden"><div id="consultsList" class="space-y-3"></div></section>
 
   <section id="tab-laws" class="pane hidden">
     <div class="flex flex-wrap items-center gap-4 mb-4">
@@ -63,10 +128,10 @@ const token = mcaToken();
 if (!token) location.href = '/auth.html#login';
 const ADMIN_EMAIL = 'mycontractanalyzer@gmail.com';
 const H = {'Authorization': 'Bearer ' + token};
-const TARIFFS = ['Free','Light','Standard','Pro','Business','Business Pro'];
+let USERS = [];
 
 fetch('/api/me', {headers: H}).then(r => r.ok ? r.json() : Promise.reject())
-  .then(u => { if (u.email !== ADMIN_EMAIL) location.href = '/profile.html'; loadStats(); })
+  .then(u => { if (u.email !== ADMIN_EMAIL) location.href = '/profile.html'; loadDash(); })
   .catch(() => location.href = '/auth.html#login');
 
 document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => {
@@ -74,55 +139,141 @@ document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => {
   b.classList.add('on');
   document.querySelectorAll('.pane').forEach(p => p.classList.add('hidden'));
   document.getElementById('tab-' + b.dataset.tab).classList.remove('hidden');
-  const loaders = {stats: loadStats, users: loadUsers, support: loadSupport,
-                   feedback: loadFeedback, consults: loadConsults, laws: loadLaws};
-  loaders[b.dataset.tab]();
+  ({dash: loadDash, users: loadUsers, grant: loadUsers, checks: loadUsers,
+    promo: loadPromos, support: loadSupport, feedback: loadFeedback,
+    consults: loadConsults, laws: loadLaws})[b.dataset.tab]();
 });
 
-async function loadStats(){
-  const r = await fetch('/api/admin/stats', {headers: H});
-  if (!r.ok) return;
-  const s = await r.json();
+function bars(data, color){
+  if (!data || !data.length) return '<p class="text-white/50 text-sm">Пока нет данных</p>';
+  const max = Math.max(...data.map(x => x.c), 1);
+  return '<div class="flex items-end gap-1 h-24">' + data.slice(-30).map(x =>
+    '<div title="' + x.d + ': ' + x.c + '" style="height:' + Math.max(4, Math.round(x.c / max * 100)) +
+    '%" class="flex-1 rounded-t ' + color + '"></div>').join('') + '</div>';
+}
+
+async function loadDash(){
+  const [s, ser] = await Promise.all([
+    fetch('/api/admin/stats', {headers: H}).then(r => r.json()),
+    fetch('/api/admin/series', {headers: H}).then(r => r.json())]);
   const card = (t, v) => '<div class="glass p-5"><div class="text-white/60 text-sm">' + t + '</div><div class="text-2xl font-extrabold mt-1">' + v + '</div></div>';
   document.getElementById('statCards').innerHTML =
-    card('Пользователей', s.users) + card('Подтверждено', s.verified) +
-    card('Анализов', s.analyses) + card('Договоров', s.contracts) +
-    card('Средняя оценка', s.feedback_avg ?? '—') + card('Открытых обращений', s.support_open) +
-    card('Статей в базе', s.laws) + card('Регистраций сегодня', s.reg_today ?? '—');
-  document.getElementById('usersTable').innerHTML = (s.recent_users || []).map(u =>
-    '<div class="flex justify-between gap-3 border-b border-white/5 pb-2"><span>' + mcaEsc(u.email) +
-    '</span><span class="text-amber-400">' + mcaEsc(u.tariff) + '</span><span class="text-white/50">проверок: ' + u.checks_left + '</span></div>').join('');
+    card('Пользователи', s.users) + card('Платные', ser.paid) +
+    card('Анализы', s.analyses) + card('Средняя оценка', s.feedback_avg ?? '—') +
+    card('Открытых обращений', s.support_open) + card('Статей в базе', s.laws) +
+    card('Регистраций сегодня', s.reg_today ?? '—') + card('Договоров', s.contracts);
+  document.getElementById('regsChart').innerHTML = bars(ser.regs, 'bg-amber-500');
+  document.getElementById('anlsChart').innerHTML = bars(ser.anls, 'bg-sky-500');
+  document.getElementById('topPromos').innerHTML = ser.top_promos.length
+    ? ser.top_promos.map(p => '<div>• <b>' + mcaEsc(p.code) + '</b> — ' + (p.used_count || 0) + ' исп.</div>').join('')
+    : '<p class="text-white/50">Пока нет промокодов</p>';
 }
 
 async function loadUsers(){
   const r = await fetch('/api/admin/users', {headers: H});
+  USERS = await r.json();
+  const opts = USERS.map(u => '<option value="' + u.id + '">' + mcaEsc(u.email) + ' — ' + u.tariff + ' (' + u.checks_left + ' пров.)</option>').join('');
+  document.getElementById('grantEmail').innerHTML = opts;
+  document.getElementById('checksEmail').innerHTML = opts;
+  document.getElementById('usersList').innerHTML = USERS.map(u =>
+    '<div class="glass p-4 flex flex-wrap items-center gap-3">' +
+    '<div class="flex-1 min-w-[220px]"><b class="text-sm">' + mcaEsc(u.email) + '</b> <span class="text-xs text-white/50">#' + u.id +
+    (u.verified ? ' ✅' : ' ⏳') + ' · ' + u.tariff + ' · проверок: ' + u.checks_left + '</span></div>' +
+    '<input id="rp' + u.id + '" class="input text-sm" style="max-width:150px" placeholder="Временный пароль" value="mca12345">' +
+    '<button data-uid="' + u.id + '" class="rp-btn btn-ghost text-xs">🔑 Сбросить</button>' +
+    '<button data-uid="' + u.id + '" class="del-btn btn-ghost text-xs">🗑 Удалить</button></div>').join('');
+  document.querySelectorAll('.rp-btn').forEach(b => b.onclick = async () => {
+    const uid = b.dataset.uid;
+    await fetch('/api/admin/users/' + uid + '/reset_password', {method: 'POST',
+      headers: {'Content-Type': 'application/json', ...H},
+      body: JSON.stringify({password: document.getElementById('rp' + uid).value})});
+    b.textContent = '✅ Готово';
+  });
+  document.querySelectorAll('.del-btn').forEach(b => b.onclick = async () => {
+    if (!confirm('Удалить пользователя #' + b.dataset.uid + ' безвозвратно?')) return;
+    await fetch('/api/admin/users/' + b.dataset.uid + '/delete', {method: 'POST', headers: H});
+    loadUsers();
+  });
+}
+
+document.getElementById('grantBtn').onclick = async () => {
+  const r = await fetch('/api/admin/users/' + document.getElementById('grantEmail').value + '/grant', {
+    method: 'POST', headers: {'Content-Type': 'application/json', ...H},
+    body: JSON.stringify({tariff: document.getElementById('grantTariff').value,
+                          promo_code: document.getElementById('grantPromo').value})});
+  const d = await r.json();
+  document.getElementById('grantMsg').textContent = r.ok ? ('✅ Тариф выдан' + (d.message ? '. ' + d.message : '')) : ('❌ ' + (d.detail || 'Ошибка'));
+};
+
+document.getElementById('checksBtn').onclick = async () => {
+  const r = await fetch('/api/admin/users/' + document.getElementById('checksEmail').value + '/checks_set', {
+    method: 'POST', headers: {'Content-Type': 'application/json', ...H},
+    body: JSON.stringify({value: +document.getElementById('checksNum').value,
+                          mode: document.querySelector('input[name="cmode"]:checked').value})});
+  document.getElementById('checksMsg').textContent = r.ok ? '✅ Готово' : '❌ Ошибка';
+};
+
+document.querySelectorAll('input[name="pcode_mode"]').forEach(r => r.onchange = () => {
+  document.getElementById('pCustom').style.display = r.value === 'custom' && r.checked ? 'block' : (document.querySelector('input[name="pcode_mode"]:checked').value === 'custom' ? 'block' : 'none');
+});
+
+document.getElementById('pCreate').onclick = async () => {
+  const dur = document.getElementById('pDur').value;
+  let expires = '';
+  if (dur === 'exact') {
+    const v = document.getElementById('pExact').value;
+    if (!v) { document.getElementById('pMsg').textContent = '❌ Укажи точную дату'; return; }
+    expires = v.replace('T', ' ').slice(0, 16);
+  } else if (dur !== '0') {
+    const d = new Date(Date.now() + (+dur) * 86400000);
+    expires = d.toISOString().slice(0, 16).replace('T', ' ');
+  }
+  const r = await fetch('/api/admin/promocodes', {method: 'POST',
+    headers: {'Content-Type': 'application/json', ...H},
+    body: JSON.stringify({
+      kind: document.querySelector('input[name="pkind"]:checked').value,
+      checks_bonus: +document.getElementById('pChecks').value,
+      discount_rub: +document.getElementById('pRub').value,
+      min_tariff: document.getElementById('pTariff').value,
+      expires_at: expires,
+      custom_code: document.getElementById('pCustom').value.trim().replace(/\s+/g, '').toUpperCase()})});
+  const d = await r.json();
+  document.getElementById('pMsg').textContent = r.ok ? ('✅ Создан промокод: ' + d.code) : ('❌ ' + (d.detail || 'Ошибка'));
+  if (r.ok) loadPromos();
+};
+
+async function loadPromos(){
+  const r = await fetch('/api/admin/promocodes', {headers: H});
   if (!r.ok) return;
   const list = await r.json();
-  document.getElementById('usersList').innerHTML = list.map(u =>
-    '<div class="glass p-4 grid md:grid-cols-[1fr_auto_auto] gap-3 items-center">' +
-    '<div><b class="text-sm">' + mcaEsc(u.email) + '</b> <span class="text-xs text-white/50">#' + u.id +
-    (u.verified ? ' ✅' : ' ⏳') + ' · ' + mcaEsc(u.created_at || '') + '</span>' +
-    '<div class="text-xs text-white/60 mt-1">проверок: <b id="chk' + u.id + '">' + u.checks_left + '</b></div></div>' +
-    '<select data-uid="' + u.id + '" class="tar-sel input text-sm" style="max-width:170px">' +
-    TARIFFS.map(t => '<option' + (t === u.tariff ? ' selected' : '') + '>' + t + '</option>').join('') + '</select>' +
-    '<div class="flex gap-2"><button data-uid="' + u.id + '" data-d="10" class="add-chk btn-ghost text-xs">+10</button>' +
-    '<button data-uid="' + u.id + '" data-d="50" class="add-chk btn-ghost text-xs">+50</button>' +
-    '<button data-uid="' + u.id + '" data-d="100" class="add-chk btn-ghost text-xs">+100</button></div></div>').join('');
-  document.querySelectorAll('.tar-sel').forEach(s => s.onchange = async () => {
-    await fetch('/api/admin/users/' + s.dataset.uid + '/tariff', {method: 'POST',
-      headers: {'Content-Type': 'application/json', ...H}, body: JSON.stringify({tariff: s.value})});
+  document.getElementById('promoList').innerHTML = list.length ? list.map(p => {
+    const extras = [];
+    if (p.checks_bonus) extras.push('+' + p.checks_bonus + ' пров.');
+    if (p.discount_rub) extras.push('−' + p.discount_rub + ' ₽');
+    if (p.min_tariff) extras.push('только ' + p.min_tariff);
+    extras.push('использован: ' + (p.used_count || 0) + ' раз');
+    extras.push(p.expires_at ? 'до ' + p.expires_at : 'бессрочно');
+    return '<div class="glass p-4 flex flex-wrap items-center gap-3">' +
+      '<div class="flex-1 min-w-[240px] text-sm"><b>' + mcaEsc(p.code) + '</b> — ' +
+      (p.kind === 'checks' ? '🎁 на проверки' : '💰 на скидку') + ' (' + extras.join(', ') + ') ' +
+      (p.active ? '<span class="text-green-400">✅ активен</span>' : '<span class="text-red-400">❌ выключен</span>') +
+      '<div class="text-xs text-white/40 mt-1">создан: ' + mcaEsc(p.created_at || '') + '</div></div>' +
+      (p.active ? '<button data-code="' + mcaEsc(p.code) + '" class="off-btn btn-ghost text-xs">Выключить</button>' : '') +
+      '<button data-code="' + mcaEsc(p.code) + '" class="pdel-btn btn-ghost text-xs">🗑 Удалить</button></div>';
+  }).join('') : '<p class="text-white/50">Пока нет</p>';
+  document.querySelectorAll('.off-btn').forEach(b => b.onclick = async () => {
+    await fetch('/api/admin/promocodes/' + encodeURIComponent(b.dataset.code) + '/deactivate', {method: 'POST', headers: H});
+    loadPromos();
   });
-  document.querySelectorAll('.add-chk').forEach(b => b.onclick = async () => {
-    await fetch('/api/admin/users/' + b.dataset.uid + '/checks', {method: 'POST',
-      headers: {'Content-Type': 'application/json', ...H}, body: JSON.stringify({delta: +b.dataset.d})});
-    const el = document.getElementById('chk' + b.dataset.uid);
-    el.textContent = (+el.textContent) + (+b.dataset.d);
+  document.querySelectorAll('.pdel-btn').forEach(b => b.onclick = async () => {
+    if (!confirm('Удалить промокод ' + b.dataset.code + '?')) return;
+    await fetch('/api/admin/promocodes/' + encodeURIComponent(b.dataset.code) + '/delete', {method: 'POST', headers: H});
+    loadPromos();
   });
 }
 
 async function loadSupport(){
   const r = await fetch('/api/admin/support', {headers: H});
-  if (!r.ok) return;
   const list = await r.json();
   document.getElementById('supportList').innerHTML = list.length ? list.map(m =>
     '<div class="glass p-5"><div class="flex flex-wrap items-center gap-3 mb-2"><b>' + mcaEsc(m.email) + '</b>' +
@@ -145,7 +296,6 @@ async function loadSupport(){
 
 async function loadFeedback(){
   const r = await fetch('/api/admin/feedback', {headers: H});
-  if (!r.ok) return;
   const list = await r.json();
   document.getElementById('feedbackList').innerHTML = list.length ? list.map(f =>
     '<div class="glass p-4"><div class="flex justify-between text-sm"><b>' + mcaEsc(f.email || ('user#' + f.user_id)) +
@@ -157,32 +307,26 @@ async function loadFeedback(){
 
 async function loadConsults(){
   const r = await fetch('/api/admin/consults', {headers: H});
-  if (!r.ok) return;
   const list = await r.json();
   document.getElementById('consultsList').innerHTML = list.length ? list.map(c =>
     '<div class="glass p-4 text-sm"><div class="font-bold mb-1">' + mcaEsc(c.email || ('user#' + c.user_id)) + '</div>' +
     Object.entries(c).filter(([k]) => !['id','user_id','email','created_at'].includes(k))
       .map(([k, v]) => '<div class="text-white/70"><span class="text-white/40">' + k + ':</span> ' + mcaEsc(String(v ?? '')) + '</div>').join('') +
-    '</div>').join('')
-    : '<p class="text-white/50">Заявок пока нет.</p>';
+    '</div>').join('') : '<p class="text-white/50">Заявок пока нет.</p>';
 }
 
 let poll = null;
 async function loadLaws(){
   const r = await fetch('/api/admin/laws', {headers: H});
-  if (!r.ok) return;
   const d = await r.json();
   document.getElementById('lawsTable').innerHTML = d.laws.map(l =>
     '<div class="flex justify-between gap-3 border-b border-white/5 pb-1"><span><b>' + mcaEsc(l.code) + '</b> — ' + mcaEsc(l.title) +
     '</span><span class="text-white/50">' + (l.ft ? (l.ft + ' симв. текста') : 'только суть') + '</span></div>').join('');
-  renderJob(d.job);
+  document.getElementById('jobStatus').textContent = d.job.running
+    ? ('⏳ Выполняется: ' + d.job.done + '/' + d.job.total + ' · ' + d.job.last)
+    : (d.job.error ? ('❌ ' + d.job.error) : (d.job.last ? ('✅ Последняя операция: ' + d.job.last) : ''));
   if (d.job.running && !poll) poll = setInterval(loadLaws, 3000);
   if (!d.job.running && poll) { clearInterval(poll); poll = null; }
-}
-function renderJob(j){
-  document.getElementById('jobStatus').textContent = j.running
-    ? ('⏳ Выполняется: ' + j.done + '/' + j.total + ' · ' + j.last)
-    : (j.error ? ('❌ ' + j.error) : (j.last ? ('✅ Последняя операция: ' + j.last) : ''));
 }
 document.getElementById('reloadLaws').onclick = async () => {
   const r = await fetch('/api/admin/laws/reload', {method: 'POST', headers: H});

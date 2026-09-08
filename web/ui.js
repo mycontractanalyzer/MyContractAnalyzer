@@ -5,6 +5,8 @@
   document.head.appendChild(l);
 })();
 
+var MCA_DEMO = 0; // сюда потом вставь номер публичного отчёта-примера (report.html?id=N). 0 = кнопка выключена
+
 function mcaToken(){ return localStorage.getItem('mca_token'); }
 
 function mcaEsc(t){ return (t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -35,7 +37,8 @@ function mcaNav(){
       + '<a href="/lawyer.html" class="nav-link">ИИ-юрист</a>'
       + '<a href="/profile.html" class="px-4 py-2 rounded-xl bg-amber-500 text-black font-semibold hover:bg-amber-400 transition">Кабинет</a>'
       + '<button onclick="localStorage.removeItem(\'mca_token\');location.href=\'/\'" class="nav-link">Выйти</button>'
-    : '<a href="/auth.html#login" class="nav-link">Войти</a>'
+    : (MCA_DEMO ? '<a href="/report.html?id=' + MCA_DEMO + '" class="nav-link">👀 Пример отчёта</a>' : '')
+      + '<a href="/auth.html#login" class="nav-link">Войти</a>'
       + '<a href="/auth.html#signup" class="px-4 py-2 rounded-xl bg-amber-500 text-black font-semibold hover:bg-amber-400 transition">Регистрация</a>';
   el.innerHTML =
     '<nav class="sticky top-0 z-50 backdrop-blur-xl bg-[#0b0d12]/75 border-b border-white/5">'
