@@ -70,20 +70,26 @@ def _extract_keywords(text: str):
 
 
 def _best_excerpt(ft: str, words, max_chars: int = 450) -> str:
+    """Два самых релевантных НЕпересекающихся фрагмента статей закона."""
     ft_low = ft.lower()
-    best_pos, best_score = -1, 0
+    cands = []
     for m in re.finditer(r"статья\s+\d+[.\d]*", ft_low):
         pos = m.start()
         window = ft_low[pos:pos + 1500]
         score = sum(1 for w in words if w in window)
-        if score > best_score:
-            best_score = score
-            best_pos = pos
-        if best_score >= 6:
-            break
-    if best_pos < 0 or best_score == 0:
+        if score > 0:
+            cands.append((score, pos))
+    cands.sort(key=lambda x: (-x[0], x[1]))
+    if not cands:
         return ft[:max_chars]
-    return ft[best_pos:best_pos + max_chars]
+    picked = [cands[0]]
+    for score, pos in cands[1:]:
+        if all(abs(pos - p) > 900 for _, p in picked):
+            picked.append((score, pos))
+            if len(picked) >= 2:
+                break
+    picked.sort(key=lambda x: x[1])
+    return "\n…\n".join(ft[p:p + max_chars] for _, p in picked)
 
 
 def search_laws(query: str, limit: int = 10):
@@ -140,8 +146,7 @@ def laws_context_block(query: str, limit: int = 8, max_chars: int = 450) -> str:
     for i in with_ft[:6]:
         excerpt = _best_excerpt(i["full_text"].strip(), words, max_chars)
         lines.append(f"- {i['code']} — {i['title']}. ДОСЛОВНО: «{excerpt}»")
-    # fallback: если полных текстов мало — добавляем seed-строки, чтобы модель видела темы
-    for i in only_es[: (6 - len(lines))]:
+    for i in only_es[: (6 - len(lines)) if len(lines) < 6 else 0]:
         lines.append(f"- {i['code']} — {i['title']}: {i['essence']}")
     if not lines:
         return ""

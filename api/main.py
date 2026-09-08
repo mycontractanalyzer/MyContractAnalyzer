@@ -589,3 +589,67 @@ def admin_laws_reload(user=Depends(_auth)):
 
     threading.Thread(target=run, daemon=True).start()
     return {"ok": True}
+
+
+@app.get("/api/admin/users")
+def admin_users(user=Depends(_auth)):
+    _admin(user)
+    conn = get_connection()
+    rows = [dict(r) for r in conn.execute(
+        "SELECT id, email, tariff, checks_left, verified, created_at FROM users ORDER BY id DESC")]
+    conn.close()
+    return rows
+
+
+class UserTariffIn(BaseModel):
+    tariff: str
+
+
+@app.post("/api/admin/users/{uid}/tariff")
+def admin_set_tariff(uid: int, data: UserTariffIn, user=Depends(_auth)):
+    _admin(user)
+    conn = get_connection()
+    conn.execute("UPDATE users SET tariff = ? WHERE id = ?", (data.tariff, uid))
+    conn.commit()
+    conn.close()
+    return {"ok": True}
+
+
+class UserChecksIn(BaseModel):
+    delta: int
+
+
+@app.post("/api/admin/users/{uid}/checks")
+def admin_add_checks(uid: int, data: UserChecksIn, user=Depends(_auth)):
+    _admin(user)
+    conn = get_connection()
+    conn.execute("UPDATE users SET checks_left = MAX(0, checks_left + ?) WHERE id = ?",
+                 (data.delta, uid))
+    conn.commit()
+    conn.close()
+    return {"ok": True}
+
+
+@app.get("/api/admin/feedback")
+def admin_feedback(user=Depends(_auth)):
+    _admin(user)
+    conn = get_connection()
+    rows = [dict(r) for r in conn.execute(
+        "SELECT f.*, u.email FROM feedback f LEFT JOIN users u ON u.id = f.user_id "
+        "ORDER BY f.id DESC LIMIT 100")]
+    conn.close()
+    return rows
+
+
+@app.get("/api/admin/consults")
+def admin_consults(user=Depends(_auth)):
+    _admin(user)
+    conn = get_connection()
+    try:
+        rows = [dict(r) for r in conn.execute(
+            "SELECT c.*, u.email FROM consult_requests c LEFT JOIN users u ON u.id = c.user_id "
+            "ORDER BY c.id DESC LIMIT 100")]
+    except Exception:
+        rows = []
+    conn.close()
+    return rows

@@ -17,7 +17,10 @@
 
   <div class="flex flex-wrap gap-2 mb-6 text-sm">
     <button data-tab="stats" class="tab-btn on">📊 Статистика</button>
+    <button data-tab="users" class="tab-btn">👥 Пользователи</button>
     <button data-tab="support" class="tab-btn">📨 Обращения</button>
+    <button data-tab="feedback" class="tab-btn">⭐ Отзывы</button>
+    <button data-tab="consults" class="tab-btn">🧑‍⚖️ Заявки юристу</button>
     <button data-tab="laws" class="tab-btn">📚 Законы</button>
   </div>
 
@@ -27,8 +30,21 @@
     <div id="usersTable" class="glass p-4 text-sm space-y-2"></div>
   </section>
 
+  <section id="tab-users" class="pane hidden">
+    <p class="text-sm text-white/60 mb-4">Смени тариф тестеру или начисли проверки — изменения применяются мгновенно.</p>
+    <div id="usersList" class="space-y-3"></div>
+  </section>
+
   <section id="tab-support" class="pane hidden">
     <div id="supportList" class="space-y-4"></div>
+  </section>
+
+  <section id="tab-feedback" class="pane hidden">
+    <div id="feedbackList" class="space-y-3"></div>
+  </section>
+
+  <section id="tab-consults" class="pane hidden">
+    <div id="consultsList" class="space-y-3"></div>
   </section>
 
   <section id="tab-laws" class="pane hidden">
@@ -46,42 +62,62 @@
 const token = mcaToken();
 if (!token) location.href = '/auth.html#login';
 const ADMIN_EMAIL = 'mycontractanalyzer@gmail.com';
-
 const H = {'Authorization': 'Bearer ' + token};
-let meEmail = '';
+const TARIFFS = ['Free','Light','Standard','Pro','Business','Business Pro'];
 
 fetch('/api/me', {headers: H}).then(r => r.ok ? r.json() : Promise.reject())
-  .then(u => {
-    meEmail = u.email;
-    if (u.email !== ADMIN_EMAIL) location.href = '/profile.html';
-    loadStats();
-  }).catch(() => location.href = '/auth.html#login');
+  .then(u => { if (u.email !== ADMIN_EMAIL) location.href = '/profile.html'; loadStats(); })
+  .catch(() => location.href = '/auth.html#login');
 
 document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => {
   document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('on'));
   b.classList.add('on');
   document.querySelectorAll('.pane').forEach(p => p.classList.add('hidden'));
   document.getElementById('tab-' + b.dataset.tab).classList.remove('hidden');
-  if (b.dataset.tab === 'support') loadSupport();
-  if (b.dataset.tab === 'laws') loadLaws();
-  if (b.dataset.tab === 'stats') loadStats();
+  const loaders = {stats: loadStats, users: loadUsers, support: loadSupport,
+                   feedback: loadFeedback, consults: loadConsults, laws: loadLaws};
+  loaders[b.dataset.tab]();
 });
 
 async function loadStats(){
-  try {
-    const r = await fetch('/api/admin/stats', {headers: H});
-    if (!r.ok) return;
-    const s = await r.json();
-    const card = (t, v) => '<div class="glass p-5"><div class="text-white/60 text-sm">' + t + '</div><div class="text-2xl font-extrabold mt-1">' + v + '</div></div>';
-    document.getElementById('statCards').innerHTML =
-      card('Пользователей', s.users) + card('Подтверждено', s.verified) +
-      card('Анализов', s.analyses) + card('Договоров', s.contracts) +
-      card('Средняя оценка', s.feedback_avg ?? '—') + card('Открытых обращений', s.support_open) +
-      card('Статей в базе', s.laws) + card('Регистраций сегодня', s.reg_today ?? '—');
-    document.getElementById('usersTable').innerHTML = (s.recent_users || []).map(u =>
-      '<div class="flex justify-between gap-3 border-b border-white/5 pb-2"><span>' + mcaEsc(u.email) +
-      '</span><span class="text-amber-400">' + mcaEsc(u.tariff) + '</span><span class="text-white/50">проверок: ' + u.checks_left + '</span></div>').join('');
-  } catch(e) {}
+  const r = await fetch('/api/admin/stats', {headers: H});
+  if (!r.ok) return;
+  const s = await r.json();
+  const card = (t, v) => '<div class="glass p-5"><div class="text-white/60 text-sm">' + t + '</div><div class="text-2xl font-extrabold mt-1">' + v + '</div></div>';
+  document.getElementById('statCards').innerHTML =
+    card('Пользователей', s.users) + card('Подтверждено', s.verified) +
+    card('Анализов', s.analyses) + card('Договоров', s.contracts) +
+    card('Средняя оценка', s.feedback_avg ?? '—') + card('Открытых обращений', s.support_open) +
+    card('Статей в базе', s.laws) + card('Регистраций сегодня', s.reg_today ?? '—');
+  document.getElementById('usersTable').innerHTML = (s.recent_users || []).map(u =>
+    '<div class="flex justify-between gap-3 border-b border-white/5 pb-2"><span>' + mcaEsc(u.email) +
+    '</span><span class="text-amber-400">' + mcaEsc(u.tariff) + '</span><span class="text-white/50">проверок: ' + u.checks_left + '</span></div>').join('');
+}
+
+async function loadUsers(){
+  const r = await fetch('/api/admin/users', {headers: H});
+  if (!r.ok) return;
+  const list = await r.json();
+  document.getElementById('usersList').innerHTML = list.map(u =>
+    '<div class="glass p-4 grid md:grid-cols-[1fr_auto_auto] gap-3 items-center">' +
+    '<div><b class="text-sm">' + mcaEsc(u.email) + '</b> <span class="text-xs text-white/50">#' + u.id +
+    (u.verified ? ' ✅' : ' ⏳') + ' · ' + mcaEsc(u.created_at || '') + '</span>' +
+    '<div class="text-xs text-white/60 mt-1">проверок: <b id="chk' + u.id + '">' + u.checks_left + '</b></div></div>' +
+    '<select data-uid="' + u.id + '" class="tar-sel input text-sm" style="max-width:170px">' +
+    TARIFFS.map(t => '<option' + (t === u.tariff ? ' selected' : '') + '>' + t + '</option>').join('') + '</select>' +
+    '<div class="flex gap-2"><button data-uid="' + u.id + '" data-d="10" class="add-chk btn-ghost text-xs">+10</button>' +
+    '<button data-uid="' + u.id + '" data-d="50" class="add-chk btn-ghost text-xs">+50</button>' +
+    '<button data-uid="' + u.id + '" data-d="100" class="add-chk btn-ghost text-xs">+100</button></div></div>').join('');
+  document.querySelectorAll('.tar-sel').forEach(s => s.onchange = async () => {
+    await fetch('/api/admin/users/' + s.dataset.uid + '/tariff', {method: 'POST',
+      headers: {'Content-Type': 'application/json', ...H}, body: JSON.stringify({tariff: s.value})});
+  });
+  document.querySelectorAll('.add-chk').forEach(b => b.onclick = async () => {
+    await fetch('/api/admin/users/' + b.dataset.uid + '/checks', {method: 'POST',
+      headers: {'Content-Type': 'application/json', ...H}, body: JSON.stringify({delta: +b.dataset.d})});
+    const el = document.getElementById('chk' + b.dataset.uid);
+    el.textContent = (+el.textContent) + (+b.dataset.d);
+  });
 }
 
 async function loadSupport(){
@@ -89,12 +125,10 @@ async function loadSupport(){
   if (!r.ok) return;
   const list = await r.json();
   document.getElementById('supportList').innerHTML = list.length ? list.map(m =>
-    '<div class="glass p-5">' +
-    '<div class="flex flex-wrap items-center gap-3 mb-2"><b>' + mcaEsc(m.email) + '</b>' +
-    '<span class="chip text-xs">' + mcaEsc(m.topic) + '</span>' +
-    '<span class="text-xs text-white/50">' + mcaEsc(m.created_at || '') + '</span>' +
-    (m.replied ? '<span class="text-xs text-green-400">✅ отвечено</span>' : '<span class="text-xs text-amber-400">🔥 новое</span>') +
-    '</div><p class="text-sm text-white/70 mb-3">' + mcaEsc(m.message) + '</p>' +
+    '<div class="glass p-5"><div class="flex flex-wrap items-center gap-3 mb-2"><b>' + mcaEsc(m.email) + '</b>' +
+    '<span class="chip text-xs">' + mcaEsc(m.topic) + '</span><span class="text-xs text-white/50">' + mcaEsc(m.created_at || '') + '</span>' +
+    (m.replied ? '<span class="text-xs text-green-400">✅ отвечено</span>' : '<span class="text-xs text-amber-400">🔥 новое</span>') + '</div>' +
+    '<p class="text-sm text-white/70 mb-3">' + mcaEsc(m.message) + '</p>' +
     '<textarea id="rep' + m.id + '" rows="3" placeholder="Текст ответа…" class="input text-sm mb-3"></textarea>' +
     '<button data-mid="' + m.id + '" class="rep-btn btn-primary text-sm">📨 Отправить ответ</button></div>').join('')
     : '<p class="text-white/50">Обращений пока нет.</p>';
@@ -102,10 +136,35 @@ async function loadSupport(){
     const mid = b.dataset.mid;
     const answer = document.getElementById('rep' + mid).value.trim();
     if (!answer) return;
-    const r = await fetch('/api/admin/support/' + mid + '/reply', {method: 'POST', headers: {'Content-Type': 'application/json', ...H}, body: JSON.stringify({answer})});
+    const r = await fetch('/api/admin/support/' + mid + '/reply', {method: 'POST',
+      headers: {'Content-Type': 'application/json', ...H}, body: JSON.stringify({answer})});
     b.textContent = r.ok ? '✅ Отправлено' : '❌ Ошибка';
     setTimeout(loadSupport, 800);
   });
+}
+
+async function loadFeedback(){
+  const r = await fetch('/api/admin/feedback', {headers: H});
+  if (!r.ok) return;
+  const list = await r.json();
+  document.getElementById('feedbackList').innerHTML = list.length ? list.map(f =>
+    '<div class="glass p-4"><div class="flex justify-between text-sm"><b>' + mcaEsc(f.email || ('user#' + f.user_id)) +
+    '</b><span class="text-amber-400">' + '⭐'.repeat(f.rating || 0) + '</span></div>' +
+    '<p class="text-sm text-white/70 mt-2">' + mcaEsc(f.comment || '—') + '</p>' +
+    '<div class="text-xs text-white/40 mt-1">отчёт #' + f.analysis_id + '</div></div>').join('')
+    : '<p class="text-white/50">Отзывов пока нет.</p>';
+}
+
+async function loadConsults(){
+  const r = await fetch('/api/admin/consults', {headers: H});
+  if (!r.ok) return;
+  const list = await r.json();
+  document.getElementById('consultsList').innerHTML = list.length ? list.map(c =>
+    '<div class="glass p-4 text-sm"><div class="font-bold mb-1">' + mcaEsc(c.email || ('user#' + c.user_id)) + '</div>' +
+    Object.entries(c).filter(([k]) => !['id','user_id','email','created_at'].includes(k))
+      .map(([k, v]) => '<div class="text-white/70"><span class="text-white/40">' + k + ':</span> ' + mcaEsc(String(v ?? '')) + '</div>').join('') +
+    '</div>').join('')
+    : '<p class="text-white/50">Заявок пока нет.</p>';
 }
 
 let poll = null;
