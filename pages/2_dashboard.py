@@ -105,6 +105,9 @@ if st.button("🚀 Анализировать", type="primary"):
                         depth=depth_key, jurisdiction=jurisdiction, memory_ctx=memory_ctx)
                     report = st.write_stream(stream_gen)
 
+                    from core.analyzer import split_report_highlights
+                    report, hl_json = split_report_highlights(report)
+
                     status.update(label="💾 Сохраняю отчёт…")
                     spend_checks(user["id"], len(text))
                     contract_id = save_contract(user["id"], ctype, role, text)
@@ -113,11 +116,11 @@ if st.button("🚀 Анализировать", type="primary"):
                     num = sum(1 for t in existing if t == ctype or t.startswith(ctype + " "))
                     rename_analysis(analysis_id, ctype if num == 0 else f"{ctype} {num + 1}")
 
-                    if depth_key != "brief":
-                        status.update(label="🗺 Составляю карту пунктов…")
+                    if hl_json:
+                        save_highlights(analysis_id, hl_json)
+                    elif depth_key == "detailed":
                         try:
-                            hl_text = text if depth_key == "detailed" else text[:12000]
-                            save_highlights(analysis_id, extract_highlights(hl_text, user["tariff"]))
+                            save_highlights(analysis_id, extract_highlights(text[:30000], user["tariff"]))
                         except Exception:
                             pass
 

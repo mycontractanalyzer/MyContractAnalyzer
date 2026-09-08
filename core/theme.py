@@ -68,13 +68,16 @@ box-shadow:0 14px 40px rgba(240,167,27,.5), inset 0 1px 0 rgba(255,255,255,.6) !
 div.stButton>button:active{transform:translateY(0) scale(.99);}
 
 div[data-testid="stTextInput"] input,div[data-testid="stTextArea"] textarea,
-div[data-testid="stSelectbox"] > div,div[data-testid="stNumberInput"] input{
-background:rgba(255,255,255,.05) !important;border:1px solid rgba(255,255,255,.12) !important;border-radius:12px !important;
-color:#eef1f6 !important;outline:none !important;box-shadow:none !important;
-transition:border-color .2s ease,background .2s ease !important;}
-div[data-testid="stTextInput"] input:focus,div[data-testid="stTextArea"] textarea:focus,
-div[data-testid="stSelectbox"] > div:focus-within,div[data-testid="stNumberInput"] input:focus{
-outline:none !important;box-shadow:none !important;border-color:rgba(240,180,41,.8) !important;}
+div[data-testid="stNumberInput"] input{
+background:transparent !important;border:none !important;box-shadow:none !important;
+outline:none !important;color:#eef1f6 !important;border-radius:12px !important;}
+div[data-testid="stTextInput"] > div,div[data-testid="stTextArea"] > div,
+div[data-testid="stSelectbox"] > div,div[data-testid="stNumberInput"] > div{
+background:rgba(255,255,255,.05) !important;border:1px solid rgba(255,255,255,.12) !important;
+border-radius:12px !important;transition:border-color .2s ease !important;}
+div[data-testid="stTextInput"]:focus-within > div,div[data-testid="stTextArea"]:focus-within > div,
+div[data-testid="stSelectbox"]:focus-within > div,div[data-testid="stNumberInput"]:focus-within > div{
+border-color:rgba(240,180,41,.8) !important;box-shadow:none !important;}
 input[type="radio"],input[type="checkbox"]{accent-color:#f0b429;}
 
 div[data-testid="stExpander"]{border:1px solid rgba(255,255,255,.09) !important;border-radius:16px !important;background:rgba(255,255,255,.025) !important;}
