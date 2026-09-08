@@ -1,7 +1,7 @@
 import streamlit as st
 
 from core.ui import render_header
-from utils.auth import get_current_user, login_user, register_user, resend_code, verify_email
+from utils.auth import (get_current_user, get_session_user, login_user, register_user,                           resend_code, save_token_to_device, verify_email)
 
 st.set_page_config(page_title="Вход и регистрация", page_icon="🔐")
 render_header()
@@ -18,9 +18,14 @@ tab_login, tab_reg = st.tabs(["Вход", "Регистрация"])
 with tab_login:
     email = st.text_input("Email", key="login_email")
     password = st.text_input("Пароль", type="password", key="login_pass")
+    remember = st.checkbox("🔒 Запомнить это устройство", value=True, key="remember_chk")
     if st.button("Войти", key="login_btn"):
         ok, msg = login_user(email, password)
         if ok:
+            if remember:
+                u = get_session_user()
+                if u and u.get("token"):
+                    save_token_to_device(u["token"])
             st.toast("👋 Успешный вход!", icon="✅")
             st.switch_page("pages/5_profile.py")
         else:

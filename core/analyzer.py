@@ -17,9 +17,9 @@ from integrations.deepseek import ask_deepseek
 PAID_TIERS = ("Standard", "Pro", "Business", "Business Pro")
 
 DEPTH_CONFIG = {
-    "brief":      {"model_key": "free", "temp": 0.3, "max_tokens": 1500},
-    "standard":   {"model_key": "free", "temp": 0.2, "max_tokens": 3500},
-    "detailed":   {"model_key": "paid", "temp": 0.2, "max_tokens": 6000},
+    "brief":    {"model_key": "free", "temp": 0.3, "max_tokens": 900},
+    "standard": {"model_key": "free", "temp": 0.2, "max_tokens": 2200},
+    "detailed": {"model_key": "paid", "temp": 0.2, "max_tokens": 5000},
 }
 
 LAWYER247_SYSTEM = (
@@ -28,6 +28,18 @@ LAWYER247_SYSTEM = (
     "законов РФ из предоставленной правовой базы и цитируй их дословно. Если вопрос не "
     "юридический — вежливо откажись. Язык ответа — язык вопроса."
 )
+
+RUBRIC = """
+ОБЯЗАТЕЛЬНЫЕ ТРЕБОВАНИЯ К ОТЧЁТУ (нарушение = брак):
+1) ПЕРВАЯ строка отчёта: «Риск-скор: N/100», где N вычисляется СТРОГО по формуле:
+   N = min(100, 12*(число красных рисков) + 5*(число жёлтых рисков) + (10, если затронуты данные/жизнь детей или здоровье, иначе 0)).
+2) «❗ Осторожно:» — красные риски: цитата пункта договора → почему опасно → как исправить.
+3) «⚖️ Правовое обоснование:» — для каждого ключевого риска укажи статью ИЗ ПРАВОВОЙ БАЗЫ ВЫШЕ
+   и приведи её ДОСЛОВНУЮ формулировку в кавычках с номером (пример: «ст. 16 ЗоЗПП: «...»).
+   Статьи вне базы НЕ выдумывать. Если база пуста — пиши «норма требует проверки по pravo.gov.ru».
+4) «🟡 Следует уточнить:», «✅ Чек-лист:» (список через «- »), «📌 Краткий вывод:»,
+   «💬 Вопросы, которые стоит задать второй стороне:».
+"""
 
 
 def choose_model(tariff: str) -> str:
@@ -52,13 +64,24 @@ def _get_api_key():
     return st.secrets.get("DEEPSEEK_API_KEY") or getattr(config, "DEEPSEEK_API_KEY", "")
 
 
+def _build_system(tariff, contract_type, role, comment, depth, jurisdiction, memory_ctx, laws_query):
+    system = build_system_prompt(tariff, contract_type, role, comment,
+                                 brief=(depth == "brief"),
+                                 jurisdiction=jurisdiction, memory_ctx=memory_ctx)
+    laws_ctx = laws_context_block(laws_query, limit=8) if depth != "brief" else ""
+    if laws_ctx:
+        system = system + "\n\n" + laws_ctx + "\n" + RUBRIC
+    else:
+        system = system + "\n" + RUBRIC.replace("ИЗ ПРАВОВОЙ БАЗЫ ВЫШЕ", "(база пуста)")
+    return system
+
+
 def _stream_deepseek(system: str, user_msg: str, model: str,
-                     max_tokens: int = 3500, temperature: float = 0.2):
+                     max_tokens: int = 2200, temperature: float = 0.2):
     api_key = _get_api_key()
     if not api_key:
         yield "[Ошибка: API ключ DeepSeek не настроен]"
         return
-
     url = "https://api.deepseek.com/chat/completions"
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     payload = {
@@ -71,7 +94,6 @@ def _stream_deepseek(system: str, user_msg: str, model: str,
         "temperature": temperature,
         "max_tokens": max_tokens,
     }
-
     try:
         with requests.post(url, headers=headers, json=payload, stream=True, timeout=300) as r:
             r.raise_for_status()
@@ -98,14 +120,8 @@ def _stream_deepseek(system: str, user_msg: str, model: str,
 def analyze_contract(text, tariff="Free", contract_type="", role="", comment="",
                      depth="standard", jurisdiction="Россия", memory_ctx=""):
     model = _pick_model_for_depth(tariff, depth)
-    system = build_system_prompt(tariff, contract_type, role, comment,
-                                 brief=(depth == "brief"),
-                                 jurisdiction=jurisdiction, memory_ctx=memory_ctx)
-    laws_ctx = laws_context_block(text, limit=12)
-    if laws_ctx:
-        system = system + "\n\n" + laws_ctx
-    user_msg = f"Вот текст договора для анализа (режим: {depth}):\n\n{smart_compress(text)}"
-    report = ask_deepseek(system, user_msg, model)
+    system = _build_system(tariff, contract_type, role, comment, depth, jurisdiction, memory_ctx, text)
+    report = ask_deepseek(system, f"ДОГОВОР:\n\n{smart_compress(text)}", model)
     return report, model
 
 
@@ -113,13 +129,8 @@ def analyze_contract_stream(text, tariff="Free", contract_type="", role="", comm
                             depth="standard", jurisdiction="Россия", memory_ctx=""):
     cfg = DEPTH_CONFIG.get(depth, DEPTH_CONFIG["standard"])
     model = _pick_model_for_depth(tariff, depth)
-    system = build_system_prompt(tariff, contract_type, role, comment,
-                                 brief=(depth == "brief"),
-                                 jurisdiction=jurisdiction, memory_ctx=memory_ctx)
-    laws_ctx = laws_context_block(text, limit=12)
-    if laws_ctx:
-        system = system + "\n\n" + laws_ctx
-    user_msg = f"Вот текст договора для анализа (режим: {depth}):\n\n{smart_compress(text)}"
+    system = _build_system(tariff, contract_type, role, comment, depth, jurisdiction, memory_ctx, text)
+    user_msg = f"ДОГОВОР (режим {depth}):\n\n{smart_compress(text)}"
     gen = _stream_deepseek(system, user_msg, model,
                            max_tokens=cfg["max_tokens"], temperature=cfg["temp"])
     return gen, model
@@ -209,6 +220,6 @@ def lawyer247_stream(question: str, history: list, tariff: str):
         msgs.append(f"КЛИЕНТ: {q}")
         msgs.append(f"ЮРИСТ: {a}")
     msgs.append(f"КЛИЕНТ: {question}")
-    user_msg = "\n\n".join(msgs)
     model = choose_model(tariff)
-    return _stream_deepseek(system, user_msg, model, max_tokens=1200, temperature=0.3), model
+    return _stream_deepseek(system, "\n\n".join(msgs), model,
+                            max_tokens=900, temperature=0.3), model

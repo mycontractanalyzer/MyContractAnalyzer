@@ -60,14 +60,17 @@ def render_menu():
             st.page_link("pages/18_support_admin.py", label="📨 Поддержка (обращения)", use_container_width=True)
         if user:
             if st.button("🚪 Выйти", key="menu_logout", use_container_width=True):
-                from utils.auth import logout_user
+                from utils.auth import forget_device, logout_user
                 logout_user()
+                forget_device()
                 st.switch_page("app.py")
 
 
 def render_header():
     inject_style()
     render_menu()
+    from utils.auth import remember_bridge
+    remember_bridge()
 
 
 def render_hero():

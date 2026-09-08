@@ -207,3 +207,36 @@ def get_current_user():
         return None
     _sync_url(row["token"])
     return dict(row)
+
+
+import streamlit.components.v1 as _components
+
+_REMEMBER_JS = """
+<script>
+try {
+  var t = localStorage.getItem('mca_token');
+  var url = new URL(window.parent.location.href);
+  if (t && !url.searchParams.get('t') && !sessionStorage.getItem('mca_restored')) {
+    sessionStorage.setItem('mca_restored', '1');
+    url.searchParams.set('t', t);
+    window.parent.location.replace(url.toString());
+  }
+} catch (e) {}
+</script>
+"""
+
+
+def remember_bridge():
+    _components.html(_REMEMBER_JS, height=0, width=0)
+
+
+def save_token_to_device(token: str):
+    _components.html(
+        f"<script>try{{localStorage.setItem('mca_token','{token}');}}catch(e){{}}</script>",
+        height=0, width=0)
+
+
+def forget_device():
+    _components.html(
+        "<script>try{localStorage.removeItem('mca_token');}catch(e){}</script>",
+        height=0, width=0)

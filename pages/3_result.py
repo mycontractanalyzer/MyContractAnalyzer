@@ -61,6 +61,16 @@ contract = get_contract(analysis["contract_id"])
 m = re.search(r"(?:Риск-скор|Risk score)[^0-9]*(\d{1,3})\s*/\s*100", analysis["report"])
 if m:
     score = int(m.group(1))
+else:
+    _hl = []
+    if analysis.get("highlights"):
+        try:
+            _hl = json.loads(analysis["highlights"])
+        except Exception:
+            _hl = []
+    _reds = sum(1 for it in _hl if it.get("level") == "red")
+    score = min(100, _reds * 12 + (len(_hl) - _reds) * 5) if _hl else None
+if score is not None:
     verdict = ("✅ Можно подписывать" if score <= 30
                else ("🟡 С осторожностью" if score <= 70 else "❌ Не подписывать без правок"))
     st.metric("🎯 Риск-скор договора", f"{score}/100", verdict)
