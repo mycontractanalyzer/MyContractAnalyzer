@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вход и регистрация — MyContractAnalyzer</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body class="min-h-screen flex items-center justify-center px-4">
+<div class="orb orb-a"></div><div class="orb orb-b"></div>
+<div class="glass p-8 w-full max-w-md relative z-10">
+  <a href="/" class="flex items-center gap-2 font-bold mb-6 font-display">⚖️ MyContractAnalyzer</a>
+
+  <div id="boxLogin">
+    <h1 class="text-2xl font-bold mb-6">🔐 Вход</h1>
+    <form id="loginForm" class="space-y-4">
+      <input name="email" type="email" required placeholder="Email" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none">
+      <input name="password" type="password" required placeholder="Пароль" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none">
+      <button class="btn-primary w-full">Войти</button>
+    </form>
+    <div id="loginMsg" class="mt-4 text-sm"></div>
+    <p class="mt-4 text-sm text-white/60">Нет аккаунта? <a href="#signup" class="text-amber-400 underline">Регистрация</a></p>
+  </div>
+
+  <div id="boxSignup" class="hidden">
+    <h1 class="text-2xl font-bold mb-6">✨ Регистрация</h1>
+    <form id="signupForm" class="space-y-4">
+      <input name="email" type="email" required placeholder="Email" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none">
+      <input name="password" type="password" required minlength="6" placeholder="Пароль (мин. 6 символов)" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none">
+      <input name="password2" type="password" required minlength="6" placeholder="Повторите пароль" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none">
+      <label class="flex items-start gap-2 text-xs text-white/60"><input type="checkbox" required checked class="mt-0.5 accent-amber-500">
+        Принимаю <a href="/offer.html" class="underline text-amber-400">оферту</a> и <a href="/privacy.html" class="underline text-amber-400">политику конфиденциальности</a>, даю <a href="/consent.html" class="underline text-amber-400">согласие на обработку ПДн</a></label>
+      <button class="btn-primary w-full">Создать аккаунт</button>
+    </form>
+    <div id="signupMsg" class="mt-4 text-sm"></div>
+    <p class="mt-4 text-sm text-white/60">Уже есть аккаунт? <a href="#login" class="text-amber-400 underline">Войти</a></p>
+  </div>
+
+  <div id="boxVerify" class="hidden">
+    <h1 class="text-2xl font-bold mb-6">📧 Код из письма</h1>
+    <form id="verifyForm" class="space-y-4">
+      <input name="vemail" type="email" required placeholder="Email" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none">
+      <input name="code" required placeholder="6-значный код" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none">
+      <button class="btn-primary w-full">Подтвердить</button>
+    </form>
+    <div id="verifyMsg" class="mt-4 text-sm"></div>
+  </div>
+</div>
+
+<script>
+function show(v){
+  ['Login','Signup','Verify'].forEach(x =>
+    document.getElementById('box'+x).classList.toggle('hidden', x.toLowerCase() !== v));
+}
+function route(){ show(location.hash.replace('#','') || 'login'); }
+window.addEventListener('hashchange', route); route();
+
+document.getElementById('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const msg = document.getElementById('loginMsg');
+  const fd = new FormData(e.target);
+  msg.textContent = 'Загрузка…'; msg.className = 'mt-4 text-sm text-white/70';
+  const r = await fetch('/api/login', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({email: fd.get('email'), password: fd.get('password')})});
+  const d = await r.json();
+  if (r.ok && d.token) { localStorage.setItem('mca_token', d.token); location.href = '/profile.html'; }
+  else { msg.textContent = '❌ ' + (d.detail || 'Ошибка входа'); msg.className = 'mt-4 text-sm text-red-400'; }
+});
+
+document.getElementById('signupForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const msg = document.getElementById('signupMsg');
+  const fd = new FormData(e.target);
+  msg.textContent = 'Загрузка…'; msg.className = 'mt-4 text-sm text-white/70';
+  const r = await fetch('/api/register', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({email: fd.get('email'), password: fd.get('password'), password2: fd.get('password2')})});
+  const d = await r.json();
+  if (r.ok) {
+    msg.textContent = '📧 Код отправлен на почту.'; msg.className = 'mt-4 text-sm text-green-400';
+    show('verify');
+    document.getElementById('verifyForm').vemail.value = fd.get('email');
+  } else { msg.textContent = '❌ ' + (d.detail || 'Ошибка'); msg.className = 'mt-4 text-sm text-red-400'; }
+});
+
+document.getElementById('verifyForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const msg = document.getElementById('verifyMsg');
+  const fd = new FormData(e.target);
+  const r = await fetch('/api/verify', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({email: fd.get('vemail'), code: fd.get('code')})});
+  if (r.ok) {
+    msg.textContent = '✅ Почта подтверждена! Сейчас откроется вход.';
+    msg.className = 'mt-4 text-sm text-green-400';
+    setTimeout(() => { location.hash = '#login'; }, 900);
+  } else { msg.textContent = '❌ Неверный код'; msg.className = 'mt-4 text-sm text-red-400'; }
+});
+</script>
+</body>
+</html>
