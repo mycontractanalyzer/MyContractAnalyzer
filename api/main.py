@@ -396,3 +396,196 @@ def change_pass(data: PassIn, user=Depends(_auth)):
     if not ok:
         raise HTTPException(400, msg)
     return {"ok": True, "message": msg}
+    
+
+class TitleIn(BaseModel):
+    title: str
+
+
+@app.post("/api/analyses/{aid}/share")
+def share_analysis(aid: int, user=Depends(_auth)):
+    conn = get_connection()
+    conn.execute("UPDATE analyses SET share = 1 WHERE id = ? AND user_id = ?",
+                 (aid, user["id"]))
+    conn.commit()
+    conn.close()
+    return {"ok": True, "url": f"http://185.171.82.207/report.html?id={aid}"}
+
+
+@app.post("/api/analyses/{aid}/rename")
+def rename_analysis_api(aid: int, data: TitleIn, user=Depends(_auth)):
+    conn = get_connection()
+    conn.execute("UPDATE analyses SET title = ? WHERE id = ? AND user_id = ?",
+                 (data.title, aid, user["id"]))
+    conn.commit()
+    conn.close()
+    return {"ok": True}
+
+
+@app.post("/api/analyses/{aid}/email")
+def email_analysis(aid: int, user=Depends(_auth)):
+    conn = get_connection()
+    row = conn.execute("SELECT report, title FROM analyses WHERE id = ? AND user_id = ?",
+                       (aid, user["id"])).fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(404, "Отчёт не найден")
+    from storage.pdf_generator import generate_report_pdf
+    from core.mailer import send_report_email
+    pdf = generate_report_pdf(row["report"], user["email"])
+    ok = send_report_email(user["email"], pdf, row["title"] or "Договор")
+    if not ok:
+        raise HTTPException(500, "Не удалось отправить письмо")
+    return {"ok": True}
+
+
+@app.get("/api/public/analyses/{aid}")
+def public_analysis(aid: int):
+    conn = get_connection()
+    row = conn.execute(
+        "SELECT a.report, a.highlights, a.title, c.contract_type "
+        "FROM analyses a JOIN contracts c ON c.id = a.contract_id "
+        "WHERE a.id = ? AND a.share = 1", (aid,)).fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(404, "Отчёт недоступен или скрыт владельцем")
+    return dict(row)
+
+
+@app.post("/api/upload_ocr")
+async def upload_ocr(file: UploadFile = File(...), user=Depends(_auth)):
+    data = await file.read()
+    from core.vision import ocr_image
+    try:
+        text = ocr_image(data, file.content_type or "image/png")
+    except Exception:
+        raise HTTPException(400, "Не удалось распознать фото. Попробуй более чёткий снимок.")
+    if not (text or "").strip():
+        raise HTTPException(400, "В фото не найдено текста")
+    return {"ok": True, "text": text, "chars": len(text)}
+
+
+def _send_text_email(to: str, subject: str, body: str):
+    import smtplib
+    import ssl
+    from email.mime.text import MIMEText
+    from email.header import Header
+    import streamlit as st
+    sender = st.secrets.get("GMAIL_EMAIL", "") or getattr(config, "GMAIL_EMAIL", "")
+    pwd = st.secrets.get("GMAIL_APP_PASSWORD", "") or getattr(config, "GMAIL_APP_PASSWORD", "")
+    if not sender or not pwd:
+        return False
+    msg = MIMEText(body, "plain", "utf-8")
+    msg["Subject"] = Header(subject, "utf-8")
+    msg["From"] = sender
+    msg["To"] = to
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ssl.create_default_context()) as s:
+        s.login(sender, pwd)
+        s.sendmail(sender, [to], msg.as_string())
+    return True
+
+
+def _admin(user):
+    if user["email"] not in config.ADMIN_EMAILS:
+        raise HTTPException(403, "Доступ только для администратора")
+
+
+def _col(conn, table, name):
+    return name in [r["name"] for r in conn.execute(f"PRAGMA table_info({table})")]
+
+
+@app.get("/api/admin/stats")
+def admin_stats(user=Depends(_auth)):
+    _admin(user)
+    conn = get_connection()
+    q = lambda s: conn.execute(s).fetchone()[0]
+    stats = {
+        "users": q("SELECT COUNT(*) FROM users"),
+        "verified": q("SELECT COUNT(*) FROM users WHERE verified = 1"),
+        "analyses": q("SELECT COUNT(*) FROM analyses"),
+        "contracts": q("SELECT COUNT(*) FROM contracts"),
+        "feedback_avg": q("SELECT ROUND(AVG(rating),2) FROM feedback"),
+        "support_open": q("SELECT COUNT(*) FROM support_messages WHERE replied = 0"),
+        "laws": q("SELECT COUNT(*) FROM laws"),
+    }
+    if _col(conn, "users", "created_at"):
+        stats["reg_today"] = q("SELECT COUNT(*) FROM users WHERE date(created_at) = date('now')")
+    stats["recent_users"] = [dict(r) for r in conn.execute(
+        "SELECT email, tariff, checks_left FROM users ORDER BY id DESC LIMIT 15")]
+    conn.close()
+    return stats
+
+
+@app.get("/api/admin/support")
+def admin_support(user=Depends(_auth)):
+    _admin(user)
+    conn = get_connection()
+    conn.execute("""CREATE TABLE IF NOT EXISTS support_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT, topic TEXT, message TEXT,
+        replied INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))""")
+    rows = [dict(r) for r in conn.execute(
+        "SELECT * FROM support_messages ORDER BY id DESC LIMIT 50")]
+    conn.close()
+    return rows
+
+
+class ReplyIn(BaseModel):
+    answer: str
+
+
+@app.post("/api/admin/support/{mid}/reply")
+def admin_reply(mid: int, data: ReplyIn, user=Depends(_auth)):
+    _admin(user)
+    conn = get_connection()
+    row = conn.execute("SELECT * FROM support_messages WHERE id = ?", (mid,)).fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(404, "Обращение не найдено")
+    ok = _send_text_email(
+        row["email"],
+        f"MyContractAnalyzer · Ответ поддержки по теме «{row['topic']}»",
+        f"Здравствуйте!\n\nВаше обращение: {row['message']}\n\nОтвет: {data.answer}\n\nС уважением, команда MyContractAnalyzer")
+    if ok:
+        conn.execute("UPDATE support_messages SET replied = 1 WHERE id = ?", (mid,))
+        conn.commit()
+    conn.close()
+    if not ok:
+        raise HTTPException(500, "Почта не настроена")
+    return {"ok": True}
+
+
+_LAWS_JOB = {"running": False, "done": 0, "total": 0, "last": "", "error": ""}
+
+
+@app.get("/api/admin/laws")
+def admin_laws(user=Depends(_auth)):
+    _admin(user)
+    conn = get_connection()
+    rows = [dict(r) for r in conn.execute(
+        "SELECT code, title, LENGTH(COALESCE(full_text,'')) AS ft FROM laws ORDER BY code")]
+    conn.close()
+    return {"laws": rows, "job": _LAWS_JOB}
+
+
+@app.post("/api/admin/laws/reload")
+def admin_laws_reload(user=Depends(_auth)):
+    _admin(user)
+    import threading
+    if _LAWS_JOB["running"]:
+        return {"ok": False, "detail": "Уже выполняется"}
+
+    def run():
+        from core.laws_autoload import DEFAULT_PACK, autoload_law
+        _LAWS_JOB.update(running=True, done=0, total=len(DEFAULT_PACK), last="", error="")
+        try:
+            for prefix, title, cands in DEFAULT_PACK:
+                n, err, source = autoload_law(prefix, title, cands)
+                _LAWS_JOB["done"] += 1
+                _LAWS_JOB["last"] = f"{title}: статей {n}" if n else f"{title}: {err}"
+        except Exception as e:
+            _LAWS_JOB["error"] = str(e)
+        finally:
+            _LAWS_JOB["running"] = False
+
+    threading.Thread(target=run, daemon=True).start()
+    return {"ok": True}

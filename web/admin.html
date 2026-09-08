@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Админ-панель — MyContractAnalyzer</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="/style.css">
+<script src="/ui.js"></script>
+</head>
+<body class="min-h-screen">
+<div class="orb orb-a"></div><div class="orb orb-b"></div>
+<div id="siteNav"></div>
+
+<main class="max-w-6xl mx-auto px-6 py-10 relative z-10">
+  <h1 class="text-3xl font-bold mb-6">🛠 Админ-панель</h1>
+
+  <div class="flex flex-wrap gap-2 mb-6 text-sm">
+    <button data-tab="stats" class="tab-btn on">📊 Статистика</button>
+    <button data-tab="support" class="tab-btn">📨 Обращения</button>
+    <button data-tab="laws" class="tab-btn">📚 Законы</button>
+  </div>
+
+  <section id="tab-stats" class="pane">
+    <div id="statCards" class="grid md:grid-cols-4 gap-4 mb-8"></div>
+    <h2 class="font-bold mb-3">Последние пользователи</h2>
+    <div id="usersTable" class="glass p-4 text-sm space-y-2"></div>
+  </section>
+
+  <section id="tab-support" class="pane hidden">
+    <div id="supportList" class="space-y-4"></div>
+  </section>
+
+  <section id="tab-laws" class="pane hidden">
+    <div class="flex flex-wrap items-center gap-4 mb-4">
+      <button id="reloadLaws" class="btn-primary text-sm">🔄 Обновить базовый пакет законов</button>
+      <span id="jobStatus" class="text-sm text-white/60"></span>
+    </div>
+    <div id="lawsTable" class="glass p-4 text-sm space-y-1 max-h-[60vh] overflow-y-auto"></div>
+  </section>
+</main>
+
+<div id="siteFooter"></div>
+
+<script>
+const token = mcaToken();
+if (!token) location.href = '/auth.html#login';
+const ADMIN_EMAIL = 'mycontractanalyzer@gmail.com';
+
+const H = {'Authorization': 'Bearer ' + token};
+let meEmail = '';
+
+fetch('/api/me', {headers: H}).then(r => r.ok ? r.json() : Promise.reject())
+  .then(u => {
+    meEmail = u.email;
+    if (u.email !== ADMIN_EMAIL) location.href = '/profile.html';
+    loadStats();
+  }).catch(() => location.href = '/auth.html#login');
+
+document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  document.querySelectorAll('.pane').forEach(p => p.classList.add('hidden'));
+  document.getElementById('tab-' + b.dataset.tab).classList.remove('hidden');
+  if (b.dataset.tab === 'support') loadSupport();
+  if (b.dataset.tab === 'laws') loadLaws();
+  if (b.dataset.tab === 'stats') loadStats();
+});
+
+async function loadStats(){
+  try {
+    const r = await fetch('/api/admin/stats', {headers: H});
+    if (!r.ok) return;
+    const s = await r.json();
+    const card = (t, v) => '<div class="glass p-5"><div class="text-white/60 text-sm">' + t + '</div><div class="text-2xl font-extrabold mt-1">' + v + '</div></div>';
+    document.getElementById('statCards').innerHTML =
+      card('Пользователей', s.users) + card('Подтверждено', s.verified) +
+      card('Анализов', s.analyses) + card('Договоров', s.contracts) +
+      card('Средняя оценка', s.feedback_avg ?? '—') + card('Открытых обращений', s.support_open) +
+      card('Статей в базе', s.laws) + card('Регистраций сегодня', s.reg_today ?? '—');
+    document.getElementById('usersTable').innerHTML = (s.recent_users || []).map(u =>
+      '<div class="flex justify-between gap-3 border-b border-white/5 pb-2"><span>' + mcaEsc(u.email) +
+      '</span><span class="text-amber-400">' + mcaEsc(u.tariff) + '</span><span class="text-white/50">проверок: ' + u.checks_left + '</span></div>').join('');
+  } catch(e) {}
+}
+
+async function loadSupport(){
+  const r = await fetch('/api/admin/support', {headers: H});
+  if (!r.ok) return;
+  const list = await r.json();
+  document.getElementById('supportList').innerHTML = list.length ? list.map(m =>
+    '<div class="glass p-5">' +
+    '<div class="flex flex-wrap items-center gap-3 mb-2"><b>' + mcaEsc(m.email) + '</b>' +
+    '<span class="chip text-xs">' + mcaEsc(m.topic) + '</span>' +
+    '<span class="text-xs text-white/50">' + mcaEsc(m.created_at || '') + '</span>' +
+    (m.replied ? '<span class="text-xs text-green-400">✅ отвечено</span>' : '<span class="text-xs text-amber-400">🔥 новое</span>') +
+    '</div><p class="text-sm text-white/70 mb-3">' + mcaEsc(m.message) + '</p>' +
+    '<textarea id="rep' + m.id + '" rows="3" placeholder="Текст ответа…" class="input text-sm mb-3"></textarea>' +
+    '<button data-mid="' + m.id + '" class="rep-btn btn-primary text-sm">📨 Отправить ответ</button></div>').join('')
+    : '<p class="text-white/50">Обращений пока нет.</p>';
+  document.querySelectorAll('.rep-btn').forEach(b => b.onclick = async () => {
+    const mid = b.dataset.mid;
+    const answer = document.getElementById('rep' + mid).value.trim();
+    if (!answer) return;
+    const r = await fetch('/api/admin/support/' + mid + '/reply', {method: 'POST', headers: {'Content-Type': 'application/json', ...H}, body: JSON.stringify({answer})});
+    b.textContent = r.ok ? '✅ Отправлено' : '❌ Ошибка';
+    setTimeout(loadSupport, 800);
+  });
+}
+
+let poll = null;
+async function loadLaws(){
+  const r = await fetch('/api/admin/laws', {headers: H});
+  if (!r.ok) return;
+  const d = await r.json();
+  document.getElementById('lawsTable').innerHTML = d.laws.map(l =>
+    '<div class="flex justify-between gap-3 border-b border-white/5 pb-1"><span><b>' + mcaEsc(l.code) + '</b> — ' + mcaEsc(l.title) +
+    '</span><span class="text-white/50">' + (l.ft ? (l.ft + ' симв. текста') : 'только суть') + '</span></div>').join('');
+  renderJob(d.job);
+  if (d.job.running && !poll) poll = setInterval(loadLaws, 3000);
+  if (!d.job.running && poll) { clearInterval(poll); poll = null; }
+}
+function renderJob(j){
+  document.getElementById('jobStatus').textContent = j.running
+    ? ('⏳ Выполняется: ' + j.done + '/' + j.total + ' · ' + j.last)
+    : (j.error ? ('❌ ' + j.error) : (j.last ? ('✅ Последняя операция: ' + j.last) : ''));
+}
+document.getElementById('reloadLaws').onclick = async () => {
+  const r = await fetch('/api/admin/laws/reload', {method: 'POST', headers: H});
+  const d = await r.json();
+  document.getElementById('jobStatus').textContent = d.ok ? '⏳ Запущено в фоне…' : ('❌ ' + (d.detail || 'Ошибка'));
+  setTimeout(loadLaws, 1500);
+};
+
+mcaNav(); mcaFooter();
+</script>
+</body>
+</html>
