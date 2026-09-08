@@ -1,7 +1,7 @@
 """MyContractAnalyzer API — шаг 1 переезда. Работает параллельно со Streamlit."""
 import json
 
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -174,3 +174,58 @@ def analysis_detail(aid: int, user=Depends(_auth)):
         raise HTTPException(404, "Отчёт не найден")
     return {"id": row["id"], "report": row["report"],
             "highlights": row["highlights"], "created_at": row["created_at"]}
+
+
+class _FileShim:
+    """Обёртка, чтобы переиспользовать ридер файлов из Streamlit-версии."""
+    def __init__(self, name, mime, data):
+        self.name = name
+        self.type = mime
+        self._data = data
+
+    def read(self):
+        return self._data
+
+    def getvalue(self):
+        return self._data
+
+
+@app.post("/api/upload")
+async def upload(file: UploadFile = File(...), user=Depends(_auth)):
+    data = await file.read()
+    name = (file.filename or "").lower()
+    text = ""
+    try:
+        from core.file_reader import read_uploaded_file
+        text = read_uploaded_file(_FileShim(file.filename, file.content_type or "", data)) or ""
+    except Exception:
+        text = ""
+    if not text.strip():
+        import io
+        if name.endswith((".txt", ".md")):
+            text = data.decode("utf-8", errors="ignore")
+        elif name.endswith(".pdf"):
+            try:
+                import pdfplumber
+                with pdfplumber.open(io.BytesIO(data)) as pdf:
+                    text = "\n".join((p.extract_text() or "") for p in pdf.pages)
+            except Exception:
+                try:
+                    from pypdf import PdfReader
+                except Exception:
+                    from PyPDF2 import PdfReader
+                reader = PdfReader(io.BytesIO(data))
+                text = "\n".join((p.extract_text() or "") for p in reader.pages)
+        elif name.endswith(".docx"):
+            import docx
+            d = docx.Document(io.BytesIO(data))
+            parts = [p.text for p in d.paragraphs]
+            for t in d.tables:
+                for row in t.rows:
+                    parts.append(" ".join(c.text for c in row.cells))
+            text = "\n".join(parts)
+        else:
+            raise HTTPException(400, "Форматы: TXT, MD, PDF, DOCX")
+    if not text.strip():
+        raise HTTPException(400, "В файле нет текста (возможно, это скан — используй старую версию с OCR)")
+    return {"ok": True, "text": text, "chars": len(text)}
