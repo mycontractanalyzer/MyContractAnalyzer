@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-юрист 24/7 — MyContractAnalyzer</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}</style>
+</head>
+<body class="bg-[#0f1115] text-[#eef1f6] min-h-screen flex flex-col">
+<nav class="border-b border-white/10">
+  <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+    <a href="/new/" class="flex items-center gap-3 font-bold text-lg"><span class="text-2xl">⚖️</span>MyContractAnalyzer</a>
+    <div class="flex gap-2 text-sm">
+      <a href="/new/analyze.html" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10">Анализ</a>
+      <a href="/old/" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10">Старая версия</a>
+    </div>
+  </div>
+</nav>
+
+<main class="max-w-4xl mx-auto px-6 py-8 flex-1 flex flex-col w-full">
+  <h1 class="text-2xl font-bold mb-2">🤖 AI-юрист 24/7</h1>
+  <p class="text-white/60 text-sm mb-6">Безлимитный чат по правовым вопросам (тарифы Pro и Business Pro). Ответ печатается вживую.</p>
+  <div id="chat" class="flex-1 space-y-4 overflow-y-auto mb-4 pr-2"></div>
+  <form id="form" class="flex gap-3">
+    <input id="q" placeholder="Например: могут ли уволить во время отпуска?" class="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none">
+    <button class="px-6 py-3 rounded-xl bg-amber-500 text-black font-semibold hover:bg-amber-400">Спросить</button>
+  </form>
+</main>
+
+<script>
+const token = localStorage.getItem('mca_token');
+if (!token) location.href = '/new/index.html#/login';
+const history = [];
+const chat = document.getElementById('chat');
+function addMsg(role, text){
+  const d = document.createElement('div');
+  d.className = role === 'user' ? 'p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-sm whitespace-pre-wrap'
+                                : 'p-4 rounded-2xl bg-white/5 border border-white/10 text-sm whitespace-pre-wrap';
+  d.textContent = (role === 'user' ? 'Ты: ' : 'Юрист: ') + text;
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+  return d;
+}
+document.getElementById('form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const q = document.getElementById('q').value.trim();
+  if (!q) return;
+  document.getElementById('q').value = '';
+  addMsg('user', q);
+  const bot = addMsg('bot', '');
+  let out = '';
+  try {
+    const r = await fetch('/api/lawyer', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+      body: JSON.stringify({question: q, history: history.slice(-5)})
+    });
+    if (!r.ok) {
+      const d = await r.json();
+      bot.textContent = 'Юрист: ❌ ' + (d.detail || 'Ошибка');
+      return;
+    }
+    const reader = r.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, {stream: true});
+      let i;
+      while ((i = buf.indexOf('\n\n')) >= 0) {
+        const raw = buf.slice(0, i); buf = buf.slice(i + 2);
+        try {
+          const obj = JSON.parse(raw.replace(/^data: /, ''));
+          if (obj.chunk) { out += obj.chunk; bot.textContent = 'Юрист: ' + out; chat.scrollTop = chat.scrollHeight; }
+        } catch(e) {}
+      }
+    }
+    history.push([q, out]);
+  } catch(err) {
+    bot.textContent = 'Юрист: ❌ Сеть недоступна';
+  }
+});
+</script>
+</body>
+</html>

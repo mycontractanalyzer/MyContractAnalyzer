@@ -140,7 +140,8 @@ def laws_context_block(query: str, limit: int = 8, max_chars: int = 450) -> str:
     for i in with_ft[:6]:
         excerpt = _best_excerpt(i["full_text"].strip(), words, max_chars)
         lines.append(f"- {i['code']} — {i['title']}. ДОСЛОВНО: «{excerpt}»")
-    for i in only_es[:3]:
+    # fallback: если полных текстов мало — добавляем seed-строки, чтобы модель видела темы
+    for i in only_es[: (6 - len(lines))]:
         lines.append(f"- {i['code']} — {i['title']}: {i['essence']}")
     if not lines:
         return ""

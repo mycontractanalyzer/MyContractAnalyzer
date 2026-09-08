@@ -2,7 +2,7 @@
 import json
 
 from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 
 import secrets as py_secrets
@@ -229,3 +229,170 @@ async def upload(file: UploadFile = File(...), user=Depends(_auth)):
     if not text.strip():
         raise HTTPException(400, "В файле нет текста (возможно, это скан — используй старую версию с OCR)")
     return {"ok": True, "text": text, "chars": len(text)}
+
+
+@app.get("/api/analyses/{aid}/pdf")
+def analysis_pdf(aid: int, user=Depends(_auth)):
+    conn = get_connection()
+    row = conn.execute("SELECT report FROM analyses WHERE id = ? AND user_id = ?",
+                       (aid, user["id"])).fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(404, "Отчёт не найден")
+    from storage.pdf_generator import generate_report_pdf
+    data = generate_report_pdf(row["report"], user["email"])
+    return Response(content=data, media_type="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="report_{aid}.pdf"'})
+
+
+@app.get("/api/analyses/{aid}/docx")
+def analysis_docx(aid: int, user=Depends(_auth)):
+    conn = get_connection()
+    row = conn.execute("SELECT report FROM analyses WHERE id = ? AND user_id = ?",
+                       (aid, user["id"])).fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(404, "Отчёт не найден")
+    from storage.docx_generator import generate_report_docx
+    data = generate_report_docx(row["report"], user["email"])
+    return Response(
+        content=data,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="report_{aid}.docx"'})
+
+
+@app.get("/api/analyses/{aid}/contract")
+def analysis_contract(aid: int, user=Depends(_auth)):
+    conn = get_connection()
+    a = conn.execute("SELECT contract_id FROM analyses WHERE id = ? AND user_id = ?",
+                     (aid, user["id"])).fetchone()
+    if not a:
+        conn.close()
+        raise HTTPException(404, "Отчёт не найден")
+    c = conn.execute("SELECT source_text, contract_type FROM contracts WHERE id = ?",
+                     (a["contract_id"],)).fetchone()
+    conn.close()
+    return {"text": c["source_text"], "type": c["contract_type"]}
+
+
+class ToolIn(BaseModel):
+    analysis_id: int
+    scenario: str = ""
+
+
+@app.post("/api/tools/{tool}")
+def run_tool(tool: str, data: ToolIn, user=Depends(_auth)):
+    conn = get_connection()
+    a = conn.execute("SELECT * FROM analyses WHERE id = ? AND user_id = ?",
+                     (data.analysis_id, user["id"])).fetchone()
+    if not a:
+        conn.close()
+        raise HTTPException(404, "Отчёт не найден")
+    c = conn.execute("SELECT * FROM contracts WHERE id = ?", (a["contract_id"],)).fetchone()
+    conn.close()
+    a, c = dict(a), dict(c)
+    text, report, tariff = c["source_text"], a["report"], user["tariff"]
+    from core.analyzer import (generate_benchmark, generate_letter, generate_missing,
+                               generate_negotiation, generate_passport, generate_redline,
+                               generate_whatif, translate_contract)
+    from core.extra_ai import generate_precedent
+    mp = {
+        "redline": lambda: generate_redline(text, report, tariff),
+        "letter": lambda: generate_letter(text, report, tariff, c["contract_type"] or "", c["role"] or ""),
+        "negotiation": lambda: generate_negotiation(text, report, tariff),
+        "whatif": lambda: generate_whatif(text, report, data.scenario or "Своя ситуация", tariff),
+        "benchmark": lambda: generate_benchmark(text, report, tariff),
+        "passport": lambda: generate_passport(text),
+        "missing": lambda: generate_missing(text, report, tariff),
+        "translate": lambda: translate_contract(text),
+        "precedent": lambda: generate_precedent(text, report, tariff),
+    }
+    fn = mp.get(tool)
+    if not fn:
+        raise HTTPException(400, "Неизвестный инструмент")
+    return {"ok": True, "text": fn()}
+
+
+@app.get("/api/analyses/{aid}/protocol")
+def analysis_protocol(aid: int, user=Depends(_auth)):
+    conn = get_connection()
+    a = conn.execute("SELECT * FROM analyses WHERE id = ? AND user_id = ?",
+                     (aid, user["id"])).fetchone()
+    if not a:
+        conn.close()
+        raise HTTPException(404, "Отчёт не найден")
+    c = conn.execute("SELECT * FROM contracts WHERE id = ?", (a["contract_id"],)).fetchone()
+    conn.close()
+    a, c = dict(a), dict(c)
+    from core.protocol import generate_protocol, protocol_docx
+    rows = generate_protocol(a["report"], c["source_text"], user["tariff"])
+    data = protocol_docx(rows, user["email"], a.get("title") or "Договор")
+    return Response(
+        content=data,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="protocol_{aid}.docx"'})
+
+
+class LawyerIn(BaseModel):
+    question: str
+    history: list = []
+
+
+@app.post("/api/lawyer")
+def lawyer(data: LawyerIn, user=Depends(_auth)):
+    if user["tariff"] not in ("Pro", "Business Pro"):
+        raise HTTPException(403, "AI-юрист 24/7 доступен на тарифах Pro и Business Pro")
+    from core.analyzer import lawyer247_stream
+    gen, model = lawyer247_stream(data.question, data.history, user["tariff"])
+
+    def stream():
+        for ch in gen:
+            yield f"data: {json.dumps({'chunk': ch}, ensure_ascii=False)}\n\n"
+        yield "data: {\"done\": true}\n\n"
+
+    return StreamingResponse(stream(), media_type="text/event-stream")
+
+
+class FeedbackIn(BaseModel):
+    analysis_id: int
+    rating: int
+    comment: str = ""
+
+
+@app.post("/api/feedback")
+def feedback(data: FeedbackIn, user=Depends(_auth)):
+    from core.feedback import upsert_feedback
+    upsert_feedback(data.analysis_id, user["id"], data.rating, data.comment)
+    return {"ok": True}
+
+
+class SupportIn(BaseModel):
+    topic: str
+    message: str
+
+
+@app.post("/api/support")
+def support(data: SupportIn, user=Depends(_auth)):
+    conn = get_connection()
+    conn.execute("""CREATE TABLE IF NOT EXISTS support_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT, topic TEXT, message TEXT,
+        replied INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))""")
+    conn.execute("INSERT INTO support_messages (email, topic, message) VALUES (?,?,?)",
+                 (user["email"], data.topic, data.message))
+    conn.commit()
+    conn.close()
+    return {"ok": True}
+
+
+class PassIn(BaseModel):
+    old: str
+    new: str
+
+
+@app.post("/api/change_password")
+def change_pass(data: PassIn, user=Depends(_auth)):
+    from utils.auth import change_password
+    ok, msg = change_password(user["id"], data.old, data.new)
+    if not ok:
+        raise HTTPException(400, msg)
+    return {"ok": True, "message": msg}
