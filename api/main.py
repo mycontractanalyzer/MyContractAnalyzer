@@ -150,3 +150,27 @@ def analyze(data: AnalyzeIn, user=Depends(_auth)):
         yield f"data: {json.dumps({'done': True, 'analysis_id': aid}, ensure_ascii=False)}\n\n"
 
     return StreamingResponse(stream(), media_type="text/event-stream")
+
+
+@app.get("/api/analyses")
+def analyses(user=Depends(_auth)):
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT a.id, a.created_at, a.report, c.contract_type "
+        "FROM analyses a JOIN contracts c ON c.id = a.contract_id "
+        "WHERE a.user_id = ? ORDER BY a.id DESC LIMIT 30", (user["id"],)).fetchall()
+    conn.close()
+    return [{"id": r["id"], "created_at": r["created_at"], "type": r["contract_type"],
+             "preview": (r["report"] or "")[:120]} for r in rows]
+
+
+@app.get("/api/analyses/{aid}")
+def analysis_detail(aid: int, user=Depends(_auth)):
+    conn = get_connection()
+    row = conn.execute(
+        "SELECT * FROM analyses WHERE id = ? AND user_id = ?", (aid, user["id"])).fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(404, "Отчёт не найден")
+    return {"id": row["id"], "report": row["report"],
+            "highlights": row["highlights"], "created_at": row["created_at"]}

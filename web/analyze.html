@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Анализ договора — MyContractAnalyzer</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}</style>
+</head>
+<body class="bg-[#0f1115] text-[#eef1f6] min-h-screen">
+<nav class="border-b border-white/10">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+    <a href="/new/" class="flex items-center gap-3 font-bold text-lg"><span class="text-2xl">⚖️</span>MyContractAnalyzer</a>
+    <div class="flex gap-3">
+      <a href="/new/#/cabinet" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10">Кабинет</a>
+      <button id="logoutBtn" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10">Выйти</button>
+    </div>
+  </div>
+</nav>
+
+<main class="max-w-6xl mx-auto px-6 py-10 grid lg:grid-cols-3 gap-8">
+  <section class="lg:col-span-2">
+    <h1 class="text-3xl font-bold mb-6">📄 Анализ договора</h1>
+
+    <label class="block mb-4">
+      <span class="text-white/70 text-sm">Текст договора (или загрузи .txt / .md)</span>
+      <textarea id="contractText" rows="12" placeholder="Вставь текст договора сюда…"
+        class="mt-1 w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none text-sm"></textarea>
+    </label>
+    <div class="flex flex-wrap items-center gap-4 mb-6">
+      <input id="fileInput" type="file" accept=".txt,.md" class="text-sm text-white/70">
+      <span id="charCount" class="text-sm text-white/50">0 символов</span>
+    </div>
+
+    <div class="mb-6">
+      <span class="text-white/70 text-sm block mb-2">Глубина анализа</span>
+      <div class="flex gap-3">
+        <label class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 cursor-pointer has-[:checked]:border-amber-500 has-[:checked]:bg-amber-500/10">
+          <input type="radio" name="depth" value="brief" class="mr-2">⚡ Краткий
+        </label>
+        <label class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 cursor-pointer has-[:checked]:border-amber-500 has-[:checked]:bg-amber-500/10">
+          <input type="radio" name="depth" value="standard" checked class="mr-2">⚙️ Стандарт
+        </label>
+        <label class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 cursor-pointer has-[:checked]:border-amber-500 has-[:checked]:bg-amber-500/10">
+          <input type="radio" name="depth" value="detailed" class="mr-2">🔬 Развёрнутый
+        </label>
+      </div>
+    </div>
+
+    <button id="runBtn" class="px-8 py-4 rounded-2xl bg-amber-500 text-black font-semibold text-lg hover:bg-amber-400 w-full">
+      🚀 Анализировать
+    </button>
+
+    <div id="progressWrap" class="hidden mt-6">
+      <div class="h-2 rounded-full bg-white/10 overflow-hidden">
+        <div id="progressBar" class="h-full bg-amber-500 transition-all" style="width:1%"></div>
+      </div>
+      <p id="progressText" class="mt-2 text-sm text-white/60">Договор анализируется… 0%</p>
+    </div>
+
+    <div id="reportBox" class="hidden mt-8 p-6 rounded-2xl bg-white/5 border border-white/10">
+      <div id="reportContent" class="text-sm leading-relaxed whitespace-pre-wrap"></div>
+    </div>
+  </section>
+
+  <aside>
+    <h2 class="font-bold mb-4">📚 Мои отчёты</h2>
+    <div id="historyList" class="space-y-2"></div>
+  </aside>
+</main>
+
+<script>
+const token = localStorage.getItem('mca_token');
+if (!token) location.href = '/new/index.html#/login';
+document.getElementById('logoutBtn').onclick = () => { localStorage.removeItem('mca_token'); location.href = '/new/'; };
+
+const MAXT = {brief: 700, standard: 1800, detailed: 4500};
+const ta = document.getElementById('contractText');
+ta.addEventListener('input', () => {
+  document.getElementById('charCount').textContent = ta.value.length + ' символов';
+});
+document.getElementById('fileInput').addEventListener('change', async e => {
+  const f = e.target.files[0];
+  if (f) { ta.value = await f.text(); ta.dispatchEvent(new Event('input')); }
+});
+
+function md(t){
+  let h = t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  h = h.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+  h = h.replace(/^### (.*)$/gm,'<h4 class="font-bold text-lg mt-4 mb-1">$1</h4>');
+  h = h.replace(/^## (.*)$/gm,'<h3 class="font-bold text-xl mt-5 mb-2">$1</h3>');
+  h = h.replace(/^# (.*)$/gm,'<h2 class="font-bold text-2xl mt-6 mb-2">$1</h2>');
+  return h;
+}
+
+document.getElementById('runBtn').onclick = async () => {
+  const text = ta.value.trim();
+  if (!text) { alert('Вставь текст договора или загрузи файл'); return; }
+  const depth = document.querySelector('input[name="depth"]:checked').value;
+  const box = document.getElementById('reportBox');
+  const content = document.getElementById('reportContent');
+  const wrap = document.getElementById('progressWrap');
+  box.classList.remove('hidden'); wrap.classList.remove('hidden');
+  content.innerHTML = '';
+  let out = '';
+  try {
+    const r = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+      body: JSON.stringify({text, depth})
+    });
+    if (!r.ok) {
+      const d = await r.json();
+      alert('❌ ' + (d.detail || 'Ошибка анализа'));
+      wrap.classList.add('hidden');
+      return;
+    }
+    const reader = r.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, {stream: true});
+      let i;
+      while ((i = buf.indexOf('\n\n')) >= 0) {
+        const raw = buf.slice(0, i); buf = buf.slice(i + 2);
+        try {
+          const obj = JSON.parse(raw.replace(/^data: /, ''));
+          if (obj.chunk) {
+            out += obj.chunk;
+            content.innerHTML = md(out);
+            const pct = Math.min(99, Math.round(out.length / 2.5 / MAXT[depth] * 100));
+            document.getElementById('progressBar').style.width = Math.max(pct, 1) + '%';
+            document.getElementById('progressText').textContent = 'Договор анализируется… ' + pct + '%';
+          }
+          if (obj.done) {
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('progressText').textContent = '✅ Готово! Отчёт сохранён (id ' + obj.analysis_id + ')';
+            loadHistory();
+          }
+        } catch(e) {}
+      }
+    }
+  } catch(e) {
+    alert('❌ Сеть недоступна');
+  }
+};
+
+async function loadHistory(){
+  try {
+    const r = await fetch('/api/analyses', {headers: {'Authorization': 'Bearer ' + token}});
+    const list = await r.json();
+    document.getElementById('historyList').innerHTML = list.map(a =>
+      '<button data-id="' + a.id + '" class="w-full text-left p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10">' +
+      '<div class="font-semibold text-sm">' + (a.type || 'Договор') + ' · #' + a.id + '</div>' +
+      '<div class="text-xs text-white/50 mt-1">' + (a.created_at || '') + '</div></button>'
+    ).join('') || '<p class="text-white/50 text-sm">Пока пусто.</p>';
+    document.querySelectorAll('#historyList button').forEach(b => {
+      b.onclick = async () => {
+        const r = await fetch('/api/analyses/' + b.dataset.id, {headers: {'Authorization': 'Bearer ' + token}});
+        const d = await r.json();
+        document.getElementById('reportBox').classList.remove('hidden');
+        document.getElementById('reportContent').innerHTML = md(d.report || '');
+        document.getElementById('progressWrap').classList.add('hidden');
+        window.scrollTo({top: 0, behavior: 'smooth'});
+      };
+    });
+  } catch(e) {}
+}
+loadHistory();
+</script>
+</body>
+</html>
