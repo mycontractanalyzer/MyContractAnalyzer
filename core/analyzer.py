@@ -68,6 +68,7 @@ def _get_api_key():
 
 
 def split_report_highlights(report: str):
+    report = re.sub(r"\s*⚖️\s*Обоснование:[^\n]*норма в базе сервиса не найдена[^\n]*", "", report or "")
     m = re.search(r"HIGHLIGHTS_JSON:\s*(\[.*\])\s*$", report or "", re.S)
     if not m:
         m = re.search(r"HIGHLIGHTS_JSON:\s*(\[.*\])", report or "", re.S)

@@ -35,9 +35,6 @@ if st.button("📨 Отправить"):
     else:
         st.warning("Заполни email и сообщение.")
 
-st.divider()
-st.markdown("**⚡ Быстрее всего:** Telegram — [@MyContractAnalyzerSupport](https://t.me/MyContractAnalyzerSupport)")
-
 with st.expander("❓ Частые вопросы"):
     st.markdown("""
 **Как получить отчёт?** Раздел «Анализ договора» → загрузи файл → отчёт появится на экране и придёт на почту.
