@@ -5,71 +5,70 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Профиль — MyContractAnalyzer</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}</style>
+<link rel="stylesheet" href="/style.css">
+<script src="/ui.js"></script>
 </head>
-<body class="bg-[#0f1115] text-[#eef1f6] min-h-screen">
-<nav class="border-b border-white/10">
-  <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-    <a href="/new/" class="flex items-center gap-3 font-bold text-lg"><span class="text-2xl">⚖️</span>MyContractAnalyzer</a>
-    <div class="flex gap-2 text-sm">
-      <a href="/new/analyze.html" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10">Анализ</a>
-      <a href="/new/#/cabinet" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10">Кабинет</a>
-      <button id="logoutBtn" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10">Выйти</button>
-    </div>
-  </div>
-</nav>
+<body class="min-h-screen">
+<div class="orb orb-a"></div><div class="orb orb-b"></div>
+<div id="siteNav"></div>
 
-<main class="max-w-4xl mx-auto px-6 py-10 space-y-8">
+<main class="max-w-4xl mx-auto px-6 py-10 space-y-8 relative z-10">
   <h1 class="text-3xl font-bold">⚙️ Профиль и настройки</h1>
 
-  <section class="p-6 rounded-2xl bg-white/5 border border-white/10">
+  <section class="glass p-6">
     <h2 class="font-bold mb-4">👤 Мои данные</h2>
     <div id="meBox" class="text-sm space-y-1"></div>
+    <div class="flex flex-wrap gap-3 mt-5">
+      <a href="/analyze.html" class="btn-primary text-sm">📄 Анализ договора</a>
+      <a href="/lawyer.html" class="btn-ghost text-sm">🤖 ИИ-юрист 24/7</a>
+    </div>
   </section>
 
-  <section class="p-6 rounded-2xl bg-white/5 border border-white/10">
+  <section class="glass p-6">
     <h2 class="font-bold mb-4">🔑 Смена пароля</h2>
     <form id="passForm" class="grid md:grid-cols-3 gap-4">
-      <input name="old" type="password" placeholder="Текущий пароль" class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none">
-      <input name="new" type="password" placeholder="Новый пароль" minlength="6" class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none">
-      <input name="new2" type="password" placeholder="Повторите новый" minlength="6" class="px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none">
-      <button class="md:col-span-3 px-6 py-3 rounded-xl bg-amber-500 text-black font-semibold hover:bg-amber-400">💾 Сменить пароль</button>
+      <input name="old" type="password" placeholder="Текущий пароль" class="input">
+      <input name="new" type="password" placeholder="Новый пароль" minlength="6" class="input">
+      <input name="new2" type="password" placeholder="Повторите новый" minlength="6" class="input">
+      <button class="btn-primary md:col-span-3 text-sm">💾 Сменить пароль</button>
     </form>
     <div id="passMsg" class="mt-3 text-sm"></div>
   </section>
 
-  <section class="p-6 rounded-2xl bg-white/5 border border-white/10">
+  <section class="glass p-6">
     <h2 class="font-bold mb-4">💬 Поддержка</h2>
     <p class="text-sm text-white/60 mb-4">Обращение попадёт администратору, ответ придёт на твой email.</p>
     <form id="supForm" class="space-y-4">
-      <select name="topic" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10">
+      <select name="topic" class="input">
         <option>Вопрос по анализу</option><option>Оплата и тарифы</option>
         <option>Техническая проблема</option><option>Предложение</option><option>Другое</option>
       </select>
-      <textarea name="message" rows="4" placeholder="Опиши вопрос…" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none"></textarea>
-      <button class="px-6 py-3 rounded-xl bg-amber-500 text-black font-semibold hover:bg-amber-400">📨 Отправить обращение</button>
+      <textarea name="message" rows="4" placeholder="Опиши вопрос…" class="input"></textarea>
+      <button class="btn-primary text-sm">📨 Отправить обращение</button>
     </form>
     <div id="supMsg" class="mt-3 text-sm"></div>
   </section>
 
-  <section class="p-6 rounded-2xl bg-white/5 border border-white/10">
-    <h2 class="font-bold mb-3">📦 Удаление аккаунта и старые инструменты</h2>
-    <p class="text-sm text-white/60">Удаление аккаунта, история проверок, сравнение версий и прочие инструменты старой версии доступны здесь:</p>
-    <a href="/old/" class="inline-block mt-3 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-sm">Открыть старую версию</a>
+  <section class="glass p-6">
+    <h2 class="font-bold mb-3">📦 Старые инструменты</h2>
+    <p class="text-sm text-white/60">Удаление аккаунта, история проверок, сравнение версий и прочие инструменты старой версии:</p>
+    <a href="/old/" class="btn-ghost text-sm mt-3 inline-flex">Открыть старую версию</a>
   </section>
 </main>
 
+<div id="siteFooter"></div>
+
 <script>
-const token = localStorage.getItem('mca_token');
-if (!token) location.href = '/new/index.html#/login';
-document.getElementById('logoutBtn').onclick = () => { localStorage.removeItem('mca_token'); location.href = '/new/'; };
+const token = mcaToken();
+if (!token) location.href = '/auth.html#login';
 fetch('/api/me', {headers: {'Authorization': 'Bearer ' + token}})
   .then(r => r.ok ? r.json() : Promise.reject())
   .then(u => {
     document.getElementById('meBox').innerHTML =
-      '<p><b>Email:</b> ' + u.email + '</p><p><b>Тариф:</b> ' + u.tariff + '</p><p><b>Проверок осталось:</b> ' + u.checks_left + '</p>';
+      '<p><b>Email:</b> ' + mcaEsc(u.email) + '</p><p><b>Тариф:</b> ' + mcaEsc(u.tariff) +
+      '</p><p><b>Проверок осталось:</b> ' + u.checks_left + '</p>';
   })
-  .catch(() => location.href = '/new/index.html#/login');
+  .catch(() => location.href = '/auth.html#login');
 
 document.getElementById('passForm').addEventListener('submit', async e => {
   e.preventDefault();
@@ -94,6 +93,7 @@ document.getElementById('supForm').addEventListener('submit', async e => {
   msg.textContent = r.ok ? '✅ Обращение отправлено! Ответ придёт на email.' : '❌ Ошибка отправки';
   msg.className = 'mt-3 text-sm ' + (r.ok ? 'text-green-400' : 'text-red-400');
 });
+mcaNav(); mcaFooter();
 </script>
 </body>
 </html>

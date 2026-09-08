@@ -1,7 +1,7 @@
 (function(){
   var l = document.createElement('link');
   l.rel = 'icon';
-  l.href = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚖️</text></svg>';
+  l.href = '/logo.png';
   document.head.appendChild(l);
 })();
 
@@ -40,7 +40,7 @@ function mcaNav(){
   el.innerHTML =
     '<nav class="sticky top-0 z-50 backdrop-blur-xl bg-[#0b0d12]/75 border-b border-white/5">'
     + '<div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between gap-4">'
-    + '<a href="/" class="flex items-center gap-3 font-bold text-lg font-display"><span class="logo-badge">⚖️</span>MyContractAnalyzer</a>'
+    + '<a href="/" class="flex items-center gap-3 font-bold text-lg font-display"><img src="/logo.png" class="logo-img" alt="⚖️">MyContractAnalyzer</a>'
     + '<div class="hidden lg:flex items-center gap-1 text-sm">'
     + '<a href="/#features" class="nav-link">Возможности</a>'
     + '<a href="/#how" class="nav-link">Как работает</a>'
@@ -54,7 +54,7 @@ function mcaFooter(){
   if (!el) return;
   el.innerHTML =
     '<footer class="site mt-20"><div class="max-w-6xl mx-auto px-6 py-12 grid md:grid-cols-4 gap-8 text-sm">'
-    + '<div><div class="flex items-center gap-3 font-bold text-lg mb-3 font-display"><span class="logo-badge">⚖️</span>MyContractAnalyzer</div>'
+    + '<div><div class="flex items-center gap-3 font-bold text-lg mb-3 font-display"><img src="/logo.png" class="logo-img" alt="⚖️">MyContractAnalyzer</div>'
     + '<p class="text-white/50">Сервис ИИ-анализа договоров. Результаты носят информационный характер и не являются юридической консультацией.</p></div>'
     + '<div class="f-col"><div class="font-bold mb-3 text-white">Продукт</div><a href="/analyze.html">Анализ договора</a><a href="/lawyer.html">ИИ-юрист 24/7</a><a href="/content.html">Знания и подкасты</a><a href="/old/">Старая версия</a></div>'
     + '<div class="f-col"><div class="font-bold mb-3 text-white">Документы</div><a href="/offer.html">Оферта</a><a href="/privacy.html">Политика конфиденциальности</a><a href="/consent.html">Согласие на обработку ПДн</a></div>'

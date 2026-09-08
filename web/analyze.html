@@ -5,61 +5,59 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Анализ договора — MyContractAnalyzer</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}</style>
+<link rel="stylesheet" href="/style.css">
+<script src="/ui.js"></script>
 </head>
-<body class="bg-[#0f1115] text-[#eef1f6] min-h-screen">
-<nav class="border-b border-white/10">
-  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-    <a href="/new/" class="flex items-center gap-3 font-bold text-lg"><span class="text-2xl">⚖️</span>MyContractAnalyzer</a>
-    <div class="flex gap-3">
-      <a href="/new/#/cabinet" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10">Кабинет</a>
-      <button id="logoutBtn" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10">Выйти</button>
-    </div>
-  </div>
-</nav>
+<body class="min-h-screen">
+<div class="orb orb-a"></div><div class="orb orb-b"></div>
+<div id="siteNav"></div>
 
-<main class="max-w-6xl mx-auto px-6 py-10 grid lg:grid-cols-3 gap-8">
-  <section class="lg:col-span-2">
-    <h1 class="text-3xl font-bold mb-6">📄 Анализ договора</h1>
+<main class="max-w-6xl mx-auto px-6 py-10 grid lg:grid-cols-3 gap-8 relative z-10">
+  <section class="lg:col-span-2 space-y-6">
+    <h1 class="text-3xl font-bold">📄 Анализ договора</h1>
 
-    <label class="block mb-4">
-      <span class="text-white/70 text-sm">Текст договора (или загрузи .txt / .md / .pdf / .docx)</span>
-      <textarea id="contractText" rows="12" placeholder="Вставь текст договора сюда…"
-        class="mt-1 w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none text-sm"></textarea>
-    </label>
-    <div class="flex flex-wrap items-center gap-4 mb-6">
-      <input id="fileInput" type="file" accept=".txt,.md,.pdf,.docx" class="text-sm text-white/70">
-      <span id="charCount" class="text-sm text-white/50">0 символов</span>
-    </div>
+    <div class="glass p-6 space-y-5">
+      <label class="block">
+        <span class="text-white/70 text-sm">Текст договора</span>
+        <textarea id="contractText" rows="12" placeholder="Вставь текст договора сюда…" class="input mt-2 text-sm"></textarea>
+      </label>
 
-    <div class="mb-6">
-      <span class="text-white/70 text-sm block mb-2">Глубина анализа</span>
-      <div class="flex gap-3">
-        <label class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 cursor-pointer has-[:checked]:border-amber-500 has-[:checked]:bg-amber-500/10">
-          <input type="radio" name="depth" value="brief" class="mr-2">⚡ Краткий
-        </label>
-        <label class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 cursor-pointer has-[:checked]:border-amber-500 has-[:checked]:bg-amber-500/10">
-          <input type="radio" name="depth" value="standard" checked class="mr-2">⚙️ Стандарт
-        </label>
-        <label class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 cursor-pointer has-[:checked]:border-amber-500 has-[:checked]:bg-amber-500/10">
-          <input type="radio" name="depth" value="detailed" class="mr-2">🔬 Развёрнутый
-        </label>
+      <label class="dropzone block" id="dz">
+        <span class="dz-icon">📂</span>
+        <b>Перетащи файл сюда или кликни для выбора</b>
+        <span class="block text-sm text-white/50 mt-1">TXT · MD · PDF · DOCX — сервер распознает текст</span>
+        <input id="fileInput" type="file" accept=".txt,.md,.pdf,.docx">
+      </label>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <span id="charCount" class="chip">0 символов</span>
+        <span id="fileMsg" class="text-sm text-white/60"></span>
+      </div>
+
+      <div>
+        <span class="text-white/70 text-sm block mb-2">Глубина анализа</span>
+        <div class="flex flex-wrap gap-3">
+          <label class="chip cursor-pointer has-[:checked]:border-amber-500 has-[:checked]:bg-amber-500/10 has-[:checked]:text-amber-300"><input type="radio" name="depth" value="brief" class="accent-amber-500 mr-1">⚡ Краткий</label>
+          <label class="chip cursor-pointer has-[:checked]:border-amber-500 has-[:checked]:bg-amber-500/10 has-[:checked]:text-amber-300"><input type="radio" name="depth" value="standard" checked class="accent-amber-500 mr-1">⚙️ Стандарт</label>
+          <label class="chip cursor-pointer has-[:checked]:border-amber-500 has-[:checked]:bg-amber-500/10 has-[:checked]:text-amber-300"><input type="radio" name="depth" value="detailed" class="accent-amber-500 mr-1">🔬 Развёрнутый</label>
+        </div>
+      </div>
+
+      <button id="runBtn" class="btn-primary w-full text-lg">🚀 Анализировать</button>
+
+      <div id="progressWrap" class="hidden">
+        <div class="h-2 rounded-full bg-white/10 overflow-hidden">
+          <div id="progressBar" class="h-full bg-gradient-to-r from-amber-400 to-amber-600 transition-all" style="width:1%"></div>
+        </div>
+        <p id="progressText" class="mt-2 text-sm text-white/60">Договор анализируется… 0%</p>
       </div>
     </div>
 
-    <button id="runBtn" class="px-8 py-4 rounded-2xl bg-amber-500 text-black font-semibold text-lg hover:bg-amber-400 w-full">
-      🚀 Анализировать
-    </button>
-
-    <div id="progressWrap" class="hidden mt-6">
-      <div class="h-2 rounded-full bg-white/10 overflow-hidden">
-        <div id="progressBar" class="h-full bg-amber-500 transition-all" style="width:1%"></div>
+    <div id="reportBox" class="glass p-6 hidden">
+      <div id="reportContent" class="text-sm leading-relaxed"></div>
+      <div id="reportActions" class="hidden mt-6">
+        <a id="openReport" href="#" class="btn-primary">📊 Открыть полный отчёт с инструментами</a>
       </div>
-      <p id="progressText" class="mt-2 text-sm text-white/60">Договор анализируется… 0%</p>
-    </div>
-
-    <div id="reportBox" class="hidden mt-8 p-6 rounded-2xl bg-white/5 border border-white/10">
-      <div id="reportContent"></div>
     </div>
   </section>
 
@@ -69,96 +67,46 @@
   </aside>
 </main>
 
-<script>
-const token = localStorage.getItem('mca_token');
-if (!token) location.href = '/new/index.html#/login';
-document.getElementById('logoutBtn').onclick = () => { localStorage.removeItem('mca_token'); location.href = '/new/'; };
+<div id="siteFooter"></div>
 
+<script>
+const token = mcaToken();
+if (!token) location.href = '/auth.html#login';
 const MAXT = {brief: 700, standard: 1800, detailed: 4500};
 const ta = document.getElementById('contractText');
+const dz = document.getElementById('dz');
+
 ta.addEventListener('input', () => {
   document.getElementById('charCount').textContent = ta.value.length + ' символов';
 });
-document.getElementById('fileInput').addEventListener('change', async e => {
-  const f = e.target.files[0];
-  if (!f) return;
+['dragover','dragenter'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('drag'); }));
+['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('drag'); }));
+dz.addEventListener('drop', e => {
+  const f = e.dataTransfer.files[0];
+  if (f) handleFile(f);
+});
+document.getElementById('fileInput').addEventListener('change', e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+async function handleFile(f){
+  const msg = document.getElementById('fileMsg');
   const low = f.name.toLowerCase();
   if (low.endsWith('.txt') || low.endsWith('.md')) {
     ta.value = await f.text();
     ta.dispatchEvent(new Event('input'));
+    msg.textContent = '✅ ' + f.name;
     return;
   }
-  const counter = document.getElementById('charCount');
-  counter.textContent = '⏳ Сервер читает файл…';
+  msg.textContent = '⏳ Сервер читает файл…';
   try {
     const fd = new FormData();
     fd.append('file', f);
     const r = await fetch('/api/upload', {method: 'POST', headers: {'Authorization': 'Bearer ' + token}, body: fd});
     const d = await r.json();
-    if (r.ok) { ta.value = d.text; ta.dispatchEvent(new Event('input')); }
-    else { counter.textContent = '❌ ' + (d.detail || 'Не удалось прочитать файл'); }
-  } catch (err) { counter.textContent = '❌ Сеть недоступна'; }
-});
-
-function esc(t){ return (t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function md(t){
-  let h = esc(t);
-  h = h.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
-  h = h.replace(/^### (.*)$/gm,'<h4 class="font-bold text-lg mt-4 mb-1">$1</h4>');
-  h = h.replace(/^## (.*)$/gm,'<h3 class="font-bold text-xl mt-5 mb-2">$1</h3>');
-  h = h.replace(/^# (.*)$/gm,'<h2 class="font-bold text-2xl mt-6 mb-2">$1</h2>');
-  h = h.replace(/\n/g,'<br>');
-  return h;
-}
-async function downloadBlob(url, fname){
-  const r = await fetch(url, {headers: {'Authorization': 'Bearer ' + token}});
-  if (!r.ok) { alert('Скачивание недоступно'); return; }
-  const b = await r.blob();
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(b);
-  a.download = fname;
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-function renderReport(d){
-  const box = document.getElementById('reportBox');
-  box.classList.remove('hidden');
-  const raw = (d.report || '').split('HIGHLIGHTS_JSON:')[0];
-  const m = raw.match(/Риск-скор:\s*(\d{1,3})\/100/);
-  let head = '';
-  if (m) {
-    const s = +m[1];
-    const cls = s <= 30 ? 'text-green-400 border-green-500/40 bg-green-500/10'
-      : s <= 70 ? 'text-amber-400 border-amber-500/40 bg-amber-500/10'
-      : 'text-red-400 border-red-500/40 bg-red-500/10';
-    const verdict = s <= 30 ? '✅ Можно подписывать' : s <= 70 ? '🟡 С осторожностью' : '❌ Не подписывать без правок';
-    head = '<div class="mb-6 inline-block px-6 py-3 rounded-2xl border ' + cls + ' text-xl font-bold">🎯 Риск-скор: ' + s + '/100 — ' + verdict + '</div>';
-  }
-  let cards = '';
-  try {
-    const hl = JSON.parse(d.highlights || '[]');
-    const red = hl.filter(x => x.level === 'red');
-    const yel = hl.filter(x => x.level !== 'red');
-    if (red.length) cards += '<h3 class="font-bold text-lg mt-2 mb-3">🔴 Критические риски (' + red.length + ')</h3>' + red.map(x =>
-      '<div class="mb-3 p-4 rounded-xl bg-red-500/10 border border-red-500/30"><div class="font-semibold text-sm">' + esc(x.quote) +
-      '</div><div class="text-sm text-white/70 mt-2">' + esc(x.reason) + '</div></div>').join('');
-    if (yel.length) cards += '<h3 class="font-bold text-lg mt-4 mb-3">🟡 Стоит уточнить (' + yel.length + ')</h3>' + yel.map(x =>
-      '<div class="mb-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30"><div class="font-semibold text-sm">' + esc(x.quote) +
-      '</div><div class="text-sm text-white/70 mt-2">' + esc(x.reason) + '</div></div>').join('');
-  } catch(e) {}
-  const dl = '<div class="flex flex-wrap gap-3 mt-6">' +
-    '<button onclick="downloadBlob(\'/api/analyses/' + d.id + '/pdf\',\'report_' + d.id + '.pdf\')" class="px-5 py-3 rounded-xl bg-amber-500 text-black font-semibold hover:bg-amber-400">📄 Скачать PDF</button>' +
-    '<button onclick="downloadBlob(\'/api/analyses/' + d.id + '/docx\',\'report_' + d.id + '.docx\')" class="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/15">📝 Скачать DOCX</button></div>';
-  document.getElementById('reportContent').innerHTML = head + cards +
-    '<h3 class="font-bold text-lg mt-6 mb-2">📄 Полный отчёт</h3>' +
-    '<div class="text-sm leading-relaxed">' + md(raw) + '</div>' + dl;
-  window.scrollTo({top: document.getElementById('reportBox').offsetTop - 80, behavior: 'smooth'});
-}
-
-async function loadReport(id){
-  const r = await fetch('/api/analyses/' + id, {headers: {'Authorization': 'Bearer ' + token}});
-  if (r.ok) renderReport(await r.json());
+    if (r.ok) { ta.value = d.text; ta.dispatchEvent(new Event('input')); msg.textContent = '✅ ' + f.name + ' (' + d.chars + ' символов)'; }
+    else { msg.textContent = '❌ ' + (d.detail || 'Не удалось прочитать файл'); }
+  } catch (err) { msg.textContent = '❌ Сеть недоступна'; }
 }
 
 document.getElementById('runBtn').onclick = async () => {
@@ -168,6 +116,7 @@ document.getElementById('runBtn').onclick = async () => {
   const box = document.getElementById('reportBox');
   const content = document.getElementById('reportContent');
   const wrap = document.getElementById('progressWrap');
+  document.getElementById('reportActions').classList.add('hidden');
   box.classList.remove('hidden'); wrap.classList.remove('hidden');
   content.innerHTML = '<p class="text-white/60 text-sm">⏳ Запускаю анализ…</p>';
   let out = '';
@@ -198,7 +147,7 @@ document.getElementById('runBtn').onclick = async () => {
           if (obj.chunk) {
             out += obj.chunk;
             const visible = out.split('HIGHLIGHTS_JSON:')[0];
-            content.innerHTML = '<div class="text-sm leading-relaxed">' + md(visible) + '</div>';
+            content.innerHTML = mcaMd(visible);
             const pct = Math.min(99, Math.round(visible.length / 2.5 / MAXT[depth] * 100));
             document.getElementById('progressBar').style.width = Math.max(pct, 1) + '%';
             document.getElementById('progressText').textContent = 'Договор анализируется… ' + pct + '%';
@@ -206,7 +155,8 @@ document.getElementById('runBtn').onclick = async () => {
           if (obj.done) {
             document.getElementById('progressBar').style.width = '100%';
             document.getElementById('progressText').textContent = '✅ Готово! Отчёт сохранён.';
-            loadReport(obj.analysis_id);
+            document.getElementById('openReport').href = '/report.html?id=' + obj.analysis_id;
+            document.getElementById('reportActions').classList.remove('hidden');
             loadHistory();
           }
         } catch(e) {}
@@ -222,16 +172,13 @@ async function loadHistory(){
     const r = await fetch('/api/analyses', {headers: {'Authorization': 'Bearer ' + token}});
     const list = await r.json();
     document.getElementById('historyList').innerHTML = list.map(a =>
-      '<button data-id="' + a.id + '" class="w-full text-left p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10">' +
+      '<a href="/report.html?id=' + a.id + '" class="hist block">' +
       '<div class="font-semibold text-sm">' + (a.type || 'Договор') + ' · #' + a.id + '</div>' +
-      '<div class="text-xs text-white/50 mt-1">' + (a.created_at || '') + '</div></button>'
-    ).join('') || '<p class="text-white/50 text-sm">Пока пусто.</p>';
-    document.querySelectorAll('#historyList button').forEach(b => {
-      b.onclick = () => loadReport(b.dataset.id);
-    });
+      '<div class="text-xs text-white/50 mt-1">' + (a.created_at || '') + '</div></a>').join('')
+      || '<p class="text-white/50 text-sm">Пока пусто.</p>';
   } catch(e) {}
 }
-loadHistory();
+mcaNav(); mcaFooter(); loadHistory();
 </script>
 </body>
 </html>

@@ -5,70 +5,65 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Отчёт — MyContractAnalyzer</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}</style>
+<link rel="stylesheet" href="/style.css">
+<script src="/ui.js"></script>
 </head>
-<body class="bg-[#0f1115] text-[#eef1f6] min-h-screen">
-<nav class="border-b border-white/10">
-  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-    <a href="/new/" class="flex items-center gap-3 font-bold text-lg"><span class="text-2xl">⚖️</span>MyContractAnalyzer</a>
-    <div class="flex gap-2 text-sm">
-      <a href="/new/analyze.html" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10">Анализ</a>
-      <a href="/new/lawyer.html" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10">AI-юрист</a>
-      <a href="/old/" class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10">Старая версия</a>
-    </div>
-  </div>
-</nav>
+<body class="min-h-screen">
+<div class="orb orb-a"></div><div class="orb orb-b"></div>
+<div id="siteNav"></div>
 
-<main class="max-w-6xl mx-auto px-6 py-10 grid lg:grid-cols-4 gap-8">
+<main class="max-w-6xl mx-auto px-6 py-10 grid lg:grid-cols-4 gap-8 relative z-10">
   <section class="lg:col-span-3">
     <div id="scoreBadge" class="mb-6"></div>
     <div class="flex flex-wrap gap-2 mb-6 text-sm">
-      <button data-tab="report" class="tab px-4 py-2 rounded-xl bg-amber-500 text-black font-semibold">📄 Отчёт</button>
-      <button data-tab="contract" class="tab px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10">📑 Договор с подсветкой</button>
-      <button data-tab="tools" class="tab px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10">🧰 Инструменты</button>
-      <button data-tab="search" class="tab px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10">🔍 Поиск по пункту</button>
-      <button data-tab="feedback" class="tab px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10">⭐ Отзыв</button>
+      <button data-tab="report" class="tab-btn on">📄 Отчёт</button>
+      <button data-tab="contract" class="tab-btn">📑 Договор с подсветкой</button>
+      <button data-tab="tools" class="tab-btn">🧰 Инструменты</button>
+      <button data-tab="search" class="tab-btn">🔍 Поиск по пункту</button>
+      <button data-tab="feedback" class="tab-btn">⭐ Отзыв</button>
     </div>
 
     <div id="tab-report" class="pane">
       <div id="cards"></div>
-      <div id="reportBody" class="text-sm leading-relaxed mt-4"></div>
+      <div id="reportBody" class="text-sm leading-relaxed mt-4 glass p-6"></div>
       <div class="flex flex-wrap gap-3 mt-8">
-        <button id="dlPdf" class="px-5 py-3 rounded-xl bg-amber-500 text-black font-semibold hover:bg-amber-400">📄 PDF</button>
-        <button id="dlDocx" class="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/15">📝 DOCX</button>
-        <button id="dlProto" class="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/15">🧾 Протокол разногласий (DOCX)</button>
+        <button id="dlPdf" class="btn-primary text-sm">📄 Скачать PDF</button>
+        <button id="dlDocx" class="btn-ghost text-sm">📝 Скачать DOCX</button>
+        <button id="dlProto" class="btn-ghost text-sm">🧾 Протокол разногласий (DOCX)</button>
       </div>
     </div>
 
     <div id="tab-contract" class="pane hidden">
-      <div id="contractBody" class="text-sm leading-relaxed whitespace-pre-wrap p-6 rounded-2xl bg-white/5 border border-white/10"></div>
+      <div id="contractBody" class="text-sm leading-relaxed whitespace-pre-wrap glass p-6"></div>
     </div>
 
     <div id="tab-tools" class="pane hidden">
       <div id="toolButtons" class="flex flex-wrap gap-2 mb-4"></div>
       <label class="block mb-4 text-sm"><span class="text-white/70">Сценарий для «Что если…» (необязательно)</span>
-        <input id="scenario" class="mt-1 w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none"></label>
-      <div id="toolOut" class="text-sm leading-relaxed p-6 rounded-2xl bg-white/5 border border-white/10 whitespace-pre-wrap">Выбери инструмент…</div>
+        <input id="scenario" class="input mt-2"></label>
+      <div id="toolOut" class="text-sm leading-relaxed glass p-6 whitespace-pre-wrap">Выбери инструмент…</div>
     </div>
 
     <div id="tab-search" class="pane hidden">
       <div class="flex gap-3 mb-4">
-        <input id="clauseQ" placeholder="Номер пункта, например 5.2 или 7.6" class="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none">
-        <button id="clauseBtn" class="px-6 py-3 rounded-xl bg-amber-500 text-black font-semibold">Найти</button>
+        <input id="clauseQ" placeholder="Номер пункта, например 5.2 или 7.6" class="input">
+        <button id="clauseBtn" class="btn-primary text-sm">Найти</button>
       </div>
       <div id="clauseOut" class="text-sm space-y-3"></div>
     </div>
 
     <div id="tab-feedback" class="pane hidden">
-      <label class="block mb-4 text-sm"><span class="text-white/70">Оценка</span>
-        <select id="fbRating" class="mt-1 w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10">
-          <option value="5">⭐⭐⭐⭐⭐</option><option value="4">⭐⭐⭐⭐</option>
-          <option value="3">⭐⭐⭐</option><option value="2">⭐⭐</option><option value="1">⭐</option>
-        </select></label>
-      <label class="block mb-4 text-sm"><span class="text-white/70">Комментарий</span>
-        <textarea id="fbComment" rows="4" class="mt-1 w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-amber-500 outline-none"></textarea></label>
-      <button id="fbBtn" class="px-6 py-3 rounded-xl bg-amber-500 text-black font-semibold">Отправить отзыв</button>
-      <div id="fbMsg" class="mt-3 text-sm"></div>
+      <div class="glass p-6">
+        <label class="block mb-4 text-sm"><span class="text-white/70">Оценка</span>
+          <select id="fbRating" class="input mt-2">
+            <option value="5">⭐⭐⭐⭐⭐</option><option value="4">⭐⭐⭐⭐</option>
+            <option value="3">⭐⭐⭐</option><option value="2">⭐⭐</option><option value="1">⭐</option>
+          </select></label>
+        <label class="block mb-4 text-sm"><span class="text-white/70">Комментарий</span>
+          <textarea id="fbComment" rows="4" class="input mt-2"></textarea></label>
+        <button id="fbBtn" class="btn-primary text-sm">Отправить отзыв</button>
+        <div id="fbMsg" class="mt-3 text-sm"></div>
+      </div>
     </div>
   </section>
 
@@ -78,34 +73,18 @@
   </aside>
 </main>
 
+<div id="siteFooter"></div>
+
 <script>
-const token = localStorage.getItem('mca_token');
-if (!token) location.href = '/new/index.html#/login';
+const token = mcaToken();
+if (!token) location.href = '/auth.html#login';
 const params = new URLSearchParams(location.search);
 let aid = params.get('id');
-let reportRaw = '', contractText = '', detail = null;
+let reportRaw = '', contractText = '';
 
-function esc(t){ return (t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function md(t){
-  let h = esc(t);
-  h = h.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
-  h = h.replace(/^### (.*)$/gm,'<h4 class="font-bold text-lg mt-4 mb-1">$1</h4>');
-  h = h.replace(/^## (.*)$/gm,'<h3 class="font-bold text-xl mt-5 mb-2">$1</h3>');
-  h = h.replace(/^# (.*)$/gm,'<h2 class="font-bold text-2xl mt-6 mb-2">$1</h2>');
-  h = h.replace(/\n/g,'<br>');
-  return h;
-}
-async function downloadBlob(url, fname){
-  const r = await fetch(url, {headers: {'Authorization': 'Bearer ' + token}});
-  if (!r.ok) { alert('Недоступно'); return; }
-  const b = await r.blob();
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(b); a.download = fname; a.click();
-  URL.revokeObjectURL(a.href);
-}
-document.querySelectorAll('.tab').forEach(b => b.onclick = () => {
-  document.querySelectorAll('.tab').forEach(x => x.className = 'tab px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10');
-  b.className = 'tab px-4 py-2 rounded-xl bg-amber-500 text-black font-semibold';
+document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
   document.querySelectorAll('.pane').forEach(p => p.classList.add('hidden'));
   document.getElementById('tab-' + b.dataset.tab).classList.remove('hidden');
 });
@@ -114,7 +93,7 @@ async function loadReport(id){
   aid = id;
   const r = await fetch('/api/analyses/' + id, {headers: {'Authorization': 'Bearer ' + token}});
   if (!r.ok) { alert('Отчёт не найден'); return; }
-  detail = await r.json();
+  const detail = await r.json();
   reportRaw = (detail.report || '').split('HIGHLIGHTS_JSON:')[0];
   const m = reportRaw.match(/Риск-скор:\s*(\d{1,3})\/100/);
   if (m) {
@@ -131,43 +110,43 @@ async function loadReport(id){
     const hl = JSON.parse(detail.highlights || '[]');
     const red = hl.filter(x => x.level === 'red'), yel = hl.filter(x => x.level !== 'red');
     if (red.length) cards += '<h3 class="font-bold text-lg mb-3">🔴 Критические риски (' + red.length + ')</h3>' + red.map(x =>
-      '<div class="mb-3 p-4 rounded-xl bg-red-500/10 border border-red-500/30"><div class="font-semibold text-sm">' + esc(x.quote) +
-      '</div><div class="text-sm text-white/70 mt-2">' + esc(x.reason) + '</div></div>').join('');
+      '<div class="mb-3 p-4 rounded-xl bg-red-500/10 border border-red-500/30"><div class="font-semibold text-sm">' + mcaEsc(x.quote) +
+      '</div><div class="text-sm text-white/70 mt-2">' + mcaEsc(x.reason) + '</div></div>').join('');
     if (yel.length) cards += '<h3 class="font-bold text-lg mt-4 mb-3">🟡 Стоит уточнить (' + yel.length + ')</h3>' + yel.map(x =>
-      '<div class="mb-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30"><div class="font-semibold text-sm">' + esc(x.quote) +
-      '</div><div class="text-sm text-white/70 mt-2">' + esc(x.reason) + '</div></div>').join('');
+      '<div class="mb-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30"><div class="font-semibold text-sm">' + mcaEsc(x.quote) +
+      '</div><div class="text-sm text-white/70 mt-2">' + mcaEsc(x.reason) + '</div></div>').join('');
   } catch(e) {}
   document.getElementById('cards').innerHTML = cards;
-  document.getElementById('reportBody').innerHTML = md(reportRaw);
+  document.getElementById('reportBody').innerHTML = mcaMd(reportRaw);
 
   const rc = await fetch('/api/analyses/' + id + '/contract', {headers: {'Authorization': 'Bearer ' + token}});
   if (rc.ok) {
     const cd = await rc.json();
     contractText = cd.text || '';
-    let html = esc(contractText);
+    let html = mcaEsc(contractText);
     try {
       const hl = JSON.parse(detail.highlights || '[]');
       hl.forEach(x => {
-        const q = esc(x.quote);
+        const q = mcaEsc(x.quote);
         if (q && html.includes(q)) {
-          const cls = x.level === 'red' ? 'background:#7f1d1d;padding:0 2px;border-radius:3px' : 'background:#78350f;padding:0 2px;border-radius:3px';
-          html = html.replace(q, '<mark style="' + cls + '">' + q + '</mark>');
+          const st = x.level === 'red' ? 'background:#7f1d1d;padding:0 2px;border-radius:3px' : 'background:#78350f;padding:0 2px;border-radius:3px';
+          html = html.replace(q, '<mark style="' + st + '">' + q + '</mark>');
         }
       });
     } catch(e) {}
     document.getElementById('contractBody').innerHTML = html;
   }
-  history.replaceState(null, '', '/new/report.html?id=' + id);
+  history.replaceState(null, '', '/report.html?id=' + id);
 }
 
 const TOOLS = [
-  ['redline','📄 Redline (исправленный договор)'], ['letter','✉️ Письмо контрагенту'],
+  ['redline','📄 Redline'], ['letter','✉️ Письмо контрагенту'],
   ['negotiation','🎙 Скрипт переговоров'], ['whatif','🎭 Что если…'],
   ['benchmark','📊 Рыночный эталон'], ['passport','🪪 Паспорт договора'],
   ['missing','🕳 Чего не хватает'], ['translate','🌐 Перевод RU↔EN'], ['precedent','⚖️ Прецедент-радар']
 ];
 document.getElementById('toolButtons').innerHTML = TOOLS.map(t =>
-  '<button data-tool="' + t[0] + '" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-sm">' + t[1] + '</button>').join('');
+  '<button data-tool="' + t[0] + '" class="tab-btn text-sm">' + t[1] + '</button>').join('');
 document.querySelectorAll('#toolButtons button').forEach(b => b.onclick = async () => {
   const out = document.getElementById('toolOut');
   out.textContent = '⏳ Генерирую… (может занять до минуты)';
@@ -187,8 +166,8 @@ document.getElementById('clauseBtn').onclick = () => {
   const pick = t => (t || '').split('\n').filter(l => l.includes(q)).slice(0, 4);
   const ch = pick(contractText), rh = pick(reportRaw);
   document.getElementById('clauseOut').innerHTML =
-    (ch.length ? '<div><b>В договоре:</b>' + ch.map(l => '<div class="p-3 rounded-xl bg-white/5 border border-white/10 mt-2">' + esc(l) + '</div>').join('') + '</div>' : '') +
-    (rh.length ? '<div class="mt-4"><b>В отчёте:</b>' + rh.map(l => '<div class="p-3 rounded-xl bg-white/5 border border-white/10 mt-2">' + esc(l) + '</div>').join('') + '</div>' : '') +
+    (ch.length ? '<div><b>В договоре:</b>' + ch.map(l => '<div class="glass p-3 mt-2">' + mcaEsc(l) + '</div>').join('') + '</div>' : '') +
+    (rh.length ? '<div class="mt-4"><b>В отчёте:</b>' + rh.map(l => '<div class="glass p-3 mt-2">' + mcaEsc(l) + '</div>').join('') + '</div>' : '') +
     (!ch.length && !rh.length ? '<p class="text-white/50">Не найдено.</p>' : '');
 };
 
@@ -201,22 +180,23 @@ document.getElementById('fbBtn').onclick = async () => {
   document.getElementById('fbMsg').textContent = r.ok ? '✅ Отзыв сохранён, спасибо!' : '❌ Ошибка';
 };
 
-document.getElementById('dlPdf').onclick = () => downloadBlob('/api/analyses/' + aid + '/pdf', 'report_' + aid + '.pdf');
-document.getElementById('dlDocx').onclick = () => downloadBlob('/api/analyses/' + aid + '/docx', 'report_' + aid + '.docx');
-document.getElementById('dlProto').onclick = () => downloadBlob('/api/analyses/' + aid + '/protocol', 'protocol_' + aid + '.docx');
+document.getElementById('dlPdf').onclick = () => mcaDownload('/api/analyses/' + aid + '/pdf', 'report_' + aid + '.pdf');
+document.getElementById('dlDocx').onclick = () => mcaDownload('/api/analyses/' + aid + '/docx', 'report_' + aid + '.docx');
+document.getElementById('dlProto').onclick = () => mcaDownload('/api/analyses/' + aid + '/protocol', 'protocol_' + aid + '.docx');
 
 async function loadHistory(){
   const r = await fetch('/api/analyses', {headers: {'Authorization': 'Bearer ' + token}});
   const list = await r.json();
   document.getElementById('historyList').innerHTML = list.map(a =>
-    '<button data-id="' + a.id + '" class="w-full text-left p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10">' +
+    '<button data-id="' + a.id + '" class="hist">' +
     '<div class="font-semibold text-sm">' + (a.type || 'Договор') + ' · #' + a.id + '</div>' +
-    '<div class="text-xs text-white/50 mt-1">' + (a.created_at || '') + '</div></button>').join('') || '<p class="text-white/50 text-sm">Пока пусто.</p>';
+    '<div class="text-xs text-white/50 mt-1">' + (a.created_at || '') + '</div></button>').join('')
+    || '<p class="text-white/50 text-sm">Пока пусто.</p>';
   document.querySelectorAll('#historyList button').forEach(b => b.onclick = () => loadReport(b.dataset.id));
   if (!aid && list.length) aid = list[0].id;
   if (aid) loadReport(aid);
 }
-loadHistory();
+mcaNav(); mcaFooter(); loadHistory();
 </script>
 </body>
 </html>
