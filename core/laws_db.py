@@ -58,6 +58,19 @@ TOPIC_TAGS = {
     "преимуществен": ["гк", "аренд", "преимуществ"], "капремонт": ["гк", "аренд", "ремонт"],
 }
 
+KEY_ARTICLES = [
+    ("улучшени", r"Статья 623\b"),
+    ("удержан", r"Статья 359\b"),
+    ("неустойк|соразмерн|снизить", r"Статья 333\b"),
+    ("возобновлен|бессрочн|неопределенный срок", r"Статья 621\b"),
+    ("регистраци", r"Статья 651\b"),
+    ("арендн\w* плат|повышени|индексац|пересмотр", r"Статья 614\b"),
+    ("односторонн", r"Статья 450\.1\b"),
+    ("обеспечительн", r"Статья 381\.1\b"),
+    ("субаренд", r"Статья 615\b"),
+    ("преимуществен\w* прав", r"Статья 621\b"),
+]
+
 
 def _extract_keywords(text: str):
     t = (text or "").lower()
@@ -75,7 +88,7 @@ def _extract_keywords(text: str):
 
 
 def _best_excerpt(ft: str, words, max_chars: int = 600) -> str:
-    """Два самых релевантных непересекающихся окна статей; редкие слова весят больше."""
+    """До пяти самых релевантных непересекающихся окон статей; редкие слова весят больше."""
     ft_low = ft.lower()
     df = {}
     for w in set(words):
@@ -98,6 +111,32 @@ def _best_excerpt(ft: str, words, max_chars: int = 600) -> str:
                 break
     picked.sort(key=lambda x: x[1])
     return "\n…\n".join(ft[p:p + max_chars] for _, p in picked)
+
+
+def _key_excerpts(query: str):
+    """Гарантированно вырезает из базы дословный текст ключевой статьи под тему вопроса."""
+    low = (query or "").lower()
+    active = [(t, rx) for t, rx in KEY_ARTICLES if re.search(t, low)]
+    if not active:
+        return []
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT code, full_text FROM laws WHERE full_text IS NOT NULL AND LENGTH(full_text) > 1000 "
+        "AND (code LIKE '%ГК%' OR title LIKE '%Гражданский%')").fetchall()
+    conn.close()
+    add = []
+    for topic, art_rx in active:
+        for r in rows:
+            ft = r["full_text"] or ""
+            m = re.search(art_rx, ft, re.I)
+            if not m:
+                continue
+            start = m.start()
+            nxt = re.search(r"Статья\s+\d", ft[start + 12:])
+            end = start + 12 + nxt.start() if nxt else start + 900
+            add.append(f"- {r['code']} — ДОСЛОВНО (ключевая норма по теме вопроса): «{ft[start:min(end, start + 900)].strip()}»")
+            break
+    return add[:5]
 
 
 def search_laws(query: str, limit: int = 10):
@@ -155,10 +194,15 @@ def laws_context_block(query: str, limit: int = 8, max_chars: int = 600) -> str:
         lines.append(f"- {i['code']} — {i['title']}. ДОСЛОВНО: «{excerpt}»")
     for i in only_es[: (6 - len(lines)) if len(lines) < 6 else 0]:
         lines.append(f"- {i['code']} — {i['title']}: {i['essence']}")
+    try:
+        lines.extend(_key_excerpts(query))
+    except Exception:
+        pass
     if not lines:
         return ""
     rules = ("ПРАВИЛА ЦИТИРОВАНИЯ: (1) ссылайся только на те нормы, чей дословный текст выше "
-             "прямо покрывает ситуацию; (2) ЗоЗПП применим лишь когда одна из сторон — физлицо-"
-             "потребитель, в спорах между компаниями его не цитируй; (3) если прямой нормы в базе "
+             "прямо покрывает ситуацию; если в блоке есть строка «ключевая норма по теме вопроса» — "
+             "именно она является прямой нормой ответа; (2) ЗоЗПП применим лишь когда одна из сторон — "
+             "физлицо-потребитель, в спорах между компаниями его не цитируй; (3) если прямой нормы в базе "
              "нет — пиши «прямой нормы в базе нет» и НЕ применяй другие нормы по аналогии.")
     return ("ПРАВОВАЯ БАЗА (нормы РФ):\n" + "\n".join(lines) + "\n" + rules)
