@@ -19,20 +19,26 @@
     </div>
     <div id="scoreBadge" class="mb-6"></div>
 
-    <div id="dlRow" class="flex flex-wrap gap-3 mb-4">
-      <button id="dlPdf" class="btn-primary text-sm">📄 Скачать PDF</button>
-      <button id="dlDocx" class="btn-ghost text-sm">📝 Скачать DOCX</button>
-      <button id="dlProto" class="btn-ghost text-sm">🧾 Протокол разногласий (DOCX)</button>
-      <button id="dlAudio" class="btn-ghost text-sm">🔊 Аудиоверсия</button>
+    <div id="dlRow" class="glass p-4 mb-4">
+      <div class="text-xs text-white/50 mb-3">📥 СКАЧАТЬ ОТЧЁТ</div>
+      <div class="flex flex-wrap gap-2">
+        <button id="dlPdf" class="btn-primary text-sm">📄 PDF</button>
+        <button id="dlDocx" class="btn-ghost text-sm">📝 DOCX</button>
+        <button id="dlProto" class="btn-ghost text-sm">🧾 Протокол разногласий</button>
+        <button id="dlAudio" class="btn-ghost text-sm">🔊 Аудиоверсия</button>
+      </div>
+      <div id="audioBox" class="hidden mt-3"></div>
     </div>
-    <div id="audioBox" class="hidden mb-6"></div>
 
-    <div id="actionsRow" class="flex flex-wrap gap-3 mb-6">
-      <button id="shareBtn" class="btn-ghost text-sm">🔗 Поделиться по ссылке</button>
-      <button id="renameBtn" class="btn-ghost text-sm">✏️ Переименовать</button>
-      <button id="emailBtn" class="btn-ghost text-sm">📧 Отправить на почту (PDF)</button>
-      <a id="toLawyer" href="/lawyer.html" class="btn-ghost text-sm">🤖 Уточнить у ИИ-юриста</a>
-      <span id="shareMsg" class="text-sm text-white/60 self-center"></span>
+    <div id="actionsRow" class="glass p-4 mb-6">
+      <div class="text-xs text-white/50 mb-3">⚙️ ДЕЙСТВИЯ С ОТЧЁТОМ</div>
+      <div class="flex flex-wrap gap-2">
+        <button id="shareBtn" class="btn-ghost text-sm">🔗 Поделиться</button>
+        <button id="renameBtn" class="btn-ghost text-sm">✏️ Переименовать</button>
+        <button id="emailBtn" class="btn-ghost text-sm">📧 На почту</button>
+        <a id="toLawyer" href="/lawyer.html" class="btn-ghost text-sm">🤖 Уточнить у ИИ-юриста</a>
+        <span id="shareMsg" class="text-sm text-white/60 self-center"></span>
+      </div>
     </div>
 
     <div class="flex flex-wrap gap-2 mb-6 text-sm">
@@ -59,6 +65,7 @@
           <input id="lawyerQ" class="input mt-2" placeholder="Например: ничтожен ли п. 3.7? Как построить переговоры и скрипт разговора по п. 3.4?"></label>
         <p class="text-xs text-white/40 mt-2">Юрист видит текст договора и отчёт: спроси про риски, скрипт переговоров, контраргументы контрагенту или готовые формулировки правок.</p>
         <button id="lawyerAskBtn" class="btn-primary text-sm mt-3">Спросить юриста</button>
+        <button id="lawyerClearBtn" class="btn-ghost text-sm mt-3 ml-2" style="display:none">← Новый вопрос</button>
         <span id="lawyerLeftAnalysis" class="chip ml-2" style="display:none"></span>
         <div id="lawyerOut" class="text-sm leading-relaxed mt-3 hidden glass p-4"></div>
       </div>
@@ -266,6 +273,7 @@ document.getElementById('lawyerAskBtn').onclick = async () => {
   if (!q) { alert('Введи вопрос для юриста'); return; }
   const outBox = document.getElementById('lawyerOut');
   outBox.classList.remove('hidden');
+  document.getElementById('lawyerClearBtn').style.display = 'inline-block';
   outBox.innerHTML = '<span class="text-white/50">⏳ Юрист изучает отчёт и договор…</span>';
   try {
     const r = await fetch('/api/lawyer_analysis', {method: 'POST',
@@ -296,6 +304,15 @@ document.getElementById('lawyerAskBtn').onclick = async () => {
       }
     }
   } catch(e) { outBox.innerHTML = '<span class="text-red-400">❌ Сеть недоступна</span>'; }
+};
+
+document.getElementById('lawyerClearBtn').onclick = () => {
+  const box = document.getElementById('lawyerOut');
+  box.classList.add('hidden');
+  box.innerHTML = '';
+  document.getElementById('lawyerQ').value = '';
+  document.getElementById('lawyerClearBtn').style.display = 'none';
+  document.getElementById('lawyerQ').focus();
 };
 
 document.getElementById('clauseBtn').onclick = () => {
