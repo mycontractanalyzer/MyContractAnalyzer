@@ -116,3 +116,23 @@ function mcaPrompt(title, placeholder, def){
     setTimeout(() => wrap.querySelector('#mcaPromptInput').focus(), 50);
   });
 }
+
+
+function mcaConfirm(title, text, yesLabel){
+  return new Promise(resolve => {
+    const wrap = document.createElement('div');
+    wrap.className = 'fixed inset-0 z-[100] flex items-center justify-center px-4';
+    wrap.style.cssText = 'background:rgba(0,0,0,.7);backdrop-filter:blur(6px)';
+    wrap.innerHTML = '<div class="glass p-8 max-w-md w-full border-red-500/40">' +
+      '<div class="text-4xl mb-4">🗑</div>' +
+      '<h3 class="font-bold text-xl mb-3">' + title + '</h3>' +
+      '<p class="text-sm text-white/60 mb-6">' + text + '</p>' +
+      '<div class="flex gap-3"><button id="mcaCYes" class="btn-primary flex-1 text-sm" style="background:linear-gradient(135deg,#f87171,#dc2626);color:#fff;box-shadow:0 10px 30px rgba(220,38,38,.35)">' + (yesLabel || 'Да, удалить') + '</button>' +
+      '<button id="mcaCNo" class="btn-ghost flex-1 text-sm">Отмена</button></div></div>';
+    document.body.appendChild(wrap);
+    const done = v => { wrap.remove(); resolve(v); };
+    wrap.querySelector('#mcaCYes').onclick = () => done(true);
+    wrap.querySelector('#mcaCNo').onclick = () => done(false);
+    wrap.addEventListener('click', e => { if (e.target === wrap) done(false); });
+  });
+}

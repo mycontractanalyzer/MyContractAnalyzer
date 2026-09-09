@@ -79,15 +79,23 @@ async function loadHist(){
   if (!r.ok) return;
   const list = await r.json();
   document.getElementById('histList').innerHTML = list.length ? list.map(c =>
-    '<button data-id="' + c.id + '" class="hist block w-full text-left">' +
+    '<div class="hist relative">' +
+    '<button data-id="' + c.id + '" class="block w-full text-left pr-8">' +
     '<div class="font-semibold text-sm">' + mcaEsc((c.question || '').slice(0, 60)) + '</div>' +
-    '<div class="text-xs text-white/50 mt-1">' + (c.analysis_id ? ('по договору #' + c.analysis_id + ' · ') : '') + (c.created_at || '') + '</div></button>').join('')
+    '<div class="text-xs text-white/50 mt-1">' + (c.analysis_id ? ('по договору #' + c.analysis_id + ' · ') : '') + (c.created_at || '') + '</div></button>' +
+    '<button data-del="' + c.id + '" class="absolute right-2 top-2 text-white/40 hover:text-red-400" title="Удалить диалог">⋮</button></div>').join('')
     : '<p class="text-white/50 text-sm">Пока пусто.</p>';
-  document.querySelectorAll('#histList button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#histList [data-id]').forEach(b => b.onclick = () => {
     const c = list.find(x => x.id == b.dataset.id);
     chat.innerHTML = '';
     bubble('bg-amber-500/15 border border-amber-500/30 rounded-tr-sm').textContent = c.question;
     bubble('glass rounded-tl-sm').innerHTML = mcaMd(c.answer || '');
+  });
+  document.querySelectorAll('#histList [data-del]').forEach(b => b.onclick = async () => {
+    const ok = await mcaConfirm('Удалить диалог с юристом?', 'Вопрос и ответ будут удалены из истории безвозвратно.');
+    if (!ok) return;
+    await fetch('/api/lawyer_chats/' + b.dataset.del, {method: 'DELETE', headers: H});
+    loadHist();
   });
 }
 loadHist();

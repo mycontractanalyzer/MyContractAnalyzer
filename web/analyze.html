@@ -197,10 +197,19 @@ async function loadHistory(){
     const r = await fetch('/api/analyses', {headers: {'Authorization': 'Bearer ' + token}});
     const list = await r.json();
     document.getElementById('historyList').innerHTML = list.map(a =>
-      '<a href="/report.html?id=' + a.id + '" class="hist block">' +
+      '<div class="hist relative block">' +
+      '<a href="/report.html?id=' + a.id + '" class="block pr-8">' +
       '<div class="font-semibold text-sm">' + mcaEsc(a.title || a.type || 'Договор') + ' · #' + a.id + '</div>' +
-      '<div class="text-xs text-white/50 mt-1">' + (a.created_at || '') + '</div></a>').join('')
+      '<div class="text-xs text-white/50 mt-1">' + (a.created_at || '') + '</div></a>' +
+      '<button data-del="' + a.id + '" class="absolute right-2 top-2 text-white/40 hover:text-red-400" title="Удалить">⋮</button></div>').join('')
       || '<p class="text-white/50 text-sm">Пока пусто.</p>';
+    document.querySelectorAll('#historyList [data-del]').forEach(b => b.onclick = async (e) => {
+      e.preventDefault();
+      const ok = await mcaConfirm('Удалить отчёт?', 'Отчёт, его договор и связанные вопросы юристу будут удалены безвозвратно.');
+      if (!ok) return;
+      await fetch('/api/analyses/' + b.dataset.del, {method: 'DELETE', headers: {'Authorization': 'Bearer ' + token}});
+      loadHistory();
+    });
   } catch(e) {}
 }
 mcaNav(); mcaFooter(); loadHistory();

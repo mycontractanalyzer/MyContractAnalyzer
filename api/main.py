@@ -1238,3 +1238,34 @@ def lawyer_analysis(data: LawyerAnalysisIn, user=Depends(_auth)):
         yield f"data: {json.dumps({'done': True, 'left': limit - used - 1}, ensure_ascii=False)}\n\n"
 
     return StreamingResponse(stream(), media_type="text/event-stream")
+
+
+@app.delete("/api/analyses/{aid}")
+def analysis_delete(aid: int, user=Depends(_auth)):
+    conn = get_connection()
+    row = conn.execute("SELECT contract_id FROM analyses WHERE id = ? AND user_id = ?",
+                       (aid, user["id"])).fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(404, "Отчёт не найден")
+    conn.execute("DELETE FROM analyses WHERE id = ? AND user_id = ?", (aid, user["id"]))
+    try:
+        conn.execute("DELETE FROM lawyer_chats WHERE analysis_id = ?", (aid,))
+        conn.execute("DELETE FROM lawyer_analysis_usage WHERE analysis_id = ?", (aid,))
+        conn.execute("DELETE FROM contracts WHERE id = ? AND NOT EXISTS "
+                     "(SELECT 1 FROM analyses a WHERE a.contract_id = ?)",
+                     (row["contract_id"], row["contract_id"]))
+    except Exception:
+        pass
+    conn.commit()
+    conn.close()
+    return {"ok": True}
+
+
+@app.delete("/api/lawyer_chats/{cid}")
+def lawyer_chat_delete(cid: int, user=Depends(_auth)):
+    conn = get_connection()
+    conn.execute("DELETE FROM lawyer_chats WHERE id = ? AND user_id = ?", (cid, user["id"]))
+    conn.commit()
+    conn.close()
+    return {"ok": True}
