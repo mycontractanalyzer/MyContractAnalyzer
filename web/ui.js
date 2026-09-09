@@ -43,8 +43,8 @@ function mcaNav(){
   el.innerHTML =
     '<nav class="sticky top-0 z-50 backdrop-blur-xl bg-[#0b0d12]/75 border-b border-white/5">'
 + '<div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between gap-6">'
-    + '<a href="/" class="flex items-center gap-3 font-bold text-lg font-display min-w-0"><img src="/favicon.png?v=3" class="logo-img" alt="⚖️"><span class="break-words">MyContractAnalyzer</span></a>'
-+ '<div class="hidden lg:flex items-center gap-2 text-sm">'
+    + '<a href="/" class="flex items-center gap-3 font-bold text-lg font-display shrink-0"><img src="/favicon.png?v=3" class="logo-img" alt="⚖️"><span class="hidden md:inline">MyContractAnalyzer</span></a>'
++ '<div class="hidden xl:flex items-center gap-2 text-sm">'
     + '<a href="/#features" class="nav-link">Возможности</a>'
     + '<a href="/#how" class="nav-link">Как работает</a>'
     + '<a href="/#pricing" class="nav-link">Тарифы</a>'
