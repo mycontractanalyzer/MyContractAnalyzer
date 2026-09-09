@@ -136,6 +136,11 @@ def analyze(data: AnalyzeIn, user=Depends(_auth)):
     cap = TIER_CHARS.get(user["tariff"], 15000)
     if len(data.text) > cap:
         raise HTTPException(413, f"Лимит тарифа {user['tariff']}: до {cap} символов за одну проверку. Раздели документ или повысь тариф.")
+    import re as _re
+    pre = max(len(_re.findall(r"заключили настоящий договор", data.text, _re.I)),
+              len(_re.findall(r"именуем\w* в дальнейшем [«\"']?Арендодатель", data.text, _re.I)))
+    if pre > 1:
+        raise HTTPException(422, f"Похоже, в тексте несколько договоров ({pre}). Загрузите один договор: 1 проверка = 1 документ.")
     cap = TIER_CHARS.get(user["tariff"], 15000)
     if len(data.text) > cap:
         raise HTTPException(413, f"Лимит тарифа {user['tariff']}: до {cap} символов за одну проверку. Раздели документ или повысь тариф.")

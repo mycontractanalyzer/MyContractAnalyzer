@@ -133,7 +133,9 @@ document.getElementById('runBtn').onclick = async () => {
   if (!text) { alert('Вставь текст договора или загрузи файл'); return; }
   const cap2 = TIER_CHARS[myTariff] || 15000;
   if (text.length > cap2) { alert('❌ Лимит тарифа ' + myTariff + ': до ' + cap2 + ' символов за проверку. Раздели документ или повысь тариф.'); return; }
-  const dogCount = (text.match(/(^|\n)\s*ДОГОВОР[\s№N]/gi) || []).length;
+  const pre1 = (text.match(/заключили настоящий договор/gi) || []).length;
+  const pre2 = (text.match(/именуем\w* в дальнейшем [«"']?Арендодатель/gi) || []).length;
+  const dogCount = Math.max(pre1, pre2);
   if (dogCount > 1) { alert('❌ Похоже, в тексте несколько договоров (' + dogCount + '). Загрузите один договор за раз: 1 проверка = 1 документ.'); return; }
   const depth = document.querySelector('input[name="depth"]:checked').value;
   const box = document.getElementById('reportBox');

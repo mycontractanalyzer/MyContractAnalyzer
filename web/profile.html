@@ -70,6 +70,17 @@
     <p class="text-sm text-white/60 mb-4">Все отчёты, договоры и данные будут удалены безвозвратно. Действие необратимо.</p>
     <button id="delBtn" class="btn-ghost text-sm" style="border-color:rgba(248,113,113,.4);color:#fca5a5">🗑 Удалить аккаунт и все данные</button>
     <div id="delMsg" class="mt-3 text-sm"></div>
+    <div id="delModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center px-4" style="background:rgba(0,0,0,.7);backdrop-filter:blur(6px)">
+      <div class="glass p-8 max-w-md w-full border-red-500/40">
+        <div class="text-4xl mb-4">⚠️</div>
+        <h3 class="font-bold text-xl mb-3">Вы точно собираетесь удалить аккаунт?</h3>
+        <p class="text-sm text-white/60 mb-6">Все отчёты, договоры, промокоды и настройки будут стёрты безвозвратно. Восстановить доступ не получится.</p>
+        <div class="flex flex-col gap-3">
+          <button id="delYes" class="btn-primary w-full" style="background:linear-gradient(135deg,#f87171,#dc2626);color:#fff;box-shadow:0 10px 30px rgba(220,38,38,.35)">Да, хочу удалить</button>
+          <button id="delNo" class="btn-ghost w-full">Нет, оставить аккаунт</button>
+        </div>
+      </div>
+    </div>
   </section>
 </main>
 
@@ -124,12 +135,14 @@ document.getElementById('supForm').addEventListener('submit', async e => {
   msg.textContent = r.ok ? '✅ Обращение отправлено! Ответ придёт на email.' : '❌ Ошибка отправки';
   msg.className = 'mt-3 text-sm ' + (r.ok ? 'text-green-400' : 'text-red-400');
 });
-document.getElementById('delBtn').onclick = async () => {
-  if (!confirm('Удалить аккаунт и все данные безвозвратно?')) return;
-  if (!confirm('Финальное подтверждение: вы уверены?')) return;
+const delModal = document.getElementById('delModal');
+document.getElementById('delBtn').onclick = () => delModal.classList.remove('hidden');
+document.getElementById('delNo').onclick = () => delModal.classList.add('hidden');
+delModal.addEventListener('click', e => { if (e.target === delModal) delModal.classList.add('hidden'); });
+document.getElementById('delYes').onclick = async () => {
   const r = await fetch('/api/delete_account', {method: 'POST', headers: H});
   if (r.ok) { localStorage.removeItem('mca_token'); location.href = '/'; }
-  else { const d = await r.json().catch(() => ({})); document.getElementById('delMsg').textContent = '❌ ' + (d.detail || 'Ошибка'); }
+  else { const d = await r.json().catch(() => ({})); delModal.classList.add('hidden'); document.getElementById('delMsg').textContent = '❌ ' + (d.detail || 'Ошибка'); }
 };
 mcaNav(); mcaFooter();
 </script>
