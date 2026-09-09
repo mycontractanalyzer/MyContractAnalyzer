@@ -503,7 +503,7 @@ def _send_text_email(to: str, subject: str, body: str):
 
 
 def _admin(user):
-    if user["email"] not in config.ADMIN_EMAILS:
+    if user["email"] not in ["mycontractanalyzer@gmail.com"]:
         raise HTTPException(403, "Доступ только для администратора")
 
 
