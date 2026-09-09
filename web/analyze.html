@@ -93,6 +93,7 @@ ta.addEventListener('input', () => {
 ['dragover','dragenter'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('drag'); }));
 ['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('drag'); }));
 dz.addEventListener('drop', e => {
+  if (e.dataTransfer.files.length > 1) { alert('❌ Загрузите один договор за раз: 1 проверка = 1 документ.'); return; }
   const f = e.dataTransfer.files[0];
   if (f) handleFile(f);
 });
@@ -132,6 +133,8 @@ document.getElementById('runBtn').onclick = async () => {
   if (!text) { alert('Вставь текст договора или загрузи файл'); return; }
   const cap2 = TIER_CHARS[myTariff] || 15000;
   if (text.length > cap2) { alert('❌ Лимит тарифа ' + myTariff + ': до ' + cap2 + ' символов за проверку. Раздели документ или повысь тариф.'); return; }
+  const dogCount = (text.match(/(^|\n)\s*ДОГОВОР[\s№N]/gi) || []).length;
+  if (dogCount > 1) { alert('❌ Похоже, в тексте несколько договоров (' + dogCount + '). Загрузите один договор за раз: 1 проверка = 1 документ.'); return; }
   const depth = document.querySelector('input[name="depth"]:checked').value;
   const box = document.getElementById('reportBox');
   const content = document.getElementById('reportContent');

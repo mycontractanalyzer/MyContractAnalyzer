@@ -1052,3 +1052,10 @@ def compare_versions(data: CompareIn, user=Depends(_auth)):
              "important": sum(1 for c in changes if c["important"])}
     changes.sort(key=lambda c: (not c["important"], c["type"]))
     return {"stats": stats, "changes": changes[:300]}
+    
+
+@app.post("/api/delete_account")
+def delete_account(user=Depends(_auth)):
+    from utils.auth import delete_user
+    delete_user(user["id"])
+    return {"ok": True}

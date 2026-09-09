@@ -90,3 +90,4 @@ input[type=file]::file-selector-button{background:rgba(255,255,255,.06);border:1
 input[type=file]::file-selector-button:hover{background:rgba(245,181,46,.15);border-color:rgba(245,181,46,.55);color:#ffd166}
 .nav-link{white-space:nowrap}
 nav a,nav button{white-space:nowrap}
+.grad-text{line-height:1.22;padding-bottom:.14em}
