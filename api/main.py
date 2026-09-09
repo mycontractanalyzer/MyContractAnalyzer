@@ -365,7 +365,7 @@ def lawyer(data: LawyerIn, user=Depends(_auth)):
         raise HTTPException(429, f"Дневной лимит исчерпан: {limit} обращений на тарифе {user['tariff']}. Счётчик сбросится в полночь.")
     _lawyer_inc(user["email"])
     from core.analyzer import lawyer247_stream
-    gen, model = lawyer247_stream(data.question, data.history, user["tariff"])
+    gen, model = lawyer247_stream("Отвечай строго на русском языке, без иноязычных вставок. " + data.question, data.history, user["tariff"])
 
     def stream():
         out = []
@@ -1219,7 +1219,7 @@ def lawyer_analysis(data: LawyerAnalysisIn, user=Depends(_auth)):
                "\n\nФРАГМЕНТ ГОТОВОГО ОТЧЁТА ПО ЭТОМУ ДОГОВОРУ:\n" +
                (a["report"] or "").split("HIGHLIGHTS_JSON:")[0][:4000] +
                "\n\nВОПРОС ПО ЭТОМУ ДОГОВОРУ: ")
-    gen, model = lawyer247_stream(context + data.question, [], user["tariff"])
+    gen, model = lawyer247_stream(context + "Отвечай строго на русском языке, без иноязычных вставок. " + data.question, [], user["tariff"])
 
     def stream():
         out = []

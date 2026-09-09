@@ -20,6 +20,12 @@
     </div>
     <p id="ctxNote" class="text-white/60 text-sm mb-6">Чат по любым правовым вопросам. Ответ печатается вживую и сразу оформлен для чтения.</p>
 
+    <div class="flex flex-wrap gap-3 mb-4">
+      <button id="newChatBtn" class="btn-ghost text-sm">← Назад к новому диалогу</button>
+      <a href="/analyze.html" class="btn-ghost text-sm">📄 К загрузке договора</a>
+      <a href="/report.html" class="btn-ghost text-sm">📊 К последнему отчёту</a>
+    </div>
+
     <div id="chat" class="glass p-6 space-y-4 min-h-[50vh] max-h-[60vh] overflow-y-auto mb-4"></div>
 
     <div class="flex gap-3">
@@ -138,6 +144,7 @@ async function ask(){
     bot.innerHTML = '<span class="text-red-400">❌ Сеть недоступна</span>';
   }
 }
+document.getElementById('newChatBtn').onclick = () => { chat.innerHTML = ''; document.getElementById('q').value = ''; document.getElementById('q').focus(); };
 document.getElementById('send').onclick = ask;
 document.getElementById('q').addEventListener('keydown', e => { if (e.key === 'Enter') ask(); });
 mcaNav(); mcaFooter();
