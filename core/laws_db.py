@@ -50,7 +50,12 @@ TOPIC_TAGS = {
     "авторск": ["гк", "авторск"], "исключительн": ["гк", "авторск"],
     "залог": ["гк", "залог"], "имуществ": ["гк", "имуществ"],
     "регистраци": ["гк", "регистраци"], "улучшени": ["гк", "улучшени"],
-    "субаренд": ["гк", "субаренд"], "индексац": ["гк", "индексац"],
+    "субаренд": ["гк", "субаренд"], "индексац": ["гк", "индексац", "арендн плат"],
+    "удержан": ["гк", "удержан", "обеспеч"], "внесудебн": ["гк", "удержан"],
+    "реализац": ["гк", "удержан", "залог"], "обеспечительн": ["гк", "обеспеч"],
+    "предоплат": ["гк", "предоплат", "неустойк"], "очередн": ["гк", "зачет", "исполн"],
+    "коммунальн": ["гк", "арендн", "коммунальн"], "отключен": ["гк", "арендн"],
+    "преимуществен": ["гк", "аренд", "преимуществ"], "капремонт": ["гк", "аренд", "ремонт"],
 }
 
 
@@ -70,13 +75,16 @@ def _extract_keywords(text: str):
 
 
 def _best_excerpt(ft: str, words, max_chars: int = 450) -> str:
-    """Два самых релевантных НЕпересекающихся фрагмента статей закона."""
+    """Два самых релевантных непересекающихся окна статей; редкие слова весят больше."""
     ft_low = ft.lower()
+    df = {}
+    for w in set(words):
+        df[w] = ft_low.count(w) or 1
     cands = []
     for m in re.finditer(r"статья\s+\d+[.\d]*", ft_low):
         pos = m.start()
         window = ft_low[pos:pos + 1500]
-        score = sum(1 for w in words if w in window)
+        score = sum(1.0 / (1.0 + df.get(w, 1)) for w in set(words) if w in window)
         if score > 0:
             cands.append((score, pos))
     cands.sort(key=lambda x: (-x[0], x[1]))
@@ -124,9 +132,8 @@ def search_laws(query: str, limit: int = 10):
     refined = []
     for score, r in stage1[:40]:
         ft = (r["full_text"] or "").lower()
-        if ft:
-            hits = sum(1 for w in words if w in ft)
-            score += min(10, hits)
+        hits = sum(1 for w in words if w in ft)
+        score += min(10, hits)
         refined.append((score, r))
     refined.sort(key=lambda x: -x[0])
     return [dict(r) for _, r in refined[:limit]]
@@ -150,4 +157,8 @@ def laws_context_block(query: str, limit: int = 8, max_chars: int = 450) -> str:
         lines.append(f"- {i['code']} — {i['title']}: {i['essence']}")
     if not lines:
         return ""
-    return ("ПРАВОВАЯ БАЗА (нормы РФ):\n" + "\n".join(lines))
+    rules = ("ПРАВИЛА ЦИТИРОВАНИЯ: (1) ссылайся только на те нормы, чей дословный текст выше "
+             "прямо покрывает ситуацию; (2) ЗоЗПП применим лишь когда одна из сторон — физлицо-"
+             "потребитель, в спорах между компаниями его не цитируй; (3) если прямой нормы в базе "
+             "нет — пиши «прямой нормы в базе нет» и НЕ применяй другие нормы по аналогии.")
+    return ("ПРАВОВАЯ БАЗА (нормы РФ):\n" + "\n".join(lines) + "\n" + rules)

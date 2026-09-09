@@ -136,16 +136,21 @@ async function loadContract(id){
   const cd = await rc.json();
   contractText = cd.text || '';
   let html = mcaEsc(contractText);
+  const markFuzzy = (src, q, st) => {
+    const words = q.trim().split(/\s+/).filter(w => w.length > 2).slice(0, 10);
+    if (!words.length) return src;
+    const rx = new RegExp(words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('[\\s\\S]{0,6}?'), 'i');
+    return src.replace(rx, m => '<mark style="' + st + '">' + m + '</mark>');
+  };
   try {
     const r = await fetch('/api/analyses/' + id, {headers: H});
     const d = await r.json();
     const hl = JSON.parse(d.highlights || '[]');
     hl.forEach(x => {
-      const q = mcaEsc(x.quote);
-      if (q && html.includes(q)) {
-        const st = x.level === 'red' ? 'background:#7f1d1d;padding:0 2px;border-radius:3px' : 'background:#78350f;padding:0 2px;border-radius:3px';
-        html = html.replace(q, '<mark style="' + st + '">' + q + '</mark>');
-      }
+      const st = x.level === 'red'
+        ? 'background:#7f1d1d;color:#fecaca;padding:0 3px;border-radius:3px'
+        : 'background:#78350f;color:#fde68a;padding:0 3px;border-radius:3px';
+      html = markFuzzy(html, mcaEsc(x.quote), st);
     });
   } catch(e) {}
   document.getElementById('contractBody').innerHTML = html;
@@ -200,7 +205,7 @@ async function init(){
     }
   };
   document.getElementById('renameBtn').onclick = async () => {
-    const t = prompt('Новое название отчёта:');
+    const t = await mcaPrompt('Новое название отчёта', 'Например: Аренда цеха — редакция контрагента');
     if (!t) return;
     await fetch('/api/analyses/' + aid + '/rename', {method: 'POST',
       headers: {'Content-Type': 'application/json', ...H}, body: JSON.stringify({title: t})});
@@ -232,7 +237,7 @@ document.querySelectorAll('#toolButtons button').forEach(b => b.onclick = async 
       body: JSON.stringify({analysis_id: +aid, scenario: document.getElementById('scenario').value})
     });
     const d = await r.json();
-    out.textContent = r.ok ? d.text : ('❌ ' + (d.detail || 'Ошибка'));
+    out.innerHTML = r.ok ? mcaMd(d.text) : ('❌ ' + mcaEsc(d.detail || 'Ошибка'));
   } catch(e) { out.textContent = '❌ Сеть недоступна'; }
 });
 
