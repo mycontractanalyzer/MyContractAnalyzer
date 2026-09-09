@@ -995,3 +995,60 @@ def analysis_audio(aid: int, user=Depends(_auth)):
     with open(path, "wb") as f:
         f.write(audio)
     return Response(content=audio, media_type="audio/mpeg")
+
+
+COMPARE_TIERS = {"Pro", "Business", "Business Pro"}
+COMPARE_KEYS = ["неустойк", "штраф", "пеня", "размер", "цена", "срок", "уведомл",
+                "ответствен", "залог", "обеспеч", "расторж", "отказ", "продлен",
+                "индексац", "суд", "арбитраж", "подсудност", "арендн", "оплат"]
+
+
+class CompareIn(BaseModel):
+    old_text: str
+    new_text: str
+
+
+@app.post("/api/compare")
+def compare_versions(data: CompareIn, user=Depends(_auth)):
+    if user["tariff"] not in COMPARE_TIERS:
+        raise HTTPException(403, "Сравнение версий доступно на тарифах Pro, Business и Business Pro")
+    if user["checks_left"] < 1:
+        raise HTTPException(402, "Недостаточно проверок")
+    if len(data.old_text) > 200000 or len(data.new_text) > 200000:
+        raise HTTPException(413, "Каждая версия должна быть не длиннее 200 000 символов")
+    import difflib
+    import re
+
+    def clauses(t):
+        parts = re.split(r"\n(?=\s*\d+[.)]\s)", t or "")
+        return [p.strip() for p in parts if p.strip()]
+
+    old_c = clauses(data.old_text)
+    new_c = clauses(data.new_text)
+    sm = difflib.SequenceMatcher(None, old_c, new_c)
+    changes = []
+    for tag, i1, i2, j1, j2 in sm.get_opcodes():
+        if tag == "equal":
+            continue
+        if tag == "delete":
+            changes += [{"type": "removed", "old": old_c[k][:1500], "new": ""} for k in range(i1, i2)]
+        elif tag == "insert":
+            changes += [{"type": "added", "old": "", "new": new_c[k][:1500]} for k in range(j1, j2)]
+        else:
+            for n, k in enumerate(range(i1, i2)):
+                changes.append({"type": "changed", "old": old_c[k][:1500],
+                                "new": (new_c[j1 + n][:1500] if j1 + n < j2 else "")})
+    for c in changes:
+        blob = (c["old"] + " " + c["new"]).lower()
+        c["important"] = any(k in blob for k in COMPARE_KEYS)
+    conn = get_connection()
+    conn.execute("UPDATE users SET checks_left = MAX(0, checks_left - 1) WHERE id = ?",
+                 (user["id"],))
+    conn.commit()
+    conn.close()
+    stats = {"added": sum(1 for c in changes if c["type"] == "added"),
+             "removed": sum(1 for c in changes if c["type"] == "removed"),
+             "changed": sum(1 for c in changes if c["type"] == "changed"),
+             "important": sum(1 for c in changes if c["important"])}
+    changes.sort(key=lambda c: (not c["important"], c["type"]))
+    return {"stats": stats, "changes": changes[:300]}

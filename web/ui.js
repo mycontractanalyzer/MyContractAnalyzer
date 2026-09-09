@@ -33,7 +33,7 @@ function mcaNav(){
   var el = document.getElementById('siteNav');
   if (!el) return;
   var right = mcaToken()
-    ? '<a href="/analyze.html" class="nav-link">Анализ</a>'
+    ? '<a href="/analyze.html" class="nav-link">Анализ</a><a href="/compare.html" class="nav-link">🆚 Сравнение</a>'
       + '<a href="/lawyer.html" class="nav-link">ИИ-юрист</a>'
       + '<a href="/profile.html" class="px-4 py-2 rounded-xl bg-amber-500 text-black font-semibold hover:bg-amber-400 transition">Кабинет</a>'
       + '<button onclick="localStorage.removeItem(\'mca_token\');location.href=\'/\'" class="nav-link">Выйти</button>'

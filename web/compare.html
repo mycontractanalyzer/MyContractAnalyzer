@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Сравнение версий — MyContractAnalyzer</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="/style.css">
+<script src="/ui.js"></script>
+</head>
+<body class="min-h-screen">
+<div class="orb orb-a"></div><div class="orb orb-b"></div>
+<div id="siteNav"></div>
+
+<main class="max-w-6xl mx-auto px-6 py-10 relative z-10">
+  <h1 class="text-3xl font-bold mb-2">🆚 Сравнение версий договора</h1>
+  <p class="text-white/60 text-sm mb-8">Контрагент прислал новую редакцию? Покажи обе версии — сервис найдёт каждое изменение и подсветит опасные (расход: 1 проверка, тарифы Pro и выше).</p>
+
+  <div class="grid lg:grid-cols-2 gap-6 mb-6">
+    <div class="glass p-5">
+      <label class="text-sm text-white/70 block mb-2">Версия 1 (твоя / старая)</label>
+      <textarea id="oldText" rows="14" placeholder="Вставь старый текст…" class="input text-sm"></textarea>
+      <input id="oldFile" type="file" accept=".txt,.md,.pdf,.docx" class="text-sm text-white/60 mt-3">
+    </div>
+    <div class="glass p-5">
+      <label class="text-sm text-white/70 block mb-2">Версия 2 (контрагента / новая)</label>
+      <textarea id="newText" rows="14" placeholder="Вставь новый текст…" class="input text-sm"></textarea>
+      <input id="newFile" type="file" accept=".txt,.md,.pdf,.docx" class="text-sm text-white/60 mt-3">
+    </div>
+  </div>
+
+  <button id="runBtn" class="btn-primary w-full text-lg mb-8">🆚 Сравнить (1 проверка)</button>
+
+  <div id="statsRow" class="flex flex-wrap gap-3 mb-6 hidden"></div>
+  <div id="changesList" class="space-y-4"></div>
+</main>
+
+<div id="siteFooter"></div>
+
+<script>
+const token = mcaToken();
+if (!token) location.href = '/auth.html#login';
+const H = {'Authorization': 'Bearer ' + token};
+
+async function loadInto(el, f){
+  const low = f.name.toLowerCase();
+  if (low.endsWith('.txt') || low.endsWith('.md')) { el.value = await f.text(); return; }
+  const fd = new FormData(); fd.append('file', f);
+  const r = await fetch('/api/upload', {method: 'POST', headers: H, body: fd});
+  const d = await r.json();
+  if (r.ok) el.value = d.text; else alert('❌ ' + (d.detail || 'Не удалось прочитать файл'));
+}
+document.getElementById('oldFile').addEventListener('change', e => e.target.files[0] && loadInto(document.getElementById('oldText'), e.target.files[0]));
+document.getElementById('newFile').addEventListener('change', e => e.target.files[0] && loadInto(document.getElementById('newText'), e.target.files[0]));
+
+document.getElementById('runBtn').onclick = async () => {
+  const o = document.getElementById('oldText').value.trim();
+  const n = document.getElementById('newText').value.trim();
+  if (!o || !n) { alert('Заполни обе версии'); return; }
+  const list = document.getElementById('changesList');
+  list.innerHTML = '<p class="text-white/60">⏳ Сравниваю…</p>';
+  const r = await fetch('/api/compare', {method: 'POST', headers: {'Content-Type': 'application/json', ...H},
+    body: JSON.stringify({old_text: o, new_text: n})});
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) { list.innerHTML = '<p class="text-red-400">❌ ' + (d.detail || 'Ошибка') + '</p>'; return; }
+  const s = d.stats;
+  const row = document.getElementById('statsRow');
+  row.classList.remove('hidden');
+  row.innerHTML =
+    '<span class="chip">➕ Добавлено: ' + s.added + '</span>' +
+    '<span class="chip">➖ Удалено: ' + s.removed + '</span>' +
+    '<span class="chip">✏️ Изменено: ' + s.changed + '</span>' +
+    '<span class="chip" style="border-color:rgba(248,113,113,.6);color:#fca5a5">⚠️ Важных: ' + s.important + '</span>';
+  list.innerHTML = d.changes.length ? d.changes.map(c => {
+    const badge = c.type === 'added' ? '<span class="text-green-400 font-bold">➕ ДОБАВЛЕНО</span>'
+      : c.type === 'removed' ? '<span class="text-red-400 font-bold">➖ УДАЛЕНО</span>'
+      : '<span class="text-amber-400 font-bold">✏️ ИЗМЕНЕНО</span>';
+    return '<div class="glass p-5' + (c.important ? ' border-red-500/40' : '') + '">' +
+      '<div class="mb-3">' + badge + (c.important ? ' <span class="text-red-400 text-sm">⚠️ влияет на риски/деньги/сроки</span>' : '') + '</div>' +
+      (c.old ? '<div class="text-sm text-red-300/80 line-through whitespace-pre-wrap mb-2">' + mcaEsc(c.old) + '</div>' : '') +
+      (c.new ? '<div class="text-sm text-green-300/90 whitespace-pre-wrap">' + mcaEsc(c.new) + '</div>' : '') +
+      '</div>';
+  }).join('') : '<p class="text-white/60">Изменений не найдено — версии идентичны.</p>';
+};
+mcaNav(); mcaFooter();
+</script>
+</body>
+</html>
