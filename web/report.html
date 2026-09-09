@@ -41,7 +41,9 @@
         <button id="dlPdf" class="btn-primary text-sm">📄 Скачать PDF</button>
         <button id="dlDocx" class="btn-ghost text-sm">📝 Скачать DOCX</button>
         <button id="dlProto" class="btn-ghost text-sm">🧾 Протокол разногласий (DOCX)</button>
+        <button id="dlAudio" class="btn-ghost text-sm">🔊 Аудиоверсия</button>
       </div>
+      <div id="audioBox" class="hidden mt-4"></div>
     </div>
 
     <div id="tab-contract" class="pane hidden">
@@ -257,6 +259,19 @@ document.getElementById('fbBtn').onclick = async () => {
 document.getElementById('dlPdf').onclick = () => mcaDownload('/api/analyses/' + aid + '/pdf', 'report_' + aid + '.pdf');
 document.getElementById('dlDocx').onclick = () => mcaDownload('/api/analyses/' + aid + '/docx', 'report_' + aid + '.docx');
 document.getElementById('dlProto').onclick = () => mcaDownload('/api/analyses/' + aid + '/protocol', 'protocol_' + aid + '.docx');
+document.getElementById('dlAudio').onclick = async () => {
+  const box = document.getElementById('audioBox');
+  box.classList.remove('hidden');
+  box.innerHTML = '<p class="text-sm text-white/60">⏳ Генерирую аудио… (первый раз до минуты)</p>';
+  const r = await fetch('/api/analyses/' + aid + '/audio', {headers: H});
+  if (!r.ok) {
+    const d = await r.json().catch(() => ({}));
+    box.innerHTML = '<p class="text-sm text-red-400">❌ ' + (d.detail || 'Недоступно') + '</p>';
+    return;
+  }
+  const b = await r.blob();
+  box.innerHTML = '<audio controls src="' + URL.createObjectURL(b) + '" class="w-full"></audio>';
+};
 
 mcaNav(); mcaFooter(); init();
 </script>

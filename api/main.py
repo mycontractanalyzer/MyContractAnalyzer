@@ -947,3 +947,41 @@ def admin_laws_reload2(data: LawsReloadIn, user=Depends(_auth)):
 
     threading.Thread(target=run, daemon=True).start()
     return {"ok": True}
+
+
+AUDIO_TIERS = {"Standard", "Pro", "Business", "Business Pro"}
+
+
+@app.get("/api/analyses/{aid}/audio")
+def analysis_audio(aid: int, user=Depends(_auth)):
+    if user["tariff"] not in AUDIO_TIERS:
+        raise HTTPException(403, "Аудиоверсия доступна на тарифах Standard, Pro, Business и Business Pro")
+    import os
+    cache_dir = "/opt/app/cache/audio"
+    os.makedirs(cache_dir, exist_ok=True)
+    path = os.path.join(cache_dir, f"{aid}.mp3")
+    if os.path.exists(path):
+        with open(path, "rb") as f:
+            audio = f.read()
+        return Response(content=audio, media_type="audio/mpeg")
+    conn = get_connection()
+    row = conn.execute("SELECT report FROM analyses WHERE id = ? AND user_id = ?",
+                       (aid, user["id"])).fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(404, "Отчёт не найден")
+    text = (row["report"] or "").split("HIGHLIGHTS_JSON:")[0][:6000]
+    audio = None
+    try:
+        from gtts import gTTS
+        import io
+        buf = io.BytesIO()
+        gTTS(text=text, lang="ru").write_to_fp(buf)
+        audio = buf.getvalue()
+    except Exception:
+        audio = None
+    if not audio:
+        raise HTTPException(500, "Генерация аудио временно недоступна")
+    with open(path, "wb") as f:
+        f.write(audio)
+    return Response(content=audio, media_type="audio/mpeg")
