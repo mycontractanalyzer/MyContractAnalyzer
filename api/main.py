@@ -360,10 +360,10 @@ def lawyer(data: LawyerIn, user=Depends(_auth)):
     if limit == 0:
         raise HTTPException(403, "ИИ-юрист 24/7 доступен на тарифах Pro, Business и Business Pro")
     key = f"{user['email']}|{date.today().isoformat()}"
-    used = _LAWYER_USAGE.get(key, 0)
+    used = _lawyer_used(user["email"])
     if used >= limit:
         raise HTTPException(429, f"Дневной лимит исчерпан: {limit} обращений на тарифе {user['tariff']}. Счётчик сбросится в полночь.")
-    _LAWYER_USAGE[key] = used + 1
+    _lawyer_inc(user["email"])
     from core.analyzer import lawyer247_stream
     gen, model = lawyer247_stream(data.question, data.history, user["tariff"])
 
@@ -1121,3 +1121,31 @@ def feedback_v2(data: FeedbackV2In, user=Depends(_auth)):
     conn.commit()
     conn.close()
     return {"ok": True}
+
+
+def _lawyer_used(email):
+    from datetime import date
+    conn = get_connection()
+    conn.execute("CREATE TABLE IF NOT EXISTS lawyer_usage (email TEXT, day TEXT, used INTEGER, PRIMARY KEY (email, day))")
+    row = conn.execute("SELECT used FROM lawyer_usage WHERE email = ? AND day = ?",
+                       (email, date.today().isoformat())).fetchone()
+    conn.close()
+    return row["used"] if row else 0
+
+
+def _lawyer_inc(email):
+    from datetime import date
+    conn = get_connection()
+    conn.execute("CREATE TABLE IF NOT EXISTS lawyer_usage (email TEXT, day TEXT, used INTEGER, PRIMARY KEY (email, day))")
+    conn.execute("INSERT INTO lawyer_usage (email, day, used) VALUES (?, ?, 1) "
+                 "ON CONFLICT(email, day) DO UPDATE SET used = used + 1",
+                 (email, date.today().isoformat()))
+    conn.commit()
+    conn.close()
+
+
+@app.get("/api/lawyer_left")
+def lawyer_left(user=Depends(_auth)):
+    limit = LAWYER_LIMITS.get(user["tariff"], 0)
+    left = max(0, limit - _lawyer_used(user["email"]))
+    return {"limit": limit, "left": left}

@@ -14,9 +14,23 @@ function mcaEsc(t){ return (t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 function mcaMd(t){
   var h = mcaEsc(t);
   h = h.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+  h = h.replace(/\*(.+?)\*/g,'<i>$1</i>');
   h = h.replace(/^### (.*)$/gm,'<h4 class="font-bold text-lg mt-4 mb-1">$1</h4>');
   h = h.replace(/^## (.*)$/gm,'<h3 class="font-bold text-xl mt-5 mb-2">$1</h3>');
   h = h.replace(/^# (.*)$/gm,'<h2 class="font-bold text-2xl mt-6 mb-2">$1</h2>');
+  h = h.replace(/^---+$/gm,'<hr class="border-white/10 my-4">');
+  h = h.replace(/^[-•] (.*)$/gm,'<span class="block pl-4">• $1</span>');
+  h = h.replace(/((?:^\|.*\|$(?:\n|$))+)/gm, function(block){
+    var rows = block.trim().split('\n').filter(function(r){ return !/^\|[\s:-|]+\|$/.test(r.trim()); });
+    if (!rows.length) return block;
+    var html = '<table class="w-full text-sm my-3 border-collapse">';
+    rows.forEach(function(r, idx){
+      var cells = r.split('|').slice(1, -1);
+      var tag = idx === 0 ? 'th' : 'td';
+      html += '<tr>' + cells.map(function(c){ return '<' + tag + ' class="border border-white/10 px-2 py-1 text-left">' + c.trim() + '</' + tag + '>'; }).join('') + '</tr>';
+    });
+    return html + '</table>';
+  });
   return h.replace(/\n/g,'<br>');
 }
 
