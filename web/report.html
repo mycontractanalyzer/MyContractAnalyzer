@@ -221,7 +221,7 @@ async function init(){
 }
 
 const TOOLS = [
-  ['redline','📄 Redline'], ['letter','✉️ Письмо контрагенту'],
+  ['redline_v2','📄 Redline (протокол изменений)'], ['letter','✉️ Письмо контрагенту'],
   ['negotiation','🎙 Скрипт переговоров'], ['whatif','🎭 Что если…'],
   ['benchmark','📊 Рыночный эталон'], ['passport','🪪 Паспорт договора'],
   ['missing','🕳 Чего не хватает'], ['translate','🌐 Перевод RU↔EN'], ['precedent','⚖️ Прецедент-радар']
@@ -253,7 +253,7 @@ document.getElementById('clauseBtn').onclick = () => {
 };
 
 document.getElementById('fbBtn').onclick = async () => {
-  const r = await fetch('/api/feedback', {
+  const r = await fetch('/api/feedback_v2', {
     method: 'POST', headers: {'Content-Type': 'application/json', ...H},
     body: JSON.stringify({analysis_id: +aid, rating: +document.getElementById('fbRating').value,
                           comment: document.getElementById('fbComment').value})

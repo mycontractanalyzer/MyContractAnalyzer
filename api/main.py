@@ -1064,3 +1064,59 @@ def delete_account(user=Depends(_auth)):
     from utils.auth import delete_user
     delete_user(user["id"])
     return {"ok": True}
+
+
+class RedlineV2In(BaseModel):
+    analysis_id: int
+    scenario: str = ""
+
+
+@app.post("/api/tools/redline_v2")
+def tool_redline_v2(data: RedlineV2In, user=Depends(_auth)):
+    conn = get_connection()
+    row = conn.execute(
+        "SELECT a.highlights FROM analyses a WHERE a.id = ? AND a.user_id = ?",
+        (data.analysis_id, user["id"])).fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(404, "Отчёт не найден")
+    import json as _json
+    try:
+        hl = _json.loads(row["highlights"] or "[]")
+    except Exception:
+        hl = []
+    risks = [x for x in hl if x.get("level") in ("red", "yellow")][:12]
+    if not risks:
+        return {"text": "Существенных рисков не найдено — правки не требуются."}
+    from core.analyzer import ask_deepseek
+    prompt = (
+        "Ты — юрист, готовящий ПРОТОКОЛ ИЗМЕНЕНИЙ к договору для переговоров. "
+        "По каждому риску ниже выдай ровно 4 строки:\n"
+        "ПУНКТ: <номер пункта договора>\n"
+        "СТАРЫЙ: <короткая цитата вредной формулировки>\n"
+        "НОВЫЙ: <полная безопасная замена пункта, юридическим стилем>\n"
+        "ОСНОВАНИЕ: <статья ГК/иного закона или «прямой нормы в базе нет»>\n"
+        "Риски:\n" +
+        "\n".join(f"- {x.get('quote','')[:200]} | {x.get('reason','')[:200]}" for x in risks) +
+        "\nВыведи только протокол, без вступления и заключения. Язык русский."
+    )
+    text = ask_deepseek(prompt, max_tokens=3000, temperature=0.2)
+    return {"text": text}
+
+
+class FeedbackV2In(BaseModel):
+    analysis_id: int
+    rating: int
+    comment: str = ""
+
+
+@app.post("/api/feedback_v2")
+def feedback_v2(data: FeedbackV2In, user=Depends(_auth)):
+    conn = get_connection()
+    conn.execute("DELETE FROM feedback WHERE analysis_id = ? AND user_id = ?",
+                 (data.analysis_id, user["id"]))
+    conn.execute("INSERT INTO feedback (analysis_id, user_id, rating, comment) VALUES (?,?,?,?)",
+                 (data.analysis_id, user["id"], max(1, min(5, data.rating)), data.comment))
+    conn.commit()
+    conn.close()
+    return {"ok": True}
