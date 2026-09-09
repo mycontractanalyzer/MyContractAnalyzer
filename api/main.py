@@ -368,8 +368,19 @@ def lawyer(data: LawyerIn, user=Depends(_auth)):
     gen, model = lawyer247_stream(data.question, data.history, user["tariff"])
 
     def stream():
+        out = []
         for ch in gen:
+            out.append(ch)
             yield f"data: {json.dumps({'chunk': ch}, ensure_ascii=False)}\n\n"
+        try:
+            conn = get_connection()
+            conn.execute("CREATE TABLE IF NOT EXISTS lawyer_chats (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, analysis_id INTEGER, question TEXT, answer TEXT, created_at TEXT DEFAULT (datetime('now')))")
+            conn.execute("INSERT INTO lawyer_chats (user_id, analysis_id, question, answer) VALUES (?,?,?,?)",
+                         (user["id"], None, data.question, "".join(out)))
+            conn.commit()
+            conn.close()
+        except Exception:
+            pass
         yield f"data: {json.dumps({'done': True, 'left': limit - used - 1}, ensure_ascii=False)}\n\n"
 
     return StreamingResponse(stream(), media_type="text/event-stream")
@@ -1149,3 +1160,81 @@ def lawyer_left(user=Depends(_auth)):
     limit = LAWYER_LIMITS.get(user["tariff"], 0)
     left = max(0, limit - _lawyer_used(user["email"]))
     return {"limit": limit, "left": left}
+
+
+ANALYSIS_LAWYER_LIMITS = {"Standard": 10, "Pro": 20, "Business": 15, "Business Pro": 35}
+
+
+@app.get("/api/lawyer_chats")
+def lawyer_chats(user=Depends(_auth)):
+    conn = get_connection()
+    conn.execute("CREATE TABLE IF NOT EXISTS lawyer_chats (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, analysis_id INTEGER, question TEXT, answer TEXT, created_at TEXT DEFAULT (datetime('now')))")
+    rows = [dict(r) for r in conn.execute(
+        "SELECT id, analysis_id, question, answer, created_at FROM lawyer_chats WHERE user_id = ? ORDER BY id DESC LIMIT 50",
+        (user["id"],))]
+    conn.close()
+    return rows
+
+
+@app.get("/api/lawyer_analysis_left")
+def lawyer_analysis_left(analysis_id: int, user=Depends(_auth)):
+    limit = ANALYSIS_LAWYER_LIMITS.get(user["tariff"], 0)
+    conn = get_connection()
+    conn.execute("CREATE TABLE IF NOT EXISTS lawyer_analysis_usage (analysis_id INTEGER PRIMARY KEY, used INTEGER DEFAULT 0)")
+    row = conn.execute("SELECT used FROM lawyer_analysis_usage WHERE analysis_id = ?", (analysis_id,)).fetchone()
+    conn.close()
+    used = row["used"] if row else 0
+    return {"limit": limit, "left": max(0, limit - used)}
+
+
+class LawyerAnalysisIn(BaseModel):
+    analysis_id: int
+    question: str
+
+
+@app.post("/api/lawyer_analysis")
+def lawyer_analysis(data: LawyerAnalysisIn, user=Depends(_auth)):
+    limit = ANALYSIS_LAWYER_LIMITS.get(user["tariff"], 0)
+    if limit == 0:
+        raise HTTPException(403, "Вопросы юристу по анализу доступны с тарифа Standard")
+    conn = get_connection()
+    conn.execute("CREATE TABLE IF NOT EXISTS lawyer_analysis_usage (analysis_id INTEGER PRIMARY KEY, used INTEGER DEFAULT 0)")
+    row = conn.execute("SELECT used FROM lawyer_analysis_usage WHERE analysis_id = ?", (data.analysis_id,)).fetchone()
+    used = row["used"] if row else 0
+    if used >= limit:
+        conn.close()
+        raise HTTPException(429, f"Лимит вопросов юристу по этому договору исчерпан: {limit} на тарифе {user['tariff']}")
+    a = conn.execute(
+        "SELECT a.report, c.text FROM analyses a JOIN contracts c ON c.id = a.contract_id "
+        "WHERE a.id = ? AND a.user_id = ?", (data.analysis_id, user["id"])).fetchone()
+    if not a:
+        conn.close()
+        raise HTTPException(404, "Отчёт не найден")
+    conn.execute("INSERT INTO lawyer_analysis_usage (analysis_id, used) VALUES (?,1) "
+                 "ON CONFLICT(analysis_id) DO UPDATE SET used = used + 1", (data.analysis_id,))
+    conn.commit()
+    conn.close()
+    from core.analyzer import lawyer247_stream
+    context = ("КОНТЕКСТ: текст договора (фрагмент):\n" + (a["text"] or "")[:6000] +
+               "\n\nФРАГМЕНТ ГОТОВОГО ОТЧЁТА ПО ЭТОМУ ДОГОВОРУ:\n" +
+               (a["report"] or "").split("HIGHLIGHTS_JSON:")[0][:4000] +
+               "\n\nВОПРОС ПО ЭТОМУ ДОГОВОРУ: ")
+    gen, model = lawyer247_stream(context + data.question, [], user["tariff"])
+
+    def stream():
+        out = []
+        for ch in gen:
+            out.append(ch)
+            yield f"data: {json.dumps({'chunk': ch}, ensure_ascii=False)}\n\n"
+        try:
+            conn2 = get_connection()
+            conn2.execute("CREATE TABLE IF NOT EXISTS lawyer_chats (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, analysis_id INTEGER, question TEXT, answer TEXT, created_at TEXT DEFAULT (datetime('now')))")
+            conn2.execute("INSERT INTO lawyer_chats (user_id, analysis_id, question, answer) VALUES (?,?,?,?)",
+                          (user["id"], data.analysis_id, data.question, "".join(out)))
+            conn2.commit()
+            conn2.close()
+        except Exception:
+            pass
+        yield f"data: {json.dumps({'done': True, 'left': limit - used - 1}, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(stream(), media_type="text/event-stream")

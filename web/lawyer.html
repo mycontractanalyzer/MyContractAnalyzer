@@ -12,19 +12,26 @@
 <div class="orb orb-a"></div><div class="orb orb-b"></div>
 <div id="siteNav"></div>
 
-<main class="max-w-3xl mx-auto px-6 py-10 relative z-10">
-  <div class="flex flex-wrap items-center gap-3 mb-4">
-    <h1 class="text-3xl font-bold">🤖 ИИ-юрист 24/7</h1>
-    <span id="lawyerLeft" class="chip" style="display:none"></span>
-  </div>
-  <p class="text-white/60 text-sm mb-6">Чат по любым правовым вопросам. Ответ печатается вживую и сразу оформлен для чтения.</p>
+<main class="max-w-6xl mx-auto px-6 py-10 grid lg:grid-cols-4 gap-8 relative z-10">
+  <section class="lg:col-span-3">
+    <div class="flex flex-wrap items-center gap-3 mb-4">
+      <h1 class="text-3xl font-bold">🤖 ИИ-юрист 24/7</h1>
+      <span id="lawyerLeft" class="chip" style="display:none"></span>
+    </div>
+    <p id="ctxNote" class="text-white/60 text-sm mb-6">Чат по любым правовым вопросам. Ответ печатается вживую и сразу оформлен для чтения.</p>
 
-  <div id="chat" class="glass p-6 space-y-4 min-h-[50vh] max-h-[60vh] overflow-y-auto mb-4"></div>
+    <div id="chat" class="glass p-6 space-y-4 min-h-[50vh] max-h-[60vh] overflow-y-auto mb-4"></div>
 
-  <div class="flex gap-3">
-    <input id="q" class="input flex-1" placeholder="Задай вопрос…">
-    <button id="send" class="btn-primary">Отправить</button>
-  </div>
+    <div class="flex gap-3">
+      <input id="q" class="input flex-1" placeholder="Задай вопрос…">
+      <button id="send" class="btn-primary">Отправить</button>
+    </div>
+  </section>
+
+  <aside>
+    <h2 class="font-bold mb-4">🗂 История юриста</h2>
+    <div id="histList" class="space-y-2"></div>
+  </aside>
 </main>
 
 <div id="siteFooter"></div>
@@ -34,17 +41,30 @@ const token = mcaToken();
 if (!token) location.href = '/auth.html#login';
 const H = {'Authorization': 'Bearer ' + token};
 const chat = document.getElementById('chat');
+const aid = new URLSearchParams(location.search).get('aid');
+const endpoint = aid ? '/api/lawyer_analysis' : '/api/lawyer';
 
-function setChip(left, limit){
+function setChip(left, limit, isAnalysis){
   const el = document.getElementById('lawyerLeft');
   el.style.display = 'inline-flex';
-  if (limit <= 0) { el.textContent = 'ИИ-юрист доступен на тарифах Pro, Business и Business Pro'; el.style.color = '#fca5a5'; }
-  else { el.textContent = 'Осталось обращений сегодня: ' + left + ' из ' + limit; el.style.color = ''; }
+  if (limit <= 0) {
+    el.textContent = isAnalysis ? 'Вопросы юристу по анализу доступны с тарифа Standard' : 'ИИ-юрист доступен на тарифах Pro, Business и Business Pro';
+    el.style.color = '#fca5a5';
+  } else {
+    el.textContent = isAnalysis ? ('Вопросов по договору: ' + left + ' из ' + limit) : ('Осталось обращений сегодня: ' + left + ' из ' + limit);
+    el.style.color = '';
+  }
 }
-fetch('/api/lawyer_left', {headers: H})
-  .then(r => r.ok ? r.json() : {limit: 0, left: 0})
-  .then(d => setChip(d.left, d.limit))
-  .catch(() => {});
+function loadLeft(){
+  const url = aid ? ('/api/lawyer_analysis_left?analysis_id=' + aid) : '/api/lawyer_left';
+  fetch(url, {headers: H}).then(r => r.ok ? r.json() : {limit: 0, left: 0})
+    .then(d => setChip(d.left, d.limit, !!aid)).catch(() => {});
+}
+if (aid) {
+  document.getElementById('ctxNote').innerHTML =
+    'Режим «по договору»: юрист видит текст договора и готовый отчёт №' + aid + ' — отвечает максимально точно по твоим пунктам.';
+}
+loadLeft();
 
 function bubble(cls){
   const d = document.createElement('div');
@@ -53,6 +73,24 @@ function bubble(cls){
   chat.scrollTop = chat.scrollHeight;
   return d;
 }
+
+async function loadHist(){
+  const r = await fetch('/api/lawyer_chats', {headers: H});
+  if (!r.ok) return;
+  const list = await r.json();
+  document.getElementById('histList').innerHTML = list.length ? list.map(c =>
+    '<button data-id="' + c.id + '" class="hist block w-full text-left">' +
+    '<div class="font-semibold text-sm">' + mcaEsc((c.question || '').slice(0, 60)) + '</div>' +
+    '<div class="text-xs text-white/50 mt-1">' + (c.analysis_id ? ('по договору #' + c.analysis_id + ' · ') : '') + (c.created_at || '') + '</div></button>').join('')
+    : '<p class="text-white/50 text-sm">Пока пусто.</p>';
+  document.querySelectorAll('#histList button').forEach(b => b.onclick = () => {
+    const c = list.find(x => x.id == b.dataset.id);
+    chat.innerHTML = '';
+    bubble('bg-amber-500/15 border border-amber-500/30 rounded-tr-sm').textContent = c.question;
+    bubble('glass rounded-tl-sm').innerHTML = mcaMd(c.answer || '');
+  });
+}
+loadHist();
 
 async function ask(){
   const q = document.getElementById('q').value.trim();
@@ -63,9 +101,8 @@ async function ask(){
   bot.innerHTML = '<span class="text-white/50">⏳ Думаю…</span>';
   let out = '';
   try {
-    const r = await fetch('/api/lawyer', {method: 'POST',
-      headers: {'Content-Type': 'application/json', ...H},
-      body: JSON.stringify({question: q, history: []})});
+    const body = aid ? {analysis_id: +aid, question: q} : {question: q, history: []};
+    const r = await fetch(endpoint, {method: 'POST', headers: {'Content-Type': 'application/json', ...H}, body: JSON.stringify(body)});
     if (!r.ok) {
       const d = await r.json().catch(() => ({}));
       bot.innerHTML = '<span class="text-red-400">❌ ' + mcaEsc(d.detail || 'Ошибка') + '</span>';
@@ -83,16 +120,8 @@ async function ask(){
         const raw = buf.slice(0, i); buf = buf.slice(i + 2);
         try {
           const obj = JSON.parse(raw.replace(/^data: /, ''));
-          if (obj.chunk) {
-            out += obj.chunk;
-            bot.innerHTML = mcaMd(out);
-            chat.scrollTop = chat.scrollHeight;
-          }
-          if (obj.done) {
-            fetch('/api/lawyer_left', {headers: H})
-              .then(rr => rr.ok ? rr.json() : null)
-              .then(d => { if (d) setChip(d.left, d.limit); });
-          }
+          if (obj.chunk) { out += obj.chunk; bot.innerHTML = mcaMd(out); chat.scrollTop = chat.scrollHeight; }
+          if (obj.done) { loadLeft(); loadHist(); }
         } catch(e) {}
       }
     }

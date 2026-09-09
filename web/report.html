@@ -19,10 +19,19 @@
     </div>
     <div id="scoreBadge" class="mb-6"></div>
 
+    <div id="dlRow" class="flex flex-wrap gap-3 mb-4">
+      <button id="dlPdf" class="btn-primary text-sm">📄 Скачать PDF</button>
+      <button id="dlDocx" class="btn-ghost text-sm">📝 Скачать DOCX</button>
+      <button id="dlProto" class="btn-ghost text-sm">🧾 Протокол разногласий (DOCX)</button>
+      <button id="dlAudio" class="btn-ghost text-sm">🔊 Аудиоверсия</button>
+    </div>
+    <div id="audioBox" class="hidden mb-6"></div>
+
     <div id="actionsRow" class="flex flex-wrap gap-3 mb-6">
       <button id="shareBtn" class="btn-ghost text-sm">🔗 Поделиться по ссылке</button>
       <button id="renameBtn" class="btn-ghost text-sm">✏️ Переименовать</button>
       <button id="emailBtn" class="btn-ghost text-sm">📧 Отправить на почту (PDF)</button>
+      <a id="toLawyer" href="/lawyer.html" class="btn-ghost text-sm">🤖 Уточнить у ИИ-юриста</a>
       <span id="shareMsg" class="text-sm text-white/60 self-center"></span>
     </div>
 
@@ -37,13 +46,6 @@
     <div id="tab-report" class="pane">
       <div id="cards"></div>
       <div id="reportBody" class="text-sm leading-relaxed mt-4 glass p-6"></div>
-      <div id="dlRow" class="flex flex-wrap gap-3 mt-8">
-        <button id="dlPdf" class="btn-primary text-sm">📄 Скачать PDF</button>
-        <button id="dlDocx" class="btn-ghost text-sm">📝 Скачать DOCX</button>
-        <button id="dlProto" class="btn-ghost text-sm">🧾 Протокол разногласий (DOCX)</button>
-        <button id="dlAudio" class="btn-ghost text-sm">🔊 Аудиоверсия</button>
-      </div>
-      <div id="audioBox" class="hidden mt-4"></div>
     </div>
 
     <div id="tab-contract" class="pane hidden">
@@ -52,8 +54,13 @@
 
     <div id="tab-tools" class="pane hidden">
       <div id="toolButtons" class="flex flex-wrap gap-2 mb-4"></div>
-      <label class="block mb-4 text-sm"><span class="text-white/70">Сценарий для «Что если…» (необязательно)</span>
-        <input id="scenario" class="input mt-2"></label>
+      <div class="glass p-4 mb-4 border-amber-500/30">
+        <label class="block text-sm"><span class="text-white/70">🤖 Задать вопрос по анализу ИИ-юристу</span>
+          <input id="lawyerQ" class="input mt-2" placeholder="Например: ничтожен ли п. 3.7? Что ответить контрагенту по п. 3.4?"></label>
+        <button id="lawyerAskBtn" class="btn-primary text-sm mt-3">Спросить юриста</button>
+        <span id="lawyerLeftAnalysis" class="chip ml-2" style="display:none"></span>
+        <div id="lawyerOut" class="text-sm leading-relaxed mt-3 hidden glass p-4"></div>
+      </div>
       <div id="toolOut" class="text-sm leading-relaxed glass p-6 whitespace-pre-wrap">Выбери инструмент…</div>
     </div>
 
@@ -162,6 +169,11 @@ async function loadReport(id){
   if (!r.ok) { alert('Отчёт не найден'); return; }
   paint(await r.json());
   loadContract(id);
+  document.getElementById('toLawyer').href = '/lawyer.html?aid=' + id;
+  fetch('/api/lawyer_analysis_left?analysis_id=' + id, {headers: H})
+    .then(rr => rr.ok ? rr.json() : null)
+    .then(d => { if (d && d.limit > 0) { const el = document.getElementById('lawyerLeftAnalysis'); el.style.display = 'inline-flex'; el.textContent = 'Осталось вопросов по договору: ' + d.left + ' из ' + d.limit; } })
+    .catch(() => {});
   history.replaceState(null, '', '/report.html?id=' + id);
 }
 
@@ -222,9 +234,8 @@ async function init(){
 
 const TOOLS = [
   ['redline_v2','📄 Redline (протокол изменений)'], ['letter','✉️ Письмо контрагенту'],
-  ['negotiation','🎙 Скрипт переговоров'], ['whatif','🎭 Что если…'],
-  ['benchmark','📊 Рыночный эталон'], ['passport','🪪 Паспорт договора'],
-  ['missing','🕳 Чего не хватает'], ['translate','🌐 Перевод RU↔EN'], ['precedent','⚖️ Прецедент-радар']
+  ['negotiation','🎙 Скрипт переговоров'], ['benchmark','📊 Рыночный эталон'],
+  ['passport','🪪 Паспорт договора'], ['translate','🌐 Перевод RU↔EN'], ['precedent','⚖️ Прецедент-радар']
 ];
 document.getElementById('toolButtons').innerHTML = TOOLS.map(t =>
   '<button data-tool="' + t[0] + '" class="tab-btn text-sm">' + t[1] + '</button>').join('');
@@ -234,12 +245,49 @@ document.querySelectorAll('#toolButtons button').forEach(b => b.onclick = async 
   try {
     const r = await fetch('/api/tools/' + b.dataset.tool, {
       method: 'POST', headers: {'Content-Type': 'application/json', ...H},
-      body: JSON.stringify({analysis_id: +aid, scenario: document.getElementById('scenario').value})
+      body: JSON.stringify({analysis_id: +aid, scenario: ''})
     });
     const d = await r.json();
     out.innerHTML = r.ok ? mcaMd(d.text) : ('❌ ' + mcaEsc(d.detail || 'Ошибка'));
   } catch(e) { out.textContent = '❌ Сеть недоступна'; }
 });
+
+document.getElementById('lawyerAskBtn').onclick = async () => {
+  const q = document.getElementById('lawyerQ').value.trim();
+  if (!q) { alert('Введи вопрос для юриста'); return; }
+  const outBox = document.getElementById('lawyerOut');
+  outBox.classList.remove('hidden');
+  outBox.innerHTML = '<span class="text-white/50">⏳ Юрист изучает отчёт и договор…</span>';
+  try {
+    const r = await fetch('/api/lawyer_analysis', {method: 'POST',
+      headers: {'Content-Type': 'application/json', ...H},
+      body: JSON.stringify({analysis_id: +aid, question: q})});
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      outBox.innerHTML = '<span class="text-red-400">❌ ' + mcaEsc(d.detail || 'Ошибка') + '</span>';
+      return;
+    }
+    const reader = r.body.getReader(); const dec = new TextDecoder(); let buf = '', out = '';
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, {stream: true});
+      let i;
+      while ((i = buf.indexOf('\n\n')) >= 0) {
+        const raw = buf.slice(0, i); buf = buf.slice(i + 2);
+        try {
+          const obj = JSON.parse(raw.replace(/^data: /, ''));
+          if (obj.chunk) { out += obj.chunk; outBox.innerHTML = mcaMd(out); }
+          if (obj.done && obj.left !== undefined) {
+            const el = document.getElementById('lawyerLeftAnalysis');
+            el.style.display = 'inline-flex';
+            el.textContent = 'Осталось вопросов по договору: ' + obj.left;
+          }
+        } catch(e) {}
+      }
+    }
+  } catch(e) { outBox.innerHTML = '<span class="text-red-400">❌ Сеть недоступна</span>'; }
+};
 
 document.getElementById('clauseBtn').onclick = () => {
   const q = document.getElementById('clauseQ').value.trim();
@@ -271,7 +319,7 @@ document.getElementById('dlAudio').onclick = async () => {
   const r = await fetch('/api/analyses/' + aid + '/audio', {headers: H});
   if (!r.ok) {
     const d = await r.json().catch(() => ({}));
-    box.innerHTML = '<p class="text-sm text-red-400">❌ ' + (d.detail || 'Недоступно') + '</p>';
+    box.innerHTML = '<p class="text-sm text-red-400">❌ ' + mcaEsc(d.detail || 'Недоступно') + '</p>';
     return;
   }
   const b = await r.blob();
