@@ -33,7 +33,7 @@ function mcaNav(){
   var el = document.getElementById('siteNav');
   if (!el) return;
   var right = mcaToken()
-    ? '<a href="/analyze.html" class="nav-link">Анализ</a><a href="/compare.html" class="nav-link">🆚 Сравнение</a>'
+    ? '<a href="/analyze.html" class="nav-link">Анализ</a><a href="/compare.html" class="nav-link">Сравнение</a>'
       + '<a href="/lawyer.html" class="nav-link">ИИ-юрист</a>'
       + '<a href="/profile.html" class="px-4 py-2 rounded-xl bg-amber-500 text-black font-semibold hover:bg-amber-400 transition">Кабинет</a>'
       + '<button onclick="localStorage.removeItem(\'mca_token\');location.href=\'/\'" class="nav-link">Выйти</button>'
@@ -42,9 +42,9 @@ function mcaNav(){
       + '<a href="/auth.html#signup" class="px-4 py-2 rounded-xl bg-amber-500 text-black font-semibold hover:bg-amber-400 transition">Регистрация</a>';
   el.innerHTML =
     '<nav class="sticky top-0 z-50 backdrop-blur-xl bg-[#0b0d12]/75 border-b border-white/5">'
-    + '<div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between gap-4">'
++ '<div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between gap-6">'
     + '<a href="/" class="flex items-center gap-3 font-bold text-lg font-display min-w-0"><img src="/favicon.png?v=3" class="logo-img" alt="⚖️"><span class="break-words">MyContractAnalyzer</span></a>'
-    + '<div class="hidden lg:flex items-center gap-1 text-sm">'
++ '<div class="hidden lg:flex items-center gap-2 text-sm">'
     + '<a href="/#features" class="nav-link">Возможности</a>'
     + '<a href="/#how" class="nav-link">Как работает</a>'
     + '<a href="/#pricing" class="nav-link">Тарифы</a>'
