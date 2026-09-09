@@ -344,17 +344,28 @@ class LawyerIn(BaseModel):
     history: list = []
 
 
+LAWYER_LIMITS = {"Pro": 25, "Business": 15, "Business Pro": 50}
+_LAWYER_USAGE = {}
+
+
 @app.post("/api/lawyer")
 def lawyer(data: LawyerIn, user=Depends(_auth)):
-    if user["tariff"] not in ("Pro", "Business Pro"):
-        raise HTTPException(403, "AI-юрист 24/7 доступен на тарифах Pro и Business Pro")
+    from datetime import date
+    limit = LAWYER_LIMITS.get(user["tariff"], 0)
+    if limit == 0:
+        raise HTTPException(403, "ИИ-юрист 24/7 доступен на тарифах Pro, Business и Business Pro")
+    key = f"{user['email']}|{date.today().isoformat()}"
+    used = _LAWYER_USAGE.get(key, 0)
+    if used >= limit:
+        raise HTTPException(429, f"Дневной лимит исчерпан: {limit} обращений на тарифе {user['tariff']}. Счётчик сбросится в полночь.")
+    _LAWYER_USAGE[key] = used + 1
     from core.analyzer import lawyer247_stream
     gen, model = lawyer247_stream(data.question, data.history, user["tariff"])
 
     def stream():
         for ch in gen:
             yield f"data: {json.dumps({'chunk': ch}, ensure_ascii=False)}\n\n"
-        yield "data: {\"done\": true}\n\n"
+        yield f"data: {json.dumps({'done': True, 'left': limit - used - 1}, ensure_ascii=False)}\n\n"
 
     return StreamingResponse(stream(), media_type="text/event-stream")
 

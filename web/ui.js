@@ -1,7 +1,7 @@
 (function(){
   var l = document.createElement('link');
   l.rel = 'icon';
-  l.href = '/logo.png?v=2';
+  l.href = '/favicon.png?v=2';
   document.head.appendChild(l);
 })();
 
