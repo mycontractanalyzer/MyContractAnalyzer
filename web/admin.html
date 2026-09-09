@@ -169,11 +169,21 @@ document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => {
 function bars(data, color){
   if (!data || !data.length) return '<p class="text-white/50 text-sm">Пока нет данных</p>';
   const max = Math.max(...data.map(x => x.c), 1);
-  return '<div class="flex items-end gap-2 h-32">' + data.slice(-14).map(x =>
-    '<div class="group relative flex flex-col items-center justify-end" style="width:36px;height:100%">' +
-    '<span class="absolute top-0 hidden group-hover:block text-xs font-bold text-amber-300 z-10">' + x.c + '</span>' +
-    '<div title="' + x.d + ': ' + x.c + '" style="height:' + Math.max(6, Math.round(x.c / max * 96)) + 'px" class="w-full rounded-t ' + color + ' transition-all group-hover:brightness-125"></div>' +
-    '<span class="text-[10px] text-white/40 mt-1">' + String(x.d || '').slice(5) + '</span></div>').join('') + '</div>';
+  const txt = color.includes('amber') ? 'text-amber-300' : 'text-sky-300';
+  return '<div class="relative" style="height:170px">' +
+    [0.25, 0.5, 0.75, 1].map(g =>
+      '<div class="absolute left-0 right-0 border-t border-white/5" style="bottom:' + (24 + g * 116) + 'px">' +
+      '<span class="absolute -top-2 right-0 text-[10px] text-white/30">' + Math.round(max * g) + '</span></div>').join('') +
+    '<div class="absolute left-0 right-0 border-t border-white/20" style="bottom:24px"></div>' +
+    '<div class="absolute left-0 right-0 top-0 flex items-end justify-around gap-2 px-2" style="bottom:24px">' +
+    data.slice(-12).map(x =>
+      '<div class="group flex flex-col items-center justify-end" style="width:46px;height:100%">' +
+      '<span class="mb-1 text-xs font-bold ' + txt + '">' + x.c + '</span>' +
+      '<div title="' + x.d + ': ' + x.c + '" style="height:' + Math.max(4, Math.round(x.c / max * 112)) + 'px" class="w-full rounded-t-md ' + color + ' transition-all group-hover:brightness-125"></div>' +
+      '</div>').join('') + '</div>' +
+    '<div class="absolute left-0 right-0 bottom-0 flex justify-around gap-2 px-2">' +
+    data.slice(-12).map(x => '<span class="w-[46px] text-center text-[10px] text-white/40">' + String(x.d || '').slice(5) + '</span>').join('') +
+    '</div></div>';
 }
 
 function renderAll(){

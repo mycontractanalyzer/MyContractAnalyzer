@@ -94,7 +94,7 @@ def _best_excerpt(ft: str, words, max_chars: int = 450) -> str:
     for score, pos in cands[1:]:
         if all(abs(pos - p) > 900 for _, p in picked):
             picked.append((score, pos))
-            if len(picked) >= 2:
+            if len(picked) >= 3:
                 break
     picked.sort(key=lambda x: x[1])
     return "\n…\n".join(ft[p:p + max_chars] for _, p in picked)
