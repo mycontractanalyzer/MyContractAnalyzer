@@ -847,3 +847,92 @@ TIER_CHECKS = {"Free": 3, "Light": 35, "Standard": 65, "Pro": 125,
 
 TIER_CHARS = {"Free": 15000, "Light": 35000, "Standard": 50000, "Pro": 100000,
               "Business": 150000, "Business Pro": 200000}
+
+
+EXTENDED_PACK = [
+    ("ЖК", "Жилищный кодекс РФ", ["Жилищный кодекс Российской Федерации"]),
+    ("ЗК", "Земельный кодекс РФ", ["Земельный кодекс Российской Федерации"]),
+    ("НК", "Налоговый кодекс РФ (часть 1)", ["Налоговый кодекс Российской Федерации (часть первая)"]),
+    ("353-ФЗ", "ФЗ № 353-ФЗ О потребительском кредите (займе)", ["Федеральный закон № 353-ФЗ О потребительском кредите (займе)"]),
+    ("214-ФЗ", "ФЗ № 214-ФЗ Об участии в долевом строительстве", ["Федеральный закон № 214-ФЗ Об участии в долевом строительстве многоквартирных домов и иных объектов недвижимости"]),
+]
+
+
+@app.get("/api/admin/all")
+def admin_all(user=Depends(_auth)):
+    _admin(user)
+    conn = get_connection()
+
+    def safe(fn, default):
+        try:
+            return fn()
+        except Exception:
+            return default
+
+    cols = [r["name"] for r in conn.execute("PRAGMA table_info(users)").fetchall()]
+    sel = "id, email, tariff, checks_left, verified" + (", created_at" if "created_at" in cols else "")
+    out = {}
+    out["users"] = safe(lambda: [dict(r) for r in conn.execute(
+        f"SELECT {sel} FROM users ORDER BY id DESC")], [])
+    out["stats"] = safe(lambda: {
+        "users": conn.execute("SELECT COUNT(*) FROM users").fetchone()[0],
+        "verified": conn.execute("SELECT COUNT(*) FROM users WHERE verified=1").fetchone()[0],
+        "analyses": conn.execute("SELECT COUNT(*) FROM analyses").fetchone()[0],
+        "contracts": conn.execute("SELECT COUNT(*) FROM contracts").fetchone()[0],
+        "laws": conn.execute("SELECT COUNT(*) FROM laws").fetchone()[0]}, {})
+    out["stats"]["feedback_avg"] = safe(lambda: conn.execute(
+        "SELECT ROUND(AVG(rating),2) FROM feedback").fetchone()[0], None)
+    out["stats"]["support_open"] = safe(lambda: conn.execute(
+        "SELECT COUNT(*) FROM support_messages WHERE replied=0").fetchone()[0], 0)
+    out["regs"] = safe(lambda: [dict(r) for r in conn.execute(
+        "SELECT date(created_at) d, COUNT(*) c FROM users GROUP BY d ORDER BY d")], [])
+    out["anls"] = safe(lambda: [dict(r) for r in conn.execute(
+        "SELECT date(created_at) d, COUNT(*) c FROM analyses GROUP BY d ORDER BY d")], [])
+    out["paid"] = safe(lambda: conn.execute(
+        "SELECT COUNT(*) FROM users WHERE tariff!='Free'").fetchone()[0], 0)
+    out["promos"] = safe(lambda: [dict(r) for r in conn.execute(
+        "SELECT * FROM promocodes ORDER BY id DESC")], [])
+    out["top_promos"] = sorted(out["promos"], key=lambda p: p.get("used_count") or 0, reverse=True)[:5]
+    out["support"] = safe(lambda: [dict(r) for r in conn.execute(
+        "SELECT * FROM support_messages ORDER BY id DESC LIMIT 50")], [])
+    out["feedback"] = safe(lambda: [dict(r) for r in conn.execute(
+        "SELECT f.*, u.email FROM feedback f LEFT JOIN users u ON u.id=f.user_id "
+        "ORDER BY f.id DESC LIMIT 100")], [])
+    out["consults"] = safe(lambda: [dict(r) for r in conn.execute(
+        "SELECT c.*, u.email FROM consult_requests c LEFT JOIN users u ON u.id=c.user_id "
+        "ORDER BY c.id DESC LIMIT 100")], [])
+    out["laws_list"] = safe(lambda: [dict(r) for r in conn.execute(
+        "SELECT code, title, LENGTH(COALESCE(full_text,'')) ft FROM laws ORDER BY code")], [])
+    out["job"] = dict(globals().get("_LAWS_JOB", {}))
+    conn.close()
+    return out
+
+
+class LawsReloadIn(BaseModel):
+    extended: bool = False
+
+
+@app.post("/api/admin/laws_reload")
+def admin_laws_reload2(data: LawsReloadIn, user=Depends(_auth)):
+    _admin(user)
+    import threading
+    job = globals().setdefault("_LAWS_JOB", {"running": False, "done": 0, "total": 0, "last": "", "error": ""})
+    if job["running"]:
+        return {"ok": False, "detail": "Уже выполняется"}
+
+    def run():
+        try:
+            from core.laws_autoload import DEFAULT_PACK, autoload_law
+            pack = list(DEFAULT_PACK) + (list(EXTENDED_PACK) if data.extended else [])
+            job.update(running=True, done=0, total=len(pack), last="", error="")
+            for prefix, title, cands in pack:
+                n, err, source = autoload_law(prefix, title, cands)
+                job["done"] += 1
+                job["last"] = f"{title}: статей {n}" if n else f"{title}: {err}"
+        except Exception as e:
+            job["error"] = str(e)
+        finally:
+            job["running"] = False
+
+    threading.Thread(target=run, daemon=True).start()
+    return {"ok": True}
