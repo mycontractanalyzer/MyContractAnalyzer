@@ -1,7 +1,7 @@
 (function(){
   var l = document.createElement('link');
   l.rel = 'icon';
-  l.href = '/logo.png?v=2';
+  l.href = '/favicon.png?v=3';
   document.head.appendChild(l);
 })();
 
@@ -43,7 +43,7 @@ function mcaNav(){
   el.innerHTML =
     '<nav class="sticky top-0 z-50 backdrop-blur-xl bg-[#0b0d12]/75 border-b border-white/5">'
     + '<div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between gap-4">'
-    + '<a href="/" class="flex items-center gap-3 font-bold text-lg font-display min-w-0"><img src="/logo.png?v=2" class="logo-img" alt="⚖️"><span class="break-words">MyContractAnalyzer</span></a>'
+    + '<a href="/" class="flex items-center gap-3 font-bold text-lg font-display min-w-0"><img src="/favicon.png?v=3" class="logo-img" alt="⚖️"><span class="break-words">MyContractAnalyzer</span></a>'
     + '<div class="hidden lg:flex items-center gap-1 text-sm">'
     + '<a href="/#features" class="nav-link">Возможности</a>'
     + '<a href="/#how" class="nav-link">Как работает</a>'
@@ -59,7 +59,7 @@ function mcaFooter(){
     '<footer class="site mt-20">'
     + '<div class="max-w-6xl mx-auto px-6 py-10">'
     + '<div class="flex flex-wrap items-center gap-4 mb-5">'
-    + '<img src="/logo.png?v=2" class="logo-img" alt="⚖️">'
+    + '<img src="/favicon.png?v=3" class="logo-img" alt="⚖️">'
     + '<span class="font-bold text-lg font-display">MyContractAnalyzer</span>'
     + '<span class="text-white/40 text-sm">· See what you\'re signing</span></div>'
     + '<p class="text-white/50 text-sm max-w-2xl mb-8">Сервис ИИ-анализа договоров. Результаты носят информационный характер и не являются юридической консультацией.</p>'
