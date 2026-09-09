@@ -26,8 +26,19 @@
 
   <section id="adminBox" class="glass p-6 hidden border-amber-500/40">
     <h2 class="font-bold mb-3">🛠 Админ-панель</h2>
-    <p class="text-sm text-white/60 mb-4">Статистика сервиса, обращения пользователей с ответами на почту и управление базой законов — прямо в новом интерфейсе.</p>
+    <p class="text-sm text-white/60 mb-4">Статистика, пользователи, тарифы, проверки, промокоды, обращения, отзывы, заявки и законы.</p>
     <a href="/admin.html" class="btn-primary text-sm">🛠 Открыть админ-панель</a>
+  </section>
+
+  <section class="glass p-6">
+    <h2 class="font-bold mb-4">🧑‍⚖️ Консультация живого юриста</h2>
+    <p class="text-sm text-white/60 mb-4">Опиши вопрос — партнёр-юрист свяжется с тобой. Заявка видна в админке во вкладке «Заявки».</p>
+    <form id="consultForm" class="space-y-4">
+      <textarea name="question" rows="4" placeholder="Например: нужно сопровождение сделки по покупке доли в ООО…" class="input"></textarea>
+      <input name="contact" placeholder="Telegram или телефон для связи" class="input">
+      <button class="btn-primary text-sm">📨 Отправить заявку</button>
+    </form>
+    <div id="consultMsg" class="mt-3 text-sm"></div>
   </section>
 
   <section class="glass p-6">
@@ -61,10 +72,10 @@
 <script>
 const token = mcaToken();
 if (!token) location.href = '/auth.html#login';
-const ADMIN_EMAIL = 'mycontractanalyzer@gmail.com'; // позже заменим на флаг is_admin из API
+const ADMIN_EMAIL = 'mycontractanalyzer@gmail.com';
+const H = {'Authorization': 'Bearer ' + token};
 
-fetch('/api/me', {headers: {'Authorization': 'Bearer ' + token}})
-  .then(r => r.ok ? r.json() : Promise.reject())
+fetch('/api/me', {headers: H}).then(r => r.ok ? r.json() : Promise.reject())
   .then(u => {
     document.getElementById('meBox').innerHTML =
       '<p><b>Email:</b> ' + mcaEsc(u.email) + '</p><p><b>Тариф:</b> ' + mcaEsc(u.tariff) +
@@ -73,13 +84,24 @@ fetch('/api/me', {headers: {'Authorization': 'Bearer ' + token}})
   })
   .catch(() => location.href = '/auth.html#login');
 
+document.getElementById('consultForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const msg = document.getElementById('consultMsg');
+  const fd = new FormData(e.target);
+  if (!fd.get('question').trim()) { msg.textContent = '❌ Опиши вопрос'; msg.className = 'mt-3 text-sm text-red-400'; return; }
+  const r = await fetch('/api/consult', {method: 'POST', headers: {'Content-Type': 'application/json', ...H},
+    body: JSON.stringify({question: fd.get('question'), contact: fd.get('contact')})});
+  msg.textContent = r.ok ? '✅ Заявка отправлена! Мы свяжемся с тобой.' : '❌ Ошибка';
+  msg.className = 'mt-3 text-sm ' + (r.ok ? 'text-green-400' : 'text-red-400');
+});
+
 document.getElementById('passForm').addEventListener('submit', async e => {
   e.preventDefault();
   const msg = document.getElementById('passMsg');
   const fd = new FormData(e.target);
   if (fd.get('new') !== fd.get('new2')) { msg.textContent = '❌ Новые пароли не совпадают'; msg.className = 'mt-3 text-sm text-red-400'; return; }
   const r = await fetch('/api/change_password', {method: 'POST',
-    headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+    headers: {'Content-Type': 'application/json', ...H},
     body: JSON.stringify({old: fd.get('old'), new: fd.get('new')})});
   const d = await r.json();
   msg.textContent = r.ok ? '✅ ' + (d.message || 'Пароль изменён') : '❌ ' + (d.detail || 'Ошибка');
@@ -91,7 +113,7 @@ document.getElementById('supForm').addEventListener('submit', async e => {
   const msg = document.getElementById('supMsg');
   const fd = new FormData(e.target);
   const r = await fetch('/api/support', {method: 'POST',
-    headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+    headers: {'Content-Type': 'application/json', ...H},
     body: JSON.stringify({topic: fd.get('topic'), message: fd.get('message')})});
   msg.textContent = r.ok ? '✅ Обращение отправлено! Ответ придёт на email.' : '❌ Ошибка отправки';
   msg.className = 'mt-3 text-sm ' + (r.ok ? 'text-green-400' : 'text-red-400');

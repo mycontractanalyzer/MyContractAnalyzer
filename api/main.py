@@ -133,6 +133,12 @@ def me(user=Depends(_auth)):
 def analyze(data: AnalyzeIn, user=Depends(_auth)):
     if user["checks_left"] < 1:
         raise HTTPException(402, "Недостаточно проверок")
+    cap = TIER_CHARS.get(user["tariff"], 15000)
+    if len(data.text) > cap:
+        raise HTTPException(413, f"Лимит тарифа {user['tariff']}: до {cap} символов за одну проверку. Раздели документ или повысь тариф.")
+    cap = TIER_CHARS.get(user["tariff"], 15000)
+    if len(data.text) > cap:
+        raise HTTPException(413, f"Лимит тарифа {user['tariff']}: до {cap} символов за одну проверку. Раздели документ или повысь тариф.")
     gen, model = analyze_contract_stream(
         data.text, user["tariff"], data.contract_type, data.role, data.comment, depth=data.depth)
 
@@ -706,7 +712,7 @@ def admin_grant(uid: int, data: GrantIn, user=Depends(_auth)):
         raise HTTPException(400, "Неизвестный тариф")
     conn = get_connection()
     conn.execute("UPDATE users SET tariff = ?, checks_left = ? WHERE id = ?",
-                 (data.tariff, TARIFFS[data.tariff]["checks"], uid))
+                 (data.tariff, TIER_CHECKS.get(data.tariff, 3), uid))
     conn.commit()
     conn.close()
     msg = ""
@@ -805,7 +811,7 @@ def reset_request(data: ResetReqIn):
     if not row:
         conn.close()
         return {"ok": True}
-    code = str(random.randbelow(900000) + 100000)
+    code = str(random.randint(100000, 999999))
     conn.execute("UPDATE users SET reset_code = ? WHERE id = ?", (code, row["id"]))
     conn.commit()
     conn.close()
@@ -834,3 +840,10 @@ def reset_confirm(data: ResetConfirmIn):
     if not ok:
         raise HTTPException(400, "Неверный код или пароль короче 6 символов")
     return {"ok": True}
+
+
+TIER_CHECKS = {"Free": 3, "Light": 35, "Standard": 65, "Pro": 125,
+               "Business": 150, "Business Pro": 200}
+
+TIER_CHARS = {"Free": 15000, "Light": 35000, "Standard": 50000, "Pro": 100000,
+              "Business": 150000, "Business Pro": 200000}

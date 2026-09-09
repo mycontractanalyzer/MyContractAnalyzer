@@ -18,7 +18,10 @@
     <h1 class="text-2xl font-bold mb-6">🔐 Вход</h1>
     <form id="loginForm" class="space-y-4">
       <input name="email" type="email" required placeholder="Email" class="input">
-      <input name="password" type="password" required placeholder="Пароль" class="input">
+      <div class="relative">
+        <input name="password" type="password" required placeholder="Пароль" class="input" style="padding-right:3rem">
+        <button type="button" class="eye absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">👁</button>
+      </div>
       <button class="btn-primary w-full">Войти</button>
     </form>
     <div id="loginMsg" class="mt-4 text-sm"></div>
@@ -32,10 +35,18 @@
     <h1 class="text-2xl font-bold mb-6">✨ Регистрация</h1>
     <form id="signupForm" class="space-y-4">
       <input name="email" type="email" required placeholder="Email" class="input">
-      <input name="password" type="password" required minlength="6" placeholder="Пароль (мин. 6 символов)" class="input">
-      <input name="password2" type="password" required minlength="6" placeholder="Повторите пароль" class="input">
-      <label class="flex items-start gap-2 text-xs text-white/60"><input type="checkbox" required checked class="mt-0.5 accent-amber-500">
-        Принимаю <a href="/offer.html" class="underline text-amber-400">оферту</a> и <a href="/privacy.html" class="underline text-amber-400">политику конфиденциальности</a>, даю <a href="/consent.html" class="underline text-amber-400">согласие на обработку ПДн</a></label>
+      <div class="relative">
+        <input name="password" type="password" required minlength="6" placeholder="Пароль (мин. 6 символов)" class="input" style="padding-right:3rem">
+        <button type="button" class="eye absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">👁</button>
+      </div>
+      <div class="relative">
+        <input name="password2" type="password" required minlength="6" placeholder="Повторите пароль" class="input" style="padding-right:3rem">
+        <button type="button" class="eye absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">👁</button>
+      </div>
+      <label class="flex items-start gap-2 text-xs text-white/60 leading-relaxed">
+        <input type="checkbox" required checked class="mt-0.5 accent-amber-500">
+        <span>Принимаю <a href="/offer.html" class="underline text-amber-400">оферту</a> и <a href="/privacy.html" class="underline text-amber-400">политику конфиденциальности</a>, даю <a href="/consent.html" class="underline text-amber-400">согласие на обработку ПДн</a></span>
+      </label>
       <button class="btn-primary w-full">Создать аккаунт</button>
     </form>
     <div id="signupMsg" class="mt-4 text-sm"></div>
@@ -58,7 +69,10 @@
       <input name="remail" type="email" required placeholder="Email" class="input">
       <button id="sendReset" class="btn-ghost w-full text-sm">📧 Прислать код на почту</button>
       <input name="rcode" placeholder="Код из письма" class="input">
-      <input name="rpass" type="password" minlength="6" placeholder="Новый пароль (мин. 6)" class="input">
+      <div class="relative">
+        <input name="rpass" type="password" minlength="6" placeholder="Новый пароль (мин. 6)" class="input" style="padding-right:3rem">
+        <button type="button" class="eye absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">👁</button>
+      </div>
       <button class="btn-primary w-full">💾 Сменить пароль</button>
     </form>
     <div id="resetMsg" class="mt-4 text-sm"></div>
@@ -75,6 +89,13 @@ function show(v){
 }
 function route(){ show(location.hash.replace('#','') || 'login'); }
 window.addEventListener('hashchange', route); route();
+
+document.querySelectorAll('.eye').forEach(b => b.onclick = () => {
+  const inp = b.parentElement.querySelector('input');
+  const showPass = inp.type === 'password';
+  inp.type = showPass ? 'text' : 'password';
+  b.textContent = showPass ? '🙈' : '👁';
+});
 
 document.getElementById('loginForm').addEventListener('submit', async e => {
   e.preventDefault();
@@ -120,10 +141,14 @@ document.getElementById('sendReset').onclick = async (e) => {
   e.preventDefault();
   const msg = document.getElementById('resetMsg');
   const email = document.getElementById('resetForm').remail.value;
-  const r = await fetch('/api/reset_request', {method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({email})});
-  msg.textContent = r.ok ? '📧 Код отправлен (если такой email существует).' : '❌ Ошибка';
-  msg.className = 'mt-4 text-sm ' + (r.ok ? 'text-green-400' : 'text-red-400');
+  msg.textContent = '⏳ Отправляю…'; msg.className = 'mt-4 text-sm text-white/70';
+  try {
+    const r = await fetch('/api/reset_request', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email})});
+    const d = await r.json().catch(() => ({}));
+    if (r.ok) { msg.textContent = '📧 Код отправлен (если такой email существует).'; msg.className = 'mt-4 text-sm text-green-400'; }
+    else { msg.textContent = '❌ ' + (d.detail || 'Ошибка отправки'); msg.className = 'mt-4 text-sm text-red-400'; }
+  } catch (err) { msg.textContent = '❌ Сеть недоступна'; msg.className = 'mt-4 text-sm text-red-400'; }
 };
 
 document.getElementById('resetForm').addEventListener('submit', async e => {

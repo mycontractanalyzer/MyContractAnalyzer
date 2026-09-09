@@ -73,11 +73,22 @@
 const token = mcaToken();
 if (!token) location.href = '/auth.html#login';
 const MAXT = {brief: 700, standard: 1800, detailed: 4500};
+const TIER_CHARS = {'Free':15000,'Light':35000,'Standard':50000,'Pro':100000,'Business':150000,'Business Pro':200000};
+let myTariff = 'Free';
 const ta = document.getElementById('contractText');
 const dz = document.getElementById('dz');
 
+fetch('/api/me', {headers: {'Authorization': 'Bearer ' + token}})
+  .then(r => r.ok ? r.json() : null)
+  .then(u => { if (u) { myTariff = u.tariff; ta.dispatchEvent(new Event('input')); } })
+  .catch(() => {});
+
 ta.addEventListener('input', () => {
-  document.getElementById('charCount').textContent = ta.value.length + ' символов';
+  const cap = TIER_CHARS[myTariff] || 15000;
+  const n = ta.value.length;
+  const el = document.getElementById('charCount');
+  el.textContent = n + ' символов · лимит тарифа: ' + cap;
+  el.style.color = n > cap ? '#f87171' : '';
 });
 ['dragover','dragenter'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('drag'); }));
 ['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('drag'); }));
@@ -119,6 +130,8 @@ async function handleFile(f){
 document.getElementById('runBtn').onclick = async () => {
   const text = ta.value.trim();
   if (!text) { alert('Вставь текст договора или загрузи файл'); return; }
+  const cap2 = TIER_CHARS[myTariff] || 15000;
+  if (text.length > cap2) { alert('❌ Лимит тарифа ' + myTariff + ': до ' + cap2 + ' символов за проверку. Раздели документ или повысь тариф.'); return; }
   const depth = document.querySelector('input[name="depth"]:checked').value;
   const box = document.getElementById('reportBox');
   const content = document.getElementById('reportContent');
