@@ -163,3 +163,11 @@ h1.grad-text::before{content:'';position:absolute;left:0;bottom:-18px;width:230p
   .float-badge{animation:mcaFloat 6s ease-in-out infinite}
   .hero-mock{gap:10px;padding-top:14px}
 }
+@media (max-width:640px){
+  .hero-mock{padding-top:26px;padding-bottom:26px}
+  .hero-mock > .glass{margin-top:0}
+  .hero-mock .float-badge{position:absolute;animation:mcaFloat 6s ease-in-out infinite}
+  .hero-mock .float-badge:nth-of-type(1){top:-15px !important;left:-6px !important;right:auto !important;bottom:auto !important}
+  .hero-mock .float-badge:nth-of-type(2){top:-15px !important;right:-6px !important;left:auto !important;bottom:auto !important}
+  .hero-mock .float-badge:nth-of-type(3){bottom:-15px !important;left:-6px !important;top:auto !important;right:auto !important}
+}
