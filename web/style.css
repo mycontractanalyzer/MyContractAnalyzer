@@ -159,3 +159,7 @@ h1.grad-text::before{content:'';position:absolute;left:0;bottom:-18px;width:230p
   .hero-mock > .glass{flex:1 1 100%;margin-top:10px}
   .float-badge{margin:0;font-size:.66rem;padding:.32rem .62rem}
 }
+@media (max-width:640px){
+  .float-badge{animation:mcaFloat 6s ease-in-out infinite}
+  .hero-mock{gap:10px;padding-top:14px}
+}
