@@ -1601,7 +1601,10 @@ def laws_search_v2(q: str = "", user=Depends(_auth)):
             out.append({"code": r["code"],
                         "art": (r["code"] or "").rsplit(" ", 1)[-1], "loaded": True,
                         "snippet": " ".join(blob[max(0, pos - 60):pos + 340].split())})
-    return outclass AdminTariffIn(BaseModel):
+    return out
+
+
+class AdminTariffIn(BaseModel):
     user_id: int
     tariff: str
     promo: str = ""
