@@ -22,7 +22,7 @@
       <a href="/auth.html#signup" data-auth-redirect class="btn-primary">🚀 Проверить договор бесплатно</a>
       <a href="#how" class="btn-ghost">Как это работает</a>
     </div>
-    <div class="grid grid-cols-3 gap-6 mt-12 max-w-xl">
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-3 mt-12 max-w-xl">
       <div><div class="stat-num">База законов</div><div class="text-xs text-white/50 mt-1">кодексы и ФЗ, цитаты дословно</div></div>
       <div><div class="stat-num">~30 сек</div><div class="text-xs text-white/50 mt-1">на полный разбор</div></div>
       <div><div class="flex items-center gap-2"><span class="stat-num">PDF·DOCX</span><svg class="text-amber-300 shrink-0" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></div><div class="text-xs text-white/50 mt-1">и аудиоверсия — в один клик</div></div>
@@ -93,33 +93,74 @@
   <div class="grid md:grid-cols-3 gap-5">
     <div class="glass glass-hover p-6 reveal flex flex-col">
       <h3 class="font-bold">Free</h3><div class="text-3xl font-extrabold my-3">0 ₽</div>
-      <ul class="text-sm text-white/60 space-y-2 mb-6"><li>3 проверки</li><li>До 15 000 символов за проверку</li><li>Базовый отчёт и карта рисков</li></ul>
+      <ul class="text-sm text-white/60 space-y-2 mb-6">
+        <li>3 проверки в месяц</li>
+        <li>До 15 000 символов за проверку</li>
+        <li>Базовый отчёт и карта рисков</li>
+        <li>Цитаты статей законов дословно</li>
+        <li>Скачивание отчёта в PDF</li>
+      </ul>
       <a href="/auth.html#signup" data-tariff="Free" class="btn-ghost w-full text-sm mt-auto">Начать</a>
     </div>
     <div class="glass glass-hover p-6 reveal flex flex-col">
       <h3 class="font-bold">Light</h3><div class="text-3xl font-extrabold my-3">290 ₽<span class="text-sm text-white/50">/мес</span></div>
-      <ul class="text-sm text-white/60 space-y-2 mb-6"><li>35 проверок</li><li>До 35 000 символов за проверку</li><li>Все инструменты, PDF/DOCX</li></ul>
+      <ul class="text-sm text-white/60 space-y-2 mb-6">
+        <li>35 проверок в месяц</li>
+        <li>До 35 000 символов за проверку</li>
+        <li>Полный отчёт, карта рисков, подсветка договора</li>
+        <li>Все инструменты: redline, письмо контрагенту, протокол разногласий, паспорт договора, перевод</li>
+        <li>PDF, DOCX и аудиоверсия отчёта</li>
+        <li>История и хранение отчётов</li>
+      </ul>
       <a href="/auth.html#signup" data-tariff="Light" class="btn-ghost w-full text-sm mt-auto">Выбрать</a>
     </div>
     <div class="glass glass-hover p-6 reveal flex flex-col">
       <h3 class="font-bold">Standard</h3><div class="text-3xl font-extrabold my-3">490 ₽<span class="text-sm text-white/50">/мес</span></div>
-      <ul class="text-sm text-white/60 space-y-2 mb-6"><li>65 проверок</li><li>До 50 000 символов за проверку</li><li>Юрист по анализу: 10 вопросов на договор</li></ul>
+      <ul class="text-sm text-white/60 space-y-2 mb-6">
+        <li>65 проверок в месяц</li>
+        <li>До 50 000 символов за проверку</li>
+        <li>Всё из Light</li>
+        <li>ИИ-юрист по анализу: 10 запросов на договор</li>
+        <li>Сравнение двух редакций договора</li>
+        <li>Отправка отчёта на почту</li>
+      </ul>
       <a href="/auth.html#signup" data-tariff="Standard" class="btn-ghost w-full text-sm mt-auto">Выбрать</a>
     </div>
     <div class="glass glass-hover p-6 reveal flex flex-col border-amber-500/50 relative overflow-hidden" style="box-shadow:0 0 60px rgba(245,181,46,.15)">
       <div class="ribbon">ХИТ</div>
       <h3 class="font-bold">Pro</h3><div class="text-3xl font-extrabold my-3">1490 ₽<span class="text-sm text-white/50">/мес</span></div>
-      <ul class="text-sm text-white/60 space-y-2 mb-6"><li>125 проверок</li><li>До 100 000 символов за проверку</li><li>ИИ-юрист 25 запросов/день + 20 на договор</li></ul>
+      <ul class="text-sm text-white/60 space-y-2 mb-6">
+        <li>125 проверок в месяц</li>
+        <li>До 100 000 символов за проверку</li>
+        <li>Всё из Standard</li>
+        <li>ИИ-юрист 24/7: 25 запросов в день + 20 запросов на договор</li>
+        <li>OCR сканов и фото договоров</li>
+        <li>Приоритетная обработка анализов</li>
+      </ul>
       <a href="/auth.html#signup" data-tariff="Pro" class="btn-ghost w-full text-sm mt-auto">Выбрать</a>
     </div>
     <div class="glass glass-hover p-6 reveal flex flex-col">
       <h3 class="font-bold">Business</h3><div class="text-3xl font-extrabold my-3">2990 ₽<span class="text-sm text-white/50">/мес</span></div>
-      <ul class="text-sm text-white/60 space-y-2 mb-6"><li>150 проверок</li><li>До 150 000 символов за проверку</li><li>Команда до 5 человек, юрист 15/день</li></ul>
+      <ul class="text-sm text-white/60 space-y-2 mb-6">
+        <li>150 проверок в месяц</li>
+        <li>До 150 000 символов за проверку</li>
+        <li>Всё из Pro</li>
+        <li>Команда до 5 человек: общие отчёты</li>
+        <li>ИИ-юрист 24/7: 15 запросов в день + 15 запросов на договор</li>
+        <li>Админ-панель и статистика использования</li>
+      </ul>
       <a href="/auth.html#signup" data-tariff="Business" class="btn-ghost w-full text-sm mt-auto">Выбрать</a>
     </div>
     <div class="glass glass-hover p-6 reveal flex flex-col">
       <h3 class="font-bold">Business Pro</h3><div class="text-3xl font-extrabold my-3">4490 ₽<span class="text-sm text-white/50">/мес</span></div>
-      <ul class="text-sm text-white/60 space-y-2 mb-6"><li>200 проверок</li><li>До 200 000 символов за проверку</li><li>Юрист 50/день + 35 на договор, приоритет-поддержка</li></ul>
+      <ul class="text-sm text-white/60 space-y-2 mb-6">
+        <li>200 проверок в месяц</li>
+        <li>До 200 000 символов за проверку</li>
+        <li>Всё из Business</li>
+        <li>ИИ-юрист 24/7: 50 запросов в день + 35 запросов на договор</li>
+        <li>Приоритет-поддержка и разбор нестандартных пунктов</li>
+        <li>API-доступ для интеграций</li>
+      </ul>
       <a href="/auth.html#signup" data-tariff="Business Pro" class="btn-ghost w-full text-sm mt-auto">Выбрать</a>
     </div>
   </div>
