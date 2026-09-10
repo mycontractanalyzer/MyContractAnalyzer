@@ -393,5 +393,20 @@ setInterval(() => { if (DATA && DATA.job && DATA.job.running) pollJob(); }, 4000
 
 mcaNav(); mcaFooter();
 </script>
+<script>
+document.getElementById('lawSearchBtn').onclick = async () => {
+  const q = document.getElementById('lawQ').value.trim();
+  const out = document.getElementById('lawSearchOut');
+  if (!q) return;
+  out.innerHTML = '<p class="text-white/50">⏳ Ищу…</p>';
+  const r = await fetch('/api/admin/laws_search?q=' + encodeURIComponent(q), {headers: H});
+  const list = await r.json().catch(() => []);
+  if (!r.ok) { out.innerHTML = '<p class="text-red-400">❌ Ошибка поиска</p>'; return; }
+  if (!list.length) { out.innerHTML = '<p class="text-red-400">❌ Ничего не найдено по запросу.</p>'; return; }
+  out.innerHTML = list.map(x => x.loaded
+    ? '<div class="p-3 rounded-xl bg-green-500/10 border border-green-500/30"><b>' + mcaEsc(x.code) + ' · ст. ' + mcaEsc(x.art) + '</b> — загружена ✅<div class="text-white/60 text-xs mt-1">' + mcaEsc(x.snippet) + '</div></div>'
+    : '<div class="p-3 rounded-xl bg-red-500/10 border border-red-500/30"><b>' + mcaEsc(x.code) + ' · ст. ' + mcaEsc(x.art) + '</b> — НЕ загружена ❌<div class="text-white/60 text-xs mt-1">' + mcaEsc(x.snippet) + '</div></div>').join('');
+};
+</script>
 </body>
 </html>

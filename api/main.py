@@ -909,6 +909,14 @@ EXTENDED_PACK = [
     ("149-ФЗ", "ФЗ № 149-ФЗ Об информации, информационных технологиях и о защите информации", ["Федеральный закон № 149-ФЗ Об информации, информационных технологиях и о защите информации"]),
     ("248-ФЗ", "ФЗ № 248-ФЗ О государственном контроле (надзоре) и муниципальном контроле в РФ", ["Федеральный закон № 248-ФЗ О государственном контроле (надзоре) и муниципальном контроле в Российской Федерации"]),
     ("161-ФЗ", "ФЗ № 161-ФЗ О национальной платёжной системе", ["Федеральный закон № 161-ФЗ О национальной платежной системе"]),
+    ("7-ФЗ", "ФЗ № 7-ФЗ Об охране окружающей среды", ["Федеральный закон № 7-ФЗ Об охране окружающей среды"]),
+    ("89-ФЗ", "ФЗ № 89-ФЗ Об отходах производства и потребления", ["Федеральный закон № 89-ФЗ Об отходах производства и потребления"]),
+    ("52-ФЗ", "ФЗ № 52-ФЗ О санитарно-эпидемиологическом благополучии населения", ["Федеральный закон № 52-ФЗ О санитарно-эпидемиологическом благополучии населения"]),
+    ("69-ФЗ", "ФЗ № 69-ФЗ О пожарной безопасности", ["Федеральный закон № 69-ФЗ О пожарной безопасности"]),
+    ("384-ФЗ", "ФЗ № 384-ФЗ Технический регламент о безопасности зданий и сооружений", ["Федеральный закон № 384-ФЗ Технический регламент о безопасности зданий и сооружений"]),
+    ("259-ФЗ", "ФЗ № 259-ФЗ Устав автомобильного транспорта и городского наземного электрического транспорта", ["Федеральный закон № 259-ФЗ Устав автомобильного транспорта и городского наземного электрического транспорта"]),
+    ("196-ФЗ", "ФЗ № 196-ФЗ О безопасности дорожного движения", ["Федеральный закон № 196-ФЗ О безопасности дорожного движения"]),
+    ("16-ФЗ", "ФЗ № 16-ФЗ О транспортной безопасности", ["Федеральный закон № 16-ФЗ О транспортной безопасности"]),
 ]
 
 
@@ -1285,3 +1293,55 @@ def lawyer_chat_delete(cid: int, user=Depends(_auth)):
     conn.commit()
     conn.close()
     return {"ok": True}
+
+
+@app.get("/api/admin/laws_search")
+def admin_laws_search(q: str = "", user=Depends(_auth)):
+    _admin(user)
+    q = (q or "").strip()
+    if not q:
+        return []
+    import re as _re
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT code, title, full_text FROM laws WHERE full_text IS NOT NULL AND LENGTH(full_text) > 500").fetchall()
+    conn.close()
+    out = []
+    m = _re.match(r"^([A-Za-zА-Яа-я0-9\-ФЗГКТКУКАПЧСЛВМЖУН]+)?\s*(?:ст\.?|статья)?\s*(\d+(?:[.\d]+)?)$", q, _re.I)
+    if m:
+        code_q = (m.group(1) or "").upper()
+        num = m.group(2)
+        for r in rows:
+            if code_q and code_q not in (r["code"] or "").upper():
+                continue
+            ft = r["full_text"] or ""
+            mm = _re.search(r"Статья\s*" + _re.escape(num) + r"(?![\d])", ft, _re.I)
+            if not mm:
+                continue
+            start = mm.start()
+            nxt = _re.search(r"Статья\s+\d", ft[start + 8:])
+            end = start + 8 + nxt.start() if nxt else start + 700
+            out.append({"code": r["code"], "art": num, "loaded": True,
+                        "snippet": " ".join(ft[start:min(end, start + 400)].split())})
+            if len(out) >= 12:
+                break
+        if not out:
+            out.append({"code": code_q or "ВСЕ КОДЕКСЫ", "art": num, "loaded": False,
+                        "snippet": "Статья не найдена ни в одном загруженном источнике"})
+        return out
+    low = q.lower()
+    for r in rows:
+        ft = r["full_text"] or ""
+        pos = ft.lower().find(low)
+        while pos >= 0 and len(out) < 20:
+            head = ft[:pos]
+            am = None
+            for am in _re.finditer(r"Статья\s*(\d+(?:[.\d]+)?)", head):
+                pass
+            art = am.group(1) if am else "?"
+            out.append({"code": r["code"], "art": art, "loaded": True,
+                        "snippet": " ".join(ft[max(0, pos - 80):pos + 320].split())})
+            pos = ft.lower().find(low, pos + len(low))
+        if len(out) >= 20:
+            break
+    return out
