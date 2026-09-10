@@ -13,68 +13,83 @@
 <div class="orb orb-a"></div><div class="orb orb-b"></div>
 <div id="siteNav"></div>
 
-<header class="max-w-6xl mx-auto px-6 pt-20 pb-16 grid lg:grid-cols-2 gap-12 items-center relative z-10">
+<header class="max-w-6xl mx-auto px-6 pt-16 pb-20 grid lg:grid-cols-2 gap-12 items-center relative z-10">
   <div>
-    <div class="badge mb-6">⚖️ ИИ-юрист для твоих договоров</div>
+    <div class="eyebrow mb-5">ИИ-юрист для твоих договоров</div>
     <h1 class="text-4xl md:text-6xl font-extrabold leading-tight mb-6 grad-text">See what you're signing</h1>
     <p class="text-lg text-white/70 mb-8 max-w-xl">Нейросеть читает договор целиком и за 30 секунд объясняет каждый риск простым языком — со ссылками на статьи законов. Подписывай уверенно или требуй правок.</p>
     <div class="flex flex-wrap gap-4">
       <a href="/auth.html#signup" data-auth-redirect class="btn-primary">🚀 Проверить договор бесплатно</a>
       <a href="#how" class="btn-ghost">Как это работает</a>
     </div>
-    <div class="flex flex-wrap gap-3 mt-10">
-      <span class="chip">✅ 2600+ статей в базе</span>
-      <span class="chip">⚡ ответ за ~30 сек</span>
-      <span class="chip">🔒 данные в России</span>
-      <span class="chip">📄 PDF/DOCX в один клик</span>
+    <div class="grid grid-cols-3 gap-6 mt-12 max-w-xl">
+      <div><div class="stat-num">2600+</div><div class="text-xs text-white/50 mt-1">статей в правовой базе</div></div>
+      <div><div class="stat-num">~30 сек</div><div class="text-xs text-white/50 mt-1">на полный разбор</div></div>
+      <div><div class="stat-num">PDF·DOCX·🔊</div><div class="text-xs text-white/50 mt-1">результат в один клик</div></div>
     </div>
   </div>
-  <div class="glass p-6 glass-hover">
-    <div class="flex items-center justify-between mb-4">
-      <span class="font-bold">🎯 Риск-скор: 46/100</span>
-      <span class="px-3 py-1 rounded-full bg-amber-500/15 text-amber-400 text-xs font-bold border border-amber-500/40">🟡 С осторожностью</span>
-    </div>
-    <div class="space-y-3 text-sm">
-      <div class="p-4 rounded-xl bg-red-500/10 border border-red-500/30">
-        <b>🔴 п. 7.6:</b> залог не возвращается при просрочке<br>
-        <span class="text-white/60">⚖️ ст. 333 ГК РФ: «Если подлежащая уплате неустойка явно несоразмерна…»</span>
+  <div class="relative">
+    <span class="float-badge hidden md:inline-flex" style="top:-18px;left:-10px">⚖️ ст. 333 ГК РФ</span>
+    <span class="float-badge hidden md:inline-flex" style="top:38%;right:-14px;animation-delay:1.2s">🔴 п. 7.6: залог не вернут</span>
+    <span class="float-badge hidden md:inline-flex" style="bottom:-16px;left:12%;animation-delay:2.1s">✅ Чек-лист: 8 правок</span>
+    <div class="glass p-6 glass-hover">
+      <div class="flex items-center justify-between mb-4">
+        <span class="font-bold">🎯 Риск-скор: 46/100</span>
+        <span class="px-3 py-1 rounded-full bg-amber-500/15 text-amber-400 text-xs font-bold border border-amber-500/40">🟡 С осторожностью</span>
       </div>
-      <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
-        <b>🟡 п. 5.5:</b> не выбран плательщик электроэнергии<br>
-        <span class="text-white/60">→ зафиксируй вариант до подписания</span>
-      </div>
-      <div class="p-4 rounded-xl bg-white/5 border border-white/10 text-white/70">
-        ✅ Чек-лист: 8 правок · 📄 PDF-отчёт · 🧰 инструменты переговоров
+      <div class="space-y-3 text-sm">
+        <div class="p-4 rounded-xl bg-red-500/10 border border-red-500/30">
+          <b>🔴 п. 7.6:</b> залог не возвращается при просрочке<br>
+          <span class="text-white/60">⚖️ ст. 333 ГК РФ: «Если подлежащая уплате неустойка явно несоразмерна…»</span>
+        </div>
+        <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
+          <b>🟡 п. 5.5:</b> не выбран плательщик электроэнергии<br>
+          <span class="text-white/60">→ зафиксируй вариант до подписания</span>
+        </div>
+        <div class="p-4 rounded-xl bg-white/5 border border-white/10 text-white/70">
+          ✅ Чек-лист правок · 📄 PDF/DOCX · 🔊 аудиоверсия · 🧰 инструменты переговоров
+        </div>
       </div>
     </div>
   </div>
 </header>
 
-<section id="features" class="max-w-6xl mx-auto px-6 py-16 relative z-10">
-  <h2 class="text-3xl font-bold text-center mb-3 grad-text">Что ты получаешь</h2>
-  <p class="text-center text-white/60 mb-12">Не «пересказ текста», а полноценный юридический разбор</p>
+<hr class="divider-glow max-w-4xl mx-auto">
+
+<section id="features" class="max-w-6xl mx-auto px-6 py-20 relative z-10">
+  <div class="text-center mb-12">
+    <div class="eyebrow justify-center mb-3" style="justify-content:center">Возможности</div>
+    <h2 class="text-3xl font-bold grad-text">Что ты получаешь</h2>
+    <p class="text-white/60 mt-3">Не «пересказ текста», а полноценный юридический разбор</p>
+  </div>
   <div class="grid md:grid-cols-3 gap-6">
     <div class="glass glass-hover p-6 reveal"><div class="text-3xl mb-3">🗺</div><h3 class="font-bold mb-2">Карта рисков</h3><p class="text-sm text-white/60">Красные и жёлтые пункты с подсветкой прямо в тексте договора и объяснением последствий.</p></div>
     <div class="glass glass-hover p-6 reveal"><div class="text-3xl mb-3">⚖️</div><h3 class="font-bold mb-2">Цитаты законов</h3><p class="text-sm text-white/60">Каждый риск подкреплён дословной статьёй из базы 2600+ норм ГК, ТК, ЗоЗПП и других.</p></div>
-    <div class="glass glass-hover p-6 reveal"><div class="text-3xl mb-3">🧰</div><h3 class="font-bold mb-2">Инструменты переговоров</h3><p class="text-sm text-white/60">Redline-версия, письмо контрагенту, протокол разногласий и другое.</p></div>
+    <div class="glass glass-hover p-6 reveal"><div class="text-3xl mb-3">🧰</div><h3 class="font-bold mb-2">Инструменты переговоров</h3><p class="text-sm text-white/60">Redline-версия, письмо контрагенту, протокол разногласий, паспорт договора и другое.</p></div>
     <div class="glass glass-hover p-6 reveal"><div class="text-3xl mb-3">⚡</div><h3 class="font-bold mb-2">Живой стриминг</h3><p class="text-sm text-white/60">Отчёт печатается в реальном времени — первые выводы через несколько секунд.</p></div>
-    <div class="glass glass-hover p-6 reveal"><div class="text-3xl mb-3">🤖</div><h3 class="font-bold mb-2">ИИ-юрист 24/7</h3><p class="text-sm text-white/60">Чат по любым правовым вопросам на тарифах Pro и Business.</p></div>
-    <div class="glass glass-hover p-6 reveal"><div class="text-3xl mb-3">📥</div><h3 class="font-bold mb-2">PDF / DOCX</h3><p class="text-sm text-white/60">Готовый отчёт и пакет для юриста в два клика — для суда, банка или контрагента.</p></div>
+    <div class="glass glass-hover p-6 reveal"><div class="text-3xl mb-3">🤖</div><h3 class="font-bold mb-2">ИИ-юрист 24/7</h3><p class="text-sm text-white/60">Чат по любым правовым вопросам и уточнения по каждому пункту твоего отчёта.</p></div>
+    <div class="glass glass-hover p-6 reveal"><div class="text-3xl mb-3">📥</div><h3 class="font-bold mb-2">PDF / DOCX / аудио</h3><p class="text-sm text-white/60">Готовый отчёт, пакет для юриста и озвучка — в два клика для суда, банка или контрагента.</p></div>
   </div>
 </section>
 
 <section id="how" class="max-w-6xl mx-auto px-6 py-16 relative z-10">
-  <h2 class="text-3xl font-bold text-center mb-12 grad-text">Три шага до спокойной подписи</h2>
+  <div class="text-center mb-12">
+    <div class="eyebrow mb-3" style="justify-content:center">Процесс</div>
+    <h2 class="text-3xl font-bold grad-text">Три шага до спокойной подписи</h2>
+  </div>
   <div class="grid md:grid-cols-3 gap-6">
-    <div class="glass glass-hover p-6 reveal"><div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-black font-extrabold flex items-center justify-center text-xl mb-4">1</div><h3 class="font-bold mb-2">Загрузи договор</h3><p class="text-sm text-white/60">TXT, PDF, DOCX или фото — черновик сохраняется автоматически.</p></div>
+    <div class="glass glass-hover p-6 reveal"><div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-black font-extrabold flex items-center justify-center text-xl mb-4">1</div><h3 class="font-bold mb-2">Загрузи договор</h3><p class="text-sm text-white/60">TXT, PDF, DOCX или фото — текст распознается автоматически, черновик сохраняется.</p></div>
     <div class="glass glass-hover p-6 reveal"><div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-black font-extrabold flex items-center justify-center text-xl mb-4">2</div><h3 class="font-bold mb-2">Смотри стрим разбора</h3><p class="text-sm text-white/60">ИИ выделяет риски, цитирует статьи и считает риск-скор по прозрачной формуле.</p></div>
     <div class="glass glass-hover p-6 reveal"><div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-black font-extrabold flex items-center justify-center text-xl mb-4">3</div><h3 class="font-bold mb-2">Действуй</h3><p class="text-sm text-white/60">Чек-лист правок, письмо контрагенту, протокол разногласий — всё в один клик.</p></div>
   </div>
 </section>
 
-<section id="pricing" class="max-w-6xl mx-auto px-6 py-16 relative z-10">
-  <h2 class="text-3xl font-bold text-center mb-3 grad-text">Тарифы</h2>
-  <p class="text-center text-white/60 mb-12">Оплата подключается после бета-недели — сейчас все проверки бесплатны для тестеров</p>
+<section id="pricing" class="max-w-6xl mx-auto px-6 py-20 relative z-10">
+  <div class="text-center mb-12">
+    <div class="eyebrow mb-3" style="justify-content:center">Тарифы</div>
+    <h2 class="text-3xl font-bold grad-text">Выбери свою глубину защиты</h2>
+    <p class="text-white/60 mt-3">Оплата подключается после бета-недели — сейчас все проверки бесплатны для тестеров</p>
+  </div>
   <div class="grid md:grid-cols-3 gap-5">
     <div class="glass glass-hover p-6 reveal flex flex-col">
       <h3 class="font-bold">Free</h3><div class="text-3xl font-extrabold my-3">0 ₽</div>
@@ -83,34 +98,38 @@
     </div>
     <div class="glass glass-hover p-6 reveal flex flex-col">
       <h3 class="font-bold">Light</h3><div class="text-3xl font-extrabold my-3">290 ₽<span class="text-sm text-white/50">/мес</span></div>
-      <ul class="text-sm text-white/60 space-y-2 mb-6"><li>35 проверок</li><li>До 35 000 символов за проверку</li><li>Все 9 инструментов, PDF/DOCX</li></ul>
+      <ul class="text-sm text-white/60 space-y-2 mb-6"><li>35 проверок</li><li>До 35 000 символов за проверку</li><li>Все инструменты, PDF/DOCX</li></ul>
       <a href="/auth.html#signup" data-tariff="Light" class="btn-ghost w-full text-sm mt-auto">Выбрать</a>
     </div>
     <div class="glass glass-hover p-6 reveal flex flex-col">
       <h3 class="font-bold">Standard</h3><div class="text-3xl font-extrabold my-3">490 ₽<span class="text-sm text-white/50">/мес</span></div>
-      <ul class="text-sm text-white/60 space-y-2 mb-6"><li>65 проверок</li><li>До 50 000 символов за проверку</li><li>Протокол разногласий, подсветка</li></ul>
+      <ul class="text-sm text-white/60 space-y-2 mb-6"><li>65 проверок</li><li>До 50 000 символов за проверку</li><li>Юрист по анализу: 10 вопросов на договор</li></ul>
       <a href="/auth.html#signup" data-tariff="Standard" class="btn-ghost w-full text-sm mt-auto">Выбрать</a>
     </div>
-    <div class="glass glass-hover p-6 reveal flex flex-col border-amber-500/40">
-      <div class="badge mb-2 text-xs">Хит</div><h3 class="font-bold">Pro</h3><div class="text-3xl font-extrabold my-3">1490 ₽<span class="text-sm text-white/50">/мес</span></div>
-      <ul class="text-sm text-white/60 space-y-2 mb-6"><li>125 проверок</li><li>До 100 000 символов за проверку</li><li>ИИ-юрист 24/7 (25 запросов/день)</li></ul>
+    <div class="glass glass-hover p-6 reveal flex flex-col border-amber-500/50 relative overflow-hidden" style="box-shadow:0 0 60px rgba(245,181,46,.15)">
+      <div class="ribbon">ХИТ</div>
+      <h3 class="font-bold">Pro</h3><div class="text-3xl font-extrabold my-3">1490 ₽<span class="text-sm text-white/50">/мес</span></div>
+      <ul class="text-sm text-white/60 space-y-2 mb-6"><li>125 проверок</li><li>До 100 000 символов за проверку</li><li>ИИ-юрист 25 запросов/день + 20 на договор</li></ul>
       <a href="/auth.html#signup" data-tariff="Pro" class="btn-ghost w-full text-sm mt-auto">Выбрать</a>
     </div>
     <div class="glass glass-hover p-6 reveal flex flex-col">
       <h3 class="font-bold">Business</h3><div class="text-3xl font-extrabold my-3">2990 ₽<span class="text-sm text-white/50">/мес</span></div>
-      <ul class="text-sm text-white/60 space-y-2 mb-6"><li>150 проверок</li><li>До 150 000 символов за проверку</li><li>Команда до 5 человек</li><li>ИИ-юрист 15 запросов/день</li></ul>
+      <ul class="text-sm text-white/60 space-y-2 mb-6"><li>150 проверок</li><li>До 150 000 символов за проверку</li><li>Команда до 5 человек, юрист 15/день</li></ul>
       <a href="/auth.html#signup" data-tariff="Business" class="btn-ghost w-full text-sm mt-auto">Выбрать</a>
     </div>
     <div class="glass glass-hover p-6 reveal flex flex-col">
       <h3 class="font-bold">Business Pro</h3><div class="text-3xl font-extrabold my-3">4490 ₽<span class="text-sm text-white/50">/мес</span></div>
-      <ul class="text-sm text-white/60 space-y-2 mb-6"><li>200 проверок</li><li>До 200 000 символов за проверку</li><li>ИИ-юрист 50 запросов/день, приоритет-поддержка</li></ul>
+      <ul class="text-sm text-white/60 space-y-2 mb-6"><li>200 проверок</li><li>До 200 000 символов за проверку</li><li>Юрист 50/день + 35 на договор, приоритет-поддержка</li></ul>
       <a href="/auth.html#signup" data-tariff="Business Pro" class="btn-ghost w-full text-sm mt-auto">Выбрать</a>
     </div>
   </div>
 </section>
 
 <section id="faq" class="max-w-3xl mx-auto px-6 py-16 space-y-4 relative z-10">
-  <h2 class="text-3xl font-bold text-center mb-10 grad-text">Частые вопросы</h2>
+  <div class="text-center mb-10">
+    <div class="eyebrow mb-3" style="justify-content:center">FAQ</div>
+    <h2 class="text-3xl font-bold grad-text">Частые вопросы</h2>
+  </div>
   <details class="faq reveal"><summary>Это заменяет живого юриста?</summary><p>Для типовых договоров — да, как первичная проверка. Для крупных сделок рекомендуем показать отчёт юристу: мы сами подготовим для него пакет документов.</p></details>
   <details class="faq reveal"><summary>Откуда берутся цитаты законов?</summary><p>Из собственной базы 2600+ статей (открытые тексты, автообновление еженедельно). Модель цитирует дословно и не выдумывает нормы вне базы.</p></details>
   <details class="faq reveal"><summary>Куда попадает мой договор?</summary><p>Текст хранится в защищённой базе на сервере в России и обрабатывается ИИ-моделью. Мы не передаём документы третьим лицам; аккаунт и данные можно удалить в любой момент.</p></details>
@@ -118,8 +137,11 @@
   <details class="faq reveal"><summary>Когда появится оплата?</summary><p>Сразу после бета-недели: ЮKassa, чеки и автоначисление проверок. Сейчас все функции бесплатны для тестеров.</p></details>
 </section>
 
-<section class="max-w-4xl mx-auto px-6 pb-20 relative z-10">
-  <div class="glass p-10 text-center reveal">
+<section class="max-w-4xl mx-auto px-6 pb-24 relative z-10">
+  <hr class="divider-glow mb-14">
+  <div class="glass p-10 text-center reveal relative overflow-hidden">
+    <span class="float-badge" style="top:14px;left:16px">🔒 данные в России</span>
+    <span class="float-badge" style="bottom:14px;right:16px;animation-delay:1.5s">⚡ старт за 30 секунд</span>
     <h2 class="text-2xl md:text-3xl font-bold mb-4 grad-text">Проверь свой договор прямо сейчас</h2>
     <p class="text-white/60 mb-8">Первая проверка бесплатна. Регистрация — 30 секунд с кодом на почту.</p>
     <a href="/auth.html#signup" data-auth-redirect class="btn-primary text-lg">🚀 Начать бесплатно</a>

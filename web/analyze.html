@@ -62,8 +62,11 @@
   </section>
 
   <aside>
-    <h2 class="font-bold mb-4">📚 Мои отчёты</h2>
-    <div id="historyList" class="space-y-2"></div>
+    <div class="glass p-5 lg:sticky lg:top-24">
+      <h2 class="font-bold mb-4 flex items-center gap-2">📚 Мои отчёты <span id="histCount" class="chip text-xs"></span></h2>
+      <div id="historyList" class="space-y-2"></div>
+      <p class="text-xs text-white/40 mt-4">Совет: перетащи PDF или фото договора — текст распознается автоматически.</p>
+    </div>
   </aside>
 </main>
 
@@ -196,6 +199,7 @@ async function loadHistory(){
   try {
     const r = await fetch('/api/analyses', {headers: {'Authorization': 'Bearer ' + token}});
     const list = await r.json();
+    document.getElementById('histCount').textContent = list.length || '';
     document.getElementById('historyList').innerHTML = list.map(a =>
       '<div class="hist relative block">' +
       '<a href="/report.html?id=' + a.id + '" class="block pr-8">' +
