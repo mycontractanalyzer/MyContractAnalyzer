@@ -1601,4 +1601,165 @@ def laws_search_v2(q: str = "", user=Depends(_auth)):
             out.append({"code": r["code"],
                         "art": (r["code"] or "").rsplit(" ", 1)[-1], "loaded": True,
                         "snippet": " ".join(blob[max(0, pos - 60):pos + 340].split())})
-    return out
+    return outclass AdminTariffIn(BaseModel):
+    user_id: int
+    tariff: str
+    promo: str = ""
+
+
+class AdminChecksIn(BaseModel):
+    user_id: int
+    amount: int
+
+
+class AdminPromoIn(BaseModel):
+    code: str
+    percent: int
+    max_uses: int = 100
+
+
+class AdminPromoToggleIn(BaseModel):
+    code: str
+
+
+class AdminSupportReplyIn(BaseModel):
+    message_id: int
+    text: str
+
+
+class AdminConsultReplyIn(BaseModel):
+    id: int
+    text: str
+
+
+class AdminUserIdIn(BaseModel):
+    user_id: int
+
+
+TIER_CHECKS_ADMIN = {"Free": 3, "Light": 35, "Standard": 65, "Pro": 125,
+                     "Business": 150, "Business Pro": 200}
+
+
+@app.post("/api/admin/tariff")
+def admin_tariff(data: AdminTariffIn, user=Depends(_auth)):
+    _admin(user)
+    add = TIER_CHECKS_ADMIN.get(data.tariff, 0)
+    conn = get_connection()
+    conn.execute("UPDATE users SET tariff = ?, checks_left = COALESCE(checks_left, 0) + ? WHERE id = ?",
+                 (data.tariff, add, data.user_id))
+    if data.promo:
+        try:
+            conn.execute("UPDATE promos SET used_count = COALESCE(used_count, 0) + 1 WHERE code = ?",
+                         (data.promo.upper(),))
+        except Exception:
+            pass
+    conn.commit()
+    conn.close()
+    return {"ok": True, "added_checks": add}
+
+
+@app.post("/api/admin/checks")
+def admin_checks(data: AdminChecksIn, user=Depends(_auth)):
+    _admin(user)
+    conn = get_connection()
+    conn.execute("UPDATE users SET checks_left = COALESCE(checks_left, 0) + ? WHERE id = ?",
+                 (data.amount, data.user_id))
+    conn.commit()
+    conn.close()
+    return {"ok": True}
+
+
+@app.post("/api/admin/promo")
+def admin_promo_create(data: AdminPromoIn, user=Depends(_auth)):
+    _admin(user)
+    conn = get_connection()
+    conn.execute("CREATE TABLE IF NOT EXISTS promos (code TEXT PRIMARY KEY, percent INTEGER, "
+                 "max_uses INTEGER, used_count INTEGER DEFAULT 0, disabled INTEGER DEFAULT 0, "
+                 "created_at TEXT DEFAULT (datetime('now')))")
+    conn.execute("INSERT OR REPLACE INTO promos (code, percent, max_uses, used_count, disabled) "
+                 "VALUES (?,?,?,?,0)", (data.code.upper(), data.percent, data.max_uses))
+    conn.commit()
+    conn.close()
+    return {"ok": True}
+
+
+@app.post("/api/admin/promo_toggle")
+def admin_promo_toggle(data: AdminPromoToggleIn, user=Depends(_auth)):
+    _admin(user)
+    conn = get_connection()
+    conn.execute("UPDATE promos SET disabled = 1 - COALESCE(disabled, 0) WHERE code = ?",
+                 (data.code.upper(),))
+    conn.commit()
+    conn.close()
+    return {"ok": True}
+
+
+@app.post("/api/admin/support_reply")
+def admin_support_reply(data: AdminSupportReplyIn, user=Depends(_auth)):
+    _admin(user)
+    conn = get_connection()
+    done = False
+    for tbl in ("support_messages", "support"):
+        try:
+            cur = conn.execute(f"UPDATE {tbl} SET reply = ? WHERE id = ?",
+                               (data.text, data.message_id))
+            if cur.rowcount:
+                done = True
+                break
+        except Exception:
+            continue
+    conn.commit()
+    conn.close()
+    return {"ok": done}
+
+
+@app.post("/api/admin/consult_reply")
+def admin_consult_reply(data: AdminConsultReplyIn, user=Depends(_auth)):
+    _admin(user)
+    conn = get_connection()
+    done = False
+    for tbl in ("consults", "consult_requests"):
+        try:
+            cur = conn.execute(f"UPDATE {tbl} SET reply = ? WHERE id = ?",
+                               (data.text, data.id))
+            if cur.rowcount:
+                done = True
+                break
+        except Exception:
+            continue
+    conn.commit()
+    conn.close()
+    return {"ok": done}
+
+
+@app.post("/api/admin/reset_password")
+def admin_reset_password(data: AdminUserIdIn, user=Depends(_auth)):
+    _admin(user)
+    import secrets
+    import string as _s
+    pwd = "".join(secrets.choice(_s.ascii_letters + _s.digits) for _ in range(10))
+    try:
+        from utils.auth import set_password as _sp
+        _sp(data.user_id, pwd)
+    except Exception:
+        from utils.auth import hash_password as _hp
+        conn = get_connection()
+        conn.execute("UPDATE users SET password_hash = ? WHERE id = ?",
+                     (_hp(pwd), data.user_id))
+        conn.commit()
+        conn.close()
+    return {"ok": True, "password": pwd}
+
+
+@app.post("/api/admin/user_delete")
+def admin_user_delete(data: AdminUserIdIn, user=Depends(_auth)):
+    _admin(user)
+    try:
+        from utils.auth import delete_user
+        delete_user(data.user_id)
+    except Exception:
+        conn = get_connection()
+        conn.execute("DELETE FROM users WHERE id = ?", (data.user_id,))
+        conn.commit()
+        conn.close()
+    return {"ok": True}
