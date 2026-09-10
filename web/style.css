@@ -151,3 +151,6 @@ h1.grad-text::before{content:'';position:absolute;left:0;bottom:-18px;width:230p
 @media (max-width:640px){
   .float-badge{font-size:.68rem;padding:.35rem .6rem;max-width:70vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 }
+@media (max-width:640px){
+  .float-badge{position:static;display:inline-flex;margin:6px 6px 0 0;animation:none;transform:none;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
