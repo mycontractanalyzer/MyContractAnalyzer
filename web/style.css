@@ -171,3 +171,9 @@ h1.grad-text::before{content:'';position:absolute;left:0;bottom:-18px;width:230p
   .hero-mock .float-badge:nth-of-type(2){top:-15px !important;right:-6px !important;left:auto !important;bottom:auto !important}
   .hero-mock .float-badge:nth-of-type(3){bottom:-15px !important;left:-6px !important;top:auto !important;right:auto !important}
 }
+@media (max-width:640px){
+  .hero-mock{padding-top:10px;padding-bottom:10px}
+  .hero-mock .float-badge:nth-of-type(1){top:calc(16% - 17px) !important;left:-6px !important;right:auto !important;bottom:auto !important}
+  .hero-mock .float-badge:nth-of-type(2){top:calc(47% - 17px) !important;right:-6px !important;left:auto !important;bottom:auto !important}
+  .hero-mock .float-badge:nth-of-type(3){top:calc(74% - 17px) !important;left:-6px !important;right:auto !important;bottom:auto !important}
+}
