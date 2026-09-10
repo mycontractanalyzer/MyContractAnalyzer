@@ -139,3 +139,12 @@ body::before{content:'';position:fixed;inset:-20%;z-index:0;pointer-events:none;
 .input{background:rgba(10,12,16,.65);box-shadow:inset 0 2px 8px rgba(0,0,0,.35)}
 mark{box-shadow:0 0 0 2px rgba(245,181,46,.15)}
 .ribbon{position:absolute;top:16px;right:-38px;transform:rotate(38deg);background:linear-gradient(90deg,#f5b52e,#ff8a3d);color:#141414;font-weight:900;font-size:.68rem;letter-spacing:.08em;padding:.3rem 2.8rem;box-shadow:0 6px 18px rgba(245,181,46,.4)}
+/* ===== ACCENTS v3: свечение вместо полосок ===== */
+h1.grad-text::after,h2.grad-text::after{display:none}
+h2.grad-text{position:relative}
+h2.grad-text::before{content:'';position:absolute;left:50%;bottom:-16px;transform:translateX(-50%);width:160px;height:22px;background:radial-gradient(50% 50% at 50% 50%,rgba(245,181,46,.38),transparent 72%);filter:blur(7px);pointer-events:none}
+h1.grad-text{position:relative}
+h1.grad-text::before{content:'';position:absolute;left:0;bottom:-18px;width:230px;height:26px;background:radial-gradient(50% 50% at 50% 50%,rgba(245,181,46,.35),transparent 72%);filter:blur(8px);pointer-events:none}
+@keyframes mcaPulse{0%,100%{opacity:.55;transform:scale(.9)}50%{opacity:1;transform:scale(1.15)}}
+.eyebrow{padding:.42rem .95rem;border-radius:999px;background:rgba(245,181,46,.08);border:1px solid rgba(245,181,46,.35);color:#ffd166;box-shadow:inset 0 0 24px rgba(245,181,46,.12),0 6px 18px rgba(0,0,0,.3)}
+.eyebrow::before{content:'';width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,#f5b52e,#ff8a3d);box-shadow:0 0 10px rgba(245,181,46,.9);animation:mcaPulse 2.4s ease-in-out infinite}
