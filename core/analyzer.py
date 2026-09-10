@@ -251,4 +251,4 @@ def lawyer247_stream(question: str, history: list, tariff: str):
         msgs.append(f"ЮРИСТ: {a}")
     msgs.append(f"КЛИЕНТ: {question}")
     return _stream_deepseek(system, "\n\n".join(msgs), MODEL_CHAT,
-                            max_tokens=900, temperature=0.3), MODEL_CHAT
+                            max_tokens=6000, temperature=0.3), MODEL_CHAT

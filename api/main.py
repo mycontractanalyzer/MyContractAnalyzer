@@ -1348,32 +1348,51 @@ ADD_PACK_V2 = [
 def _fetch_wikisource_v2(title):
     import urllib.request
     import urllib.parse
+    import urllib.error
     import json as _j
+    import time as _t
     url = ("https://ru.wikisource.org/w/api.php?action=parse&redirects=1&page="
            + urllib.parse.quote(title) + "&prop=wikitext&format=json")
-    req = urllib.request.Request(url, headers={"User-Agent": "MCA-LawsBot/1.0 (admin@local)"})
-    try:
-        with urllib.request.urlopen(req, timeout=60) as r:
-            d = _j.load(r)
-        return d.get("parse", {}).get("wikitext", {}).get("*", "") or ""
-    except Exception:
-        return ""
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                             "(KHTML, like Gecko) Chrome/124.0 Safari/537.36 MCA-LawsBot/1.0",
+               "Accept": "application/json"}
+    for attempt in range(4):
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=60) as r:
+                d = _j.load(r)
+            txt = d.get("parse", {}).get("wikitext", {}).get("*", "") or ""
+            _t.sleep(1.2)
+            return txt
+        except urllib.error.HTTPError as e:
+            wait = int(e.headers.get("Retry-After") or 0) or (5 * (attempt + 1))
+            _t.sleep(min(wait, 30))
+        except Exception:
+            _t.sleep(3 * (attempt + 1))
+    return ""
 
 
 def _search_title_v2(query):
     import urllib.request
     import urllib.parse
+    import urllib.error
     import json as _j
+    import time as _t
     url = ("https://ru.wikisource.org/w/api.php?action=query&list=search&srsearch="
            + urllib.parse.quote(query or "") + "&srlimit=1&format=json")
-    req = urllib.request.Request(url, headers={"User-Agent": "MCA-LawsBot/1.0 (admin@local)"})
-    try:
-        with urllib.request.urlopen(req, timeout=30) as r:
-            d = _j.load(r)
-        res = d.get("query", {}).get("search", [])
-        return res[0]["title"] if res else ""
-    except Exception:
-        return ""
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                             "(KHTML, like Gecko) Chrome/124.0 Safari/537.36 MCA-LawsBot/1.0"}
+    for attempt in range(3):
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=30) as r:
+                d = _j.load(r)
+            res = d.get("query", {}).get("search", [])
+            _t.sleep(1.0)
+            return res[0]["title"] if res else ""
+        except Exception:
+            _t.sleep(3 * (attempt + 1))
+    return ""
 
 
 def _fetch_law_full_v2(title):
@@ -1471,7 +1490,6 @@ def _run_pack_v2(items):
     ("СК", "Семейный кодекс РФ", ["Семейный кодекс Российской Федерации"]),
     ("152-ФЗ", "ФЗ О персональных данных", ["Федеральный закон О персональных данных"]),
     ("40-ФЗ", "ФЗ Об ОСАГО", ["Федеральный закон Об обязательном страховании гражданской ответственности владельцев транспортных средств"]),
-]
 
 EXT_PACK_V2 = [
     ("ЖК", "Жилищный кодекс РФ", ["Жилищный кодекс Российской Федерации"]),
@@ -1522,7 +1540,16 @@ def laws_reload_v2(data: LawsReloadV2In, user=Depends(_auth)):
     _admin(user)
     if _LAWS_JOB_V2["running"]:
         return {"started": False, "reason": "already running"}
-    items = list(BASE_PACK_V2 if data.pack == "base" else EXT_PACK_V2 + ADD_PACK_V2)
+    try:
+        from core.law_packs import BASE_PACK_V2 as _B, EXT_PACK_V2 as _E, ADD_PACK_V2 as _A
+    except Exception:
+        _B, _E, _A = [], [], []
+    _B = _B or globals().get("BASE_PACK_V2") or []
+    _E = _E or globals().get("EXT_PACK_V2") or []
+    _A = _A or globals().get("ADD_PACK_V2") or []
+    items = list(_B if data.pack == "base" else _E + _A)
+    if not items:
+        raise HTTPException(500, "Паки не найдены: создай core/law_packs.py")
     threading.Thread(target=_run_pack_v2, args=(items,), daemon=True).start()
     return {"started": True, "total": len(items)}
 
