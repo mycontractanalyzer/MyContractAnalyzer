@@ -1349,12 +1349,56 @@ def _fetch_wikisource_v2(title):
     import urllib.request
     import urllib.parse
     import json as _j
-    url = ("https://ru.wikisource.org/w/api.php?action=parse&page="
+    url = ("https://ru.wikisource.org/w/api.php?action=parse&redirects=1&page="
            + urllib.parse.quote(title) + "&prop=wikitext&format=json")
     req = urllib.request.Request(url, headers={"User-Agent": "MCA-LawsBot/1.0 (admin@local)"})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        d = _j.load(r)
-    return d.get("parse", {}).get("wikitext", {}).get("*", "") or ""
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            d = _j.load(r)
+        return d.get("parse", {}).get("wikitext", {}).get("*", "") or ""
+    except Exception:
+        return ""
+
+
+def _search_title_v2(query):
+    import urllib.request
+    import urllib.parse
+    import json as _j
+    url = ("https://ru.wikisource.org/w/api.php?action=query&list=search&srsearch="
+           + urllib.parse.quote(query or "") + "&srlimit=1&format=json")
+    req = urllib.request.Request(url, headers={"User-Agent": "MCA-LawsBot/1.0 (admin@local)"})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            d = _j.load(r)
+        res = d.get("query", {}).get("search", [])
+        return res[0]["title"] if res else ""
+    except Exception:
+        return ""
+
+
+def _fetch_law_full_v2(title):
+    import re as _re
+    ft = _fetch_wikisource_v2(title)
+    if len(ft) < 2000:
+        return ""
+    if _re.search(r"Статья\s*\d", ft):
+        return ft
+    links = _re.findall(r"\[\[" + _re.escape(title) + r"/([^\]|#]+)(?:\|[^\]]*)?\]\]", ft)
+    if not links:
+        full = _re.findall(r"\[\[(" + _re.escape(title) + r"/[^\]|#]+)(?:\|[^\]]*)?\]\]", ft)
+        links = [x[len(title) + 1:] for x in full]
+    seen, parts = set(), [ft]
+    for sub in links:
+        sub = sub.strip()
+        if not sub or sub in seen:
+            continue
+        seen.add(sub)
+        chunk = _fetch_wikisource_v2(title + "/" + sub)
+        if len(chunk) > 500:
+            parts.append(chunk)
+        if len(seen) >= 80:
+            break
+    return "\n".join(parts) if len(parts) > 1 else ft
 
 
 def _split_articles_v2(ft, code, title):
@@ -1385,18 +1429,25 @@ def _run_pack_v2(items):
         J["current"] = title
         try:
             ft = ""
-            for c in cands:
-                try:
-                    ft = _fetch_wikisource_v2(c)
-                    if len(ft) > 2000:
-                        break
-                except Exception:
-                    ft = ""
+            for c in list(cands) + [title]:
+                ft = _fetch_law_full_v2(c)
+                if ft and _re.search(r"Статья\s*\d", ft):
+                    break
+                if not ft:
+                    resolved = _search_title_v2(c)
+                    if resolved:
+                        ft = _fetch_law_full_v2(resolved)
+                        if ft and _re.search(r"Статья\s*\d", ft):
+                            break
             if not ft:
                 J["log"].append(f"{code}: не удалось скачать")
                 J["done"] += 1
                 continue
             rows = _split_articles_v2(ft, code, title)
+            if not rows:
+                J["log"].append(f"{code}: текст есть, но статей не найдено")
+                J["done"] += 1
+                continue
             tag = _re.split(r"[\s-]", code)[0].lower()
             for c2, t2, chunk in rows:
                 conn.execute("INSERT OR REPLACE INTO laws "
@@ -1411,8 +1462,6 @@ def _run_pack_v2(items):
     conn.close()
     J["running"] = False
     J["current"] = ""
-
-BASE_PACK_V2 = [
     ("ГК", "Гражданский кодекс РФ (часть вторая)", ["Гражданский кодекс Российской Федерации (часть вторая)"]),
     ("ТК", "Трудовой кодекс РФ", ["Трудовой кодекс Российской Федерации"]),
     ("ЗоЗПП", "Закон О защите прав потребителей", ["Закон РФ О защите прав потребителей"]),
