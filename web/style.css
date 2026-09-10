@@ -154,3 +154,8 @@ h1.grad-text::before{content:'';position:absolute;left:0;bottom:-18px;width:230p
 @media (max-width:640px){
   .float-badge{position:static;display:inline-flex;margin:6px 6px 0 0;animation:none;transform:none;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 }
+@media (max-width:640px){
+  .hero-mock{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+  .hero-mock > .glass{flex:1 1 100%;margin-top:10px}
+  .float-badge{margin:0;font-size:.66rem;padding:.32rem .62rem}
+}
