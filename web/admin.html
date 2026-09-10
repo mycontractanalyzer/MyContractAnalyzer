@@ -13,118 +13,110 @@
 <div id="siteNav"></div>
 
 <main class="max-w-6xl mx-auto px-6 py-10 relative z-10">
-  <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-    <h1 class="text-3xl font-bold">🛠 Админ-панель</h1>
+  <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+    <h1 class="text-3xl md:text-4xl font-extrabold grad-text">🛠 Админ-панель</h1>
     <button id="refreshBtn" class="btn-ghost text-sm">🔄 Обновить данные</button>
   </div>
+
   <div id="errBox" class="hidden mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/40 text-sm text-red-300"></div>
 
-  <div class="flex flex-wrap gap-2 mb-6 text-sm">
+  <div class="flex flex-wrap gap-2 mb-8 text-sm">
     <button data-tab="dash" class="tab-btn on">📊 Дашборд</button>
     <button data-tab="users" class="tab-btn">👥 Пользователи</button>
-    <button data-tab="grant" class="tab-btn">💳 Тариф</button>
+    <button data-tab="tariff" class="tab-btn">💳 Тариф</button>
     <button data-tab="checks" class="tab-btn">🎁 Проверки</button>
-    <button data-tab="promo" class="tab-btn">🎟 Промокоды</button>
-    <button data-tab="support" class="tab-btn">📨 Обращения</button>
+    <button data-tab="promos" class="tab-btn">🏷 Промокоды</button>
+    <button data-tab="support" class="tab-btn">📩 Обращения</button>
     <button data-tab="feedback" class="tab-btn">⭐ Отзывы</button>
     <button data-tab="consults" class="tab-btn">🧑⚖️ Заявки</button>
     <button data-tab="laws" class="tab-btn">📚 Законы</button>
   </div>
 
-  <section id="tab-dash" class="pane">
-    <div id="statCards" class="grid md:grid-cols-4 gap-4 mb-8"></div>
-    <div class="grid md:grid-cols-2 gap-6 mb-8">
-      <div class="glass p-5"><h3 class="font-bold mb-3">Регистрации по дням</h3><div id="regsChart"></div></div>
-      <div class="glass p-5"><h3 class="font-bold mb-3">Анализы по дням</h3><div id="anlsChart"></div></div>
+  <div id="tab-dash" class="pane">
+    <div id="statCards" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"></div>
+    <div class="grid lg:grid-cols-2 gap-6 mb-6">
+      <div class="glass p-6"><h3 class="font-bold mb-4">Регистрации по дням</h3><div id="regsChart"></div></div>
+      <div class="glass p-6"><h3 class="font-bold mb-4">Анализы по дням</h3><div id="anlsChart"></div></div>
     </div>
-    <div class="glass p-5"><h3 class="font-bold mb-3">Топ промокодов</h3><div id="topPromos" class="text-sm space-y-1"></div></div>
-  </section>
+    <div class="glass p-6"><h3 class="font-bold mb-4">Топ промокодов</h3><div id="topPromos" class="text-sm space-y-2"></div></div>
+  </div>
 
-  <section id="tab-users" class="pane hidden">
-    <input id="userSearch" class="input mb-4" placeholder="🔍 Поиск по email или номеру…">
-    <p class="text-sm text-white/60 mb-4">Сброс пароля выдаёт временный пароль; удаление стирает аккаунт безвозвратно.</p>
-    <div id="usersList" class="space-y-3"></div>
-  </section>
+  <div id="tab-users" class="pane hidden">
+    <div class="glass p-4 mb-4">
+      <input id="userSearch" class="input" placeholder="🔍 Поиск по email или номеру…">
+    </div>
+    <div id="usersList" class="space-y-2"></div>
+  </div>
 
-  <section id="tab-grant" class="pane hidden">
-    <div class="glass p-6 max-w-xl space-y-4">
-      <label class="block text-sm"><span class="text-white/70">Пользователь</span>
-        <select id="grantEmail" class="input mt-1"></select></label>
-      <label class="block text-sm"><span class="text-white/70">Тариф (проверки начислятся по тарифу)</span>
-        <select id="grantTariff" class="input mt-1">
+  <div id="tab-tariff" class="pane hidden">
+    <div class="glass p-6 max-w-xl">
+      <label class="block mb-4 text-sm"><span class="text-white/70">Пользователь</span>
+        <select id="tariffUser" class="input mt-2"></select></label>
+      <label class="block mb-4 text-sm"><span class="text-white/70">Тариф (проверки начислятся по тарифу)</span>
+        <select id="tariffSel" class="input mt-2">
           <option>Free</option><option>Light</option><option>Standard</option>
           <option>Pro</option><option>Business</option><option>Business Pro</option>
         </select></label>
-      <label class="block text-sm"><span class="text-white/70">Промокод скидки (если клиент оплатил с ним)</span>
-        <input id="grantPromo" class="input mt-1" placeholder="Необязательно"></label>
-      <button id="grantBtn" class="btn-primary text-sm">Выдать</button>
-      <div id="grantMsg" class="text-sm"></div>
+      <label class="block mb-6 text-sm"><span class="text-white/70">Промокод скидки (если клиент оплатил с ним)</span>
+        <input id="tariffPromo" class="input mt-2" placeholder="Необязательно"></label>
+      <button id="tariffBtn" class="btn-primary text-sm">Выдать</button>
+      <div id="tariffMsg" class="mt-3 text-sm"></div>
     </div>
-  </section>
+  </div>
 
-  <section id="tab-checks" class="pane hidden">
-    <div class="glass p-6 max-w-xl space-y-4">
-      <label class="block text-sm"><span class="text-white/70">Пользователь</span>
-        <select id="checksEmail" class="input mt-1"></select></label>
-      <label class="block text-sm"><span class="text-white/70">Количество</span>
-        <input id="checksNum" type="number" value="10" min="0" max="100000" class="input mt-1"></label>
-      <div class="flex gap-3 text-sm">
-        <label class="chip cursor-pointer has-[:checked]:border-amber-500 has-[:checked]:bg-amber-500/10"><input type="radio" name="cmode" value="add" checked class="accent-amber-500 mr-1">Добавить к текущим</label>
-        <label class="chip cursor-pointer has-[:checked]:border-amber-500 has-[:checked]:bg-amber-500/10"><input type="radio" name="cmode" value="set" class="accent-amber-500 mr-1">Установить ровно</label>
-      </div>
-      <button id="checksBtn" class="btn-primary text-sm">🎁 Выдать проверки</button>
-      <div id="checksMsg" class="text-sm"></div>
+  <div id="tab-checks" class="pane hidden">
+    <div class="glass p-6 max-w-xl">
+      <label class="block mb-4 text-sm"><span class="text-white/70">Пользователь</span>
+        <select id="checksUser" class="input mt-2"></select></label>
+      <label class="block mb-6 text-sm"><span class="text-white/70">Сколько проверок начислить</span>
+        <input id="checksAmt" type="number" class="input mt-2" value="50"></label>
+      <button id="checksBtn" class="btn-primary text-sm">Начислить</button>
+      <div id="checksMsg" class="mt-3 text-sm"></div>
     </div>
-  </section>
+  </div>
 
-  <section id="tab-promo" class="pane hidden">
-    <div class="glass p-6 max-w-2xl space-y-4 mb-8">
-      <h3 class="font-bold">➕ Создать промокод</h3>
-      <div class="flex flex-wrap gap-3 text-sm">
-        <label class="chip cursor-pointer has-[:checked]:border-amber-500 has-[:checked]:bg-amber-500/10"><input type="radio" name="pcode_mode" value="auto" checked class="accent-amber-500 mr-1">🎲 Сгенерировать</label>
-        <label class="chip cursor-pointer has-[:checked]:border-amber-500 has-[:checked]:bg-amber-500/10"><input type="radio" name="pcode_mode" value="custom" class="accent-amber-500 mr-1">✏️ Свой код</label>
+  <div id="tab-promos" class="pane hidden">
+    <div class="glass p-6 max-w-xl mb-6">
+      <h3 class="font-bold mb-4">Создать промокод</h3>
+      <div class="grid sm:grid-cols-3 gap-3 mb-4">
+        <input id="promoCode" class="input" placeholder="КОД">
+        <input id="promoPercent" type="number" class="input" placeholder="Скидка %" value="20">
+        <input id="promoUses" type="number" class="input" placeholder="Лимит активаций" value="100">
       </div>
-      <input id="pCustom" class="input" placeholder="Свой код (например START250)" style="display:none">
-      <div class="flex flex-wrap gap-3 text-sm">
-        <label class="chip cursor-pointer has-[:checked]:border-amber-500 has-[:checked]:bg-amber-500/10"><input type="radio" name="pkind" value="checks" checked class="accent-amber-500 mr-1">🎁 На проверки</label>
-        <label class="chip cursor-pointer has-[:checked]:border-amber-500 has-[:checked]:bg-amber-500/10"><input type="radio" name="pkind" value="discount" class="accent-amber-500 mr-1">💰 На скидку, ₽</label>
-      </div>
-      <div class="grid md:grid-cols-3 gap-4 text-sm">
-        <label class="block"><span class="text-white/70">Проверок бонусом</span><input id="pChecks" type="number" value="10" min="0" class="input mt-1"></label>
-        <label class="block"><span class="text-white/70">Скидка, ₽</span><input id="pRub" type="number" value="250" min="0" step="50" class="input mt-1"></label>
-        <label class="block"><span class="text-white/70">Только для тарифа</span>
-          <select id="pTariff" class="input mt-1"><option value="">Любой</option><option>Light</option><option>Standard</option><option>Pro</option><option>Business</option><option>Business Pro</option></select></label>
-      </div>
-      <div class="grid md:grid-cols-2 gap-4 text-sm">
-        <label class="block"><span class="text-white/70">Срок действия</span>
-          <select id="pDur" class="input mt-1">
-            <option value="30">1 месяц</option><option value="90">3 месяца</option>
-            <option value="180">6 месяцев</option><option value="365">12 месяцев</option>
-            <option value="730">24 месяца</option><option value="0">♾ Неограниченно</option>
-            <option value="exact">🎯 Точное время</option>
-          </select></label>
-        <label class="block"><span class="text-white/70">Точная дата (если выбрано)</span>
-          <input id="pExact" type="datetime-local" class="input mt-1"></label>
-      </div>
-      <button id="pCreate" class="btn-primary text-sm">🎟 Создать промокод</button>
-      <div id="pMsg" class="text-sm"></div>
+      <button id="promoCreateBtn" class="btn-primary text-sm">Создать</button>
+      <div id="promoMsg" class="mt-3 text-sm"></div>
     </div>
-    <h3 class="font-bold mb-3">📋 Все промокоды</h3>
-    <div id="promoList" class="space-y-3"></div>
-  </section>
+    <div id="promosList" class="space-y-2"></div>
+  </div>
 
-  <section id="tab-support" class="pane hidden"><div id="supportList" class="space-y-4"></div></section>
-  <section id="tab-feedback" class="pane hidden"><div id="feedbackList" class="space-y-3"></div></section>
-  <section id="tab-consults" class="pane hidden"><div id="consultsList" class="space-y-3"></div></section>
+  <div id="tab-support" class="pane hidden">
+    <div id="supportList" class="space-y-3"></div>
+  </div>
 
-  <section id="tab-laws" class="pane hidden">
-    <div class="flex flex-wrap items-center gap-4 mb-4">
-      <button id="reloadLaws" class="btn-primary text-sm">🔄 Обновить базовый пакет</button>
-      <button id="reloadLawsExt" class="btn-ghost text-sm">📚 Догрузить расширенный пакет (ЖК, ЗК, НК, 353-ФЗ, 214-ФЗ)</button>
-      <span id="jobStatus" class="text-sm text-white/60"></span>
+  <div id="tab-feedback" class="pane hidden">
+    <div id="feedbackList" class="space-y-3"></div>
+  </div>
+
+  <div id="tab-consults" class="pane hidden">
+    <div id="consultsList" class="space-y-3"></div>
+  </div>
+
+  <div id="tab-laws" class="pane hidden">
+    <div class="flex flex-wrap gap-3 mb-4">
+      <button id="lawsBaseBtn" class="btn-primary text-sm">🔄 Обновить базовый пакет законов</button>
+      <button id="lawsExtBtn" class="btn-ghost text-sm">📚 Догрузить расширенный пакет</button>
     </div>
-    <div id="lawsTable" class="glass p-4 text-sm space-y-1 max-h-[60vh] overflow-y-auto"></div>
-  </section>
+    <div id="lawsJob" class="text-sm text-white/60 mb-4"></div>
+    <div class="glass p-4 mb-4">
+      <div class="text-xs text-white/50 mb-2">🔎 Поиск статьи: проверь, загружена ли она в базу</div>
+      <div class="flex gap-2">
+        <input id="lawQ" class="input flex-1" placeholder="Например: ГК 623 · 359 · удержание · улучшения">
+        <button id="lawSearchBtn" class="btn-ghost text-sm">Найти</button>
+      </div>
+      <div id="lawSearchOut" class="mt-3 space-y-2 text-sm"></div>
+    </div>
+    <div id="lawsList" class="glass p-4 text-sm space-y-1 max-h-[60vh] overflow-y-auto"></div>
+  </div>
 </main>
 
 <div id="siteFooter"></div>
@@ -132,32 +124,8 @@
 <script>
 const token = mcaToken();
 if (!token) location.href = '/auth.html#login';
-const ADMIN_EMAIL = 'mycontractanalyzer@gmail.com';
 const H = {'Authorization': 'Bearer ' + token};
-let DATA = null;
-let USERS = [];
-
-fetch('/api/me', {headers: H}).then(r => r.ok ? r.json() : Promise.reject())
-  .then(u => { if (u.email !== ADMIN_EMAIL) location.href = '/profile.html'; loadAll(); })
-  .catch(() => location.href = '/auth.html#login');
-
-function showErr(t){
-  const b = document.getElementById('errBox');
-  b.textContent = t; b.classList.remove('hidden');
-}
-
-async function loadAll(){
-  document.getElementById('errBox').classList.add('hidden');
-  const r = await fetch('/api/admin/all', {headers: H});
-  if (!r.ok) {
-    showErr('❌ Не удалось загрузить данные (код ' + r.status + '). Выполни на сервере: systemctl restart mca-api, затем обнови страницу.');
-    return;
-  }
-  DATA = await r.json();
-  USERS = DATA.users || [];
-  renderAll();
-}
-document.getElementById('refreshBtn').onclick = loadAll;
+let DATA = {};
 
 document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => {
   document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('on'));
@@ -165,6 +133,16 @@ document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => {
   document.querySelectorAll('.pane').forEach(p => p.classList.add('hidden'));
   document.getElementById('tab-' + b.dataset.tab).classList.remove('hidden');
 });
+
+function showErr(t){ const e = document.getElementById('errBox'); e.classList.remove('hidden'); e.textContent = t; }
+function hideErr(){ document.getElementById('errBox').classList.add('hidden'); }
+
+async function act(url, body){
+  const r = await fetch(url, {method: 'POST', headers: {'Content-Type': 'application/json', ...H}, body: JSON.stringify(body)});
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.detail || ('Ошибка ' + r.status + ' на ' + url));
+  return d;
+}
 
 function bars(data, color){
   if (!data || !data.length) return '<p class="text-white/50 text-sm">Пока нет данных</p>';
@@ -186,214 +164,169 @@ function bars(data, color){
     '</div></div>';
 }
 
+function userLabel(u){ return (u.email || '') + ' — ' + (u.tariff || 'Free') + ' (' + (u.checks_left ?? 0) + ' пров.)'; }
+
 function renderAll(){
   const s = DATA.stats || {};
-  const card = (t, v) => '<div class="glass p-5"><div class="text-white/60 text-sm">' + t + '</div><div class="text-2xl font-extrabold mt-1">' + v + '</div></div>';
-  document.getElementById('statCards').innerHTML =
-    card('Пользователи', s.users ?? 0) + card('Платные', DATA.paid ?? 0) +
-    card('Анализы', s.analyses ?? 0) + card('Договоры', s.contracts ?? 0) +
-    card('Средняя оценка', s.feedback_avg ?? '—') + card('Открытых обращений', s.support_open ?? 0) +
-    card('Статей в базе', s.laws ?? 0) + card('Регистраций сегодня', (DATA.regs || []).length ? DATA.regs[DATA.regs.length - 1].c : 0);
-  document.getElementById('regsChart').innerHTML = bars(DATA.regs, 'bg-amber-500');
-  document.getElementById('anlsChart').innerHTML = bars(DATA.anls, 'bg-sky-500');
+  document.getElementById('statCards').innerHTML = [
+    ['👥 Пользователей', s.users ?? 0], ['✅ Верифицировано', s.verified ?? 0],
+    ['📄 Анализом', s.analyses ?? 0], ['📑 Договором', s.contracts ?? 0],
+    ['📚 Законов в базе', s.laws ?? 0], ['⭐ Средняя оценка', s.feedback_avg ?? '—'],
+    ['📩 Открытых обращений', s.support_open ?? 0], ['💳 Платных выдач', s.paid ?? 0]
+  ].map(c => '<div class="glass p-5"><div class="text-xs text-white/50 mb-1">' + c[0] + '</div><div class="text-2xl font-extrabold">' + c[1] + '</div></div>').join('');
+  document.getElementById('regsChart').innerHTML = bars(DATA.regs || [], 'bg-amber-500');
+  document.getElementById('anlsChart').innerHTML = bars(DATA.anls || [], 'bg-sky-500');
   document.getElementById('topPromos').innerHTML = (DATA.top_promos || []).length
-    ? DATA.top_promos.map(p => '<div>• <b>' + mcaEsc(p.code) + '</b> — ' + (p.used_count || 0) + ' исп.</div>').join('')
-    : '<p class="text-white/50">Пока нет промокодов</p>';
-  renderUsers('');
-  const opts = USERS.map(u => '<option value="' + u.id + '">' + mcaEsc(u.email) + ' — ' + u.tariff + ' (' + u.checks_left + ' пров.)</option>').join('');
-  document.getElementById('grantEmail').innerHTML = opts || '<option>— нет пользователей —</option>';
-  document.getElementById('checksEmail').innerHTML = opts || '<option>— нет пользователей —</option>';
-  renderPromos();
-  renderSupport();
-  renderFeedback();
-  renderConsults();
-  renderLaws();
+    ? (DATA.top_promos || []).map(p => '<div class="flex justify-between"><span class="font-bold">' + mcaEsc(p.code) + '</span><span class="text-white/60">активаций: ' + (p.used_count ?? 0) + '</span></div>').join('')
+    : '<p class="text-white/50">Промокодов пока нет.</p>';
+
+  renderUsers();
+  const opts = (DATA.users || []).map(u => '<option value="' + u.id + '">' + mcaEsc(userLabel(u)) + '</option>').join('');
+  document.getElementById('tariffUser').innerHTML = opts || '<option value="">Нет пользователей</option>';
+  document.getElementById('checksUser').innerHTML = opts || '<option value="">Нет пользователей</option>';
+
+  document.getElementById('promosList').innerHTML = (DATA.promos || []).length
+    ? (DATA.promos || []).map(p =>
+      '<div class="glass p-4 flex flex-wrap items-center justify-between gap-3">' +
+      '<div><b>' + mcaEsc(p.code) + '</b> · скидка ' + (p.percent ?? 0) + '% · активаций ' + (p.used_count ?? 0) + '/' + (p.max_uses ?? '∞') + '</div>' +
+      '<button data-pt="' + mcaEsc(p.code) + '" class="btn-ghost text-sm">' + (p.disabled ? '▶ Включить' : '⏸ Выключить') + '</button></div>').join('')
+    : '<p class="text-white/50">Промокодов пока нет.</p>';
+  document.querySelectorAll('[data-pt]').forEach(b => b.onclick = async () => {
+    try { await act('/api/admin/promo_toggle', {code: b.dataset.pt}); loadAll(); } catch(e){ showErr('❌ ' + e.message); }
+  });
+
+  document.getElementById('supportList').innerHTML = (DATA.support || []).length
+    ? (DATA.support || []).map(m =>
+      '<div class="glass p-5">' +
+      '<div class="text-xs text-white/50 mb-1">' + mcaEsc(m.email || '') + ' · ' + (m.created_at || '') + '</div>' +
+      '<div class="text-sm mb-3">' + mcaEsc(m.text || '') + '</div>' +
+      (m.reply ? '<div class="text-sm text-green-300 mb-2">↩ Ответ отправлен: ' + mcaEsc(m.reply) + '</div>' : '') +
+      '<div class="flex gap-2"><input id="sr' + m.id + '" class="input flex-1 text-sm" placeholder="Текст ответа…">' +
+      '<button data-sr="' + m.id + '" class="btn-primary text-sm">Ответить</button></div></div>').join('')
+    : '<p class="text-white/50">Обращений нет.</p>';
+  document.querySelectorAll('[data-sr]').forEach(b => b.onclick = async () => {
+    try {
+      await act('/api/admin/support_reply', {message_id: +b.dataset.sr, text: document.getElementById('sr' + b.dataset.sr).value});
+      loadAll();
+    } catch(e){ showErr('❌ ' + e.message); }
+  });
+
+  document.getElementById('feedbackList').innerHTML = (DATA.feedback || []).length
+    ? (DATA.feedback || []).map(f =>
+      '<div class="glass p-5"><div class="text-xs text-white/50 mb-1">' + mcaEsc(f.email || '') + ' · ' + '⭐'.repeat(f.rating || 0) + '</div>' +
+      '<div class="text-sm">' + mcaEsc(f.comment || '') + '</div></div>').join('')
+    : '<p class="text-white/50">Отзывов нет.</p>';
+
+  document.getElementById('consultsList').innerHTML = (DATA.consults || []).length
+    ? (DATA.consults || []).map(c =>
+      '<div class="glass p-5">' +
+      '<div class="text-xs text-white/50 mb-1">' + mcaEsc(c.email || '') + ' · ' + (c.created_at || '') + '</div>' +
+      '<div class="text-sm mb-3">' + mcaEsc(c.text || '') + '</div>' +
+      '<div class="flex gap-2"><input id="cr' + c.id + '" class="input flex-1 text-sm" placeholder="Ответ юриста…">' +
+      '<button data-cr="' + c.id + '" class="btn-primary text-sm">Ответить</button></div></div>').join('')
+    : '<p class="text-white/50">Заявок нет.</p>';
+  document.querySelectorAll('[data-cr]').forEach(b => b.onclick = async () => {
+    try {
+      await act('/api/admin/consult_reply', {id: +b.dataset.cr, text: document.getElementById('cr' + b.dataset.cr).value});
+      loadAll();
+    } catch(e){ showErr('❌ ' + e.message); }
+  });
+
+  document.getElementById('lawsList').innerHTML = (DATA.laws || []).length
+    ? (DATA.laws || []).map(l =>
+      '<div class="flex justify-between gap-3 py-1 border-b border-white/5">' +
+      '<span><b>' + mcaEsc(l.code) + '</b> — ' + mcaEsc(l.title || '') + '</span>' +
+      '<span class="text-white/50 shrink-0">' + (l.ft || 0) + ' симв. текста</span></div>').join('')
+    : '<p class="text-white/50">База пуста — нажми «Обновить базовый пакет».</p>';
 }
 
-function renderUsers(filter){
-  const f = (filter || '').toLowerCase();
-  const list = USERS.filter(u => !f || (u.email || '').toLowerCase().includes(f) || String(u.id).includes(f));
-  document.getElementById('usersList').innerHTML = list.length ? list.map(u =>
-    '<div class="glass p-4 flex flex-wrap items-center gap-3">' +
-    '<div class="flex-1 min-w-[220px]"><b class="text-sm">' + mcaEsc(u.email) + '</b> <span class="text-xs text-white/50">#' + u.id +
-    (u.verified ? ' ✅' : ' ⏳') + ' · ' + mcaEsc(u.tariff) + ' · проверок: ' + u.checks_left +
-    (u.created_at ? ' · ' + mcaEsc(u.created_at) : '') + '</span></div>' +
-    '<input id="rp' + u.id + '" class="input text-sm" style="max-width:150px" placeholder="Временный пароль" value="mca12345">' +
-    '<button data-uid="' + u.id + '" class="rp-btn btn-ghost text-xs">🔑 Сбросить</button>' +
-    '<button data-uid="' + u.id + '" class="del-btn btn-ghost text-xs">🗑 Удалить</button></div>').join('')
-    : '<p class="text-white/50">Никого не найдено. Всего пользователей: ' + USERS.length + '</p>';
-  document.querySelectorAll('.rp-btn').forEach(b => b.onclick = async () => {
-    const uid = b.dataset.uid;
-    const r = await fetch('/api/admin/users/' + uid + '/reset_password', {method: 'POST',
-      headers: {'Content-Type': 'application/json', ...H},
-      body: JSON.stringify({password: document.getElementById('rp' + uid).value})});
-    b.textContent = r.ok ? '✅ Готово' : '❌ Ошибка';
+function renderUsers(){
+  const q = (document.getElementById('userSearch').value || '').toLowerCase();
+  const list = (DATA.users || []).filter(u => !q || (u.email || '').toLowerCase().includes(q) || String(u.id).includes(q));
+  document.getElementById('usersList').innerHTML = list.length
+    ? list.map(u =>
+      '<div class="glass p-4 flex flex-wrap items-center justify-between gap-3">' +
+      '<div><b>' + mcaEsc(u.email) + '</b> #' + u.id +
+      '<div class="text-xs text-white/50 mt-1">' + (u.tariff || 'Free') + ' · проверок: ' + (u.checks_left ?? 0) +
+      ' · ' + (u.verified ? '✅ верифицирован' : '⏳ не верифицирован') + ' · ' + (u.created_at || '') + '</div></div>' +
+      '<div class="flex gap-2">' +
+      '<button data-rp="' + u.id + '" class="btn-ghost text-sm">🔑 Сброс пароля</button>' +
+      '<button data-du="' + u.id + '" class="btn-ghost text-sm" style="border-color:rgba(248,113,113,.4);color:#fca5a5">🗑 Удалить</button>' +
+      '</div></div>').join('')
+    : '<p class="text-white/50">Никого не найдено.</p>';
+  document.querySelectorAll('[data-rp]').forEach(b => b.onclick = async () => {
+    try { const d = await act('/api/admin/reset_password', {user_id: +b.dataset.rp}); alert('🔑 Временный пароль: ' + d.password); } catch(e){ showErr('❌ ' + e.message); }
   });
-  document.querySelectorAll('.del-btn').forEach(b => b.onclick = async () => {
-    if (!confirm('Удалить пользователя #' + b.dataset.uid + ' безвозвратно?')) return;
-    await fetch('/api/admin/users/' + b.dataset.uid + '/delete', {method: 'POST', headers: H});
-    loadAll();
-  });
-}
-document.getElementById('userSearch').oninput = e => renderUsers(e.target.value);
-
-document.getElementById('grantBtn').onclick = async () => {
-  const uid = document.getElementById('grantEmail').value;
-  if (!uid || isNaN(+uid)) { document.getElementById('grantMsg').textContent = '❌ Нет пользователей'; return; }
-  const r = await fetch('/api/admin/users/' + uid + '/grant', {
-    method: 'POST', headers: {'Content-Type': 'application/json', ...H},
-    body: JSON.stringify({tariff: document.getElementById('grantTariff').value,
-                          promo_code: document.getElementById('grantPromo').value})});
-  const d = await r.json().catch(() => ({}));
-  document.getElementById('grantMsg').textContent = r.ok ? ('✅ Тариф выдан' + (d.message ? '. ' + d.message : '')) : ('❌ ' + (d.detail || 'Ошибка'));
-  if (r.ok) loadAll();
-};
-
-document.getElementById('checksBtn').onclick = async () => {
-  const uid = document.getElementById('checksEmail').value;
-  if (!uid || isNaN(+uid)) { document.getElementById('checksMsg').textContent = '❌ Нет пользователей'; return; }
-  const r = await fetch('/api/admin/users/' + uid + '/checks_set', {
-    method: 'POST', headers: {'Content-Type': 'application/json', ...H},
-    body: JSON.stringify({value: +document.getElementById('checksNum').value,
-                          mode: document.querySelector('input[name="cmode"]:checked').value})});
-  document.getElementById('checksMsg').textContent = r.ok ? '✅ Готово' : '❌ Ошибка';
-  if (r.ok) loadAll();
-};
-
-document.querySelectorAll('input[name="pcode_mode"]').forEach(r => r.onchange = () => {
-  document.getElementById('pCustom').style.display =
-    document.querySelector('input[name="pcode_mode"]:checked').value === 'custom' ? 'block' : 'none';
-});
-
-document.getElementById('pCreate').onclick = async () => {
-  const dur = document.getElementById('pDur').value;
-  let expires = '';
-  if (dur === 'exact') {
-    const v = document.getElementById('pExact').value;
-    if (!v) { document.getElementById('pMsg').textContent = '❌ Укажи точную дату'; return; }
-    expires = v.replace('T', ' ').slice(0, 16);
-  } else if (dur !== '0') {
-    expires = new Date(Date.now() + (+dur) * 86400000).toISOString().slice(0, 16).replace('T', ' ');
-  }
-  const r = await fetch('/api/admin/promocodes', {method: 'POST',
-    headers: {'Content-Type': 'application/json', ...H},
-    body: JSON.stringify({
-      kind: document.querySelector('input[name="pkind"]:checked').value,
-      checks_bonus: +document.getElementById('pChecks').value,
-      discount_rub: +document.getElementById('pRub').value,
-      min_tariff: document.getElementById('pTariff').value,
-      expires_at: expires,
-      custom_code: document.getElementById('pCustom').value.trim().replace(/\s+/g, '').toUpperCase()})});
-  const d = await r.json().catch(() => ({}));
-  document.getElementById('pMsg').textContent = r.ok ? ('✅ Создан промокод: ' + d.code) : ('❌ ' + (d.detail || 'Ошибка'));
-  if (r.ok) loadAll();
-};
-
-function renderPromos(){
-  const list = DATA.promos || [];
-  document.getElementById('promoList').innerHTML = list.length ? list.map(p => {
-    const extras = [];
-    if (p.checks_bonus) extras.push('+' + p.checks_bonus + ' пров.');
-    if (p.discount_rub) extras.push('−' + p.discount_rub + ' ₽');
-    if (p.min_tariff) extras.push('только ' + p.min_tariff);
-    extras.push('использован: ' + (p.used_count || 0) + ' раз');
-    extras.push(p.expires_at ? 'до ' + p.expires_at : 'бессрочно');
-    return '<div class="glass p-4 flex flex-wrap items-center gap-3">' +
-      '<div class="flex-1 min-w-[240px] text-sm"><b>' + mcaEsc(p.code) + '</b> — ' +
-      (p.kind === 'checks' ? '🎁 на проверки' : '💰 на скидку') + ' (' + extras.join(', ') + ') ' +
-      (p.active ? '<span class="text-green-400">✅ активен</span>' : '<span class="text-red-400">❌ выключен</span>') +
-      '<div class="text-xs text-white/40 mt-1">создан: ' + mcaEsc(p.created_at || '') + '</div></div>' +
-      (p.active ? '<button data-code="' + mcaEsc(p.code) + '" class="off-btn btn-ghost text-xs">Выключить</button>' : '') +
-      '<button data-code="' + mcaEsc(p.code) + '" class="pdel-btn btn-ghost text-xs">🗑 Удалить</button></div>';
-  }).join('') : '<p class="text-white/50">Пока нет</p>';
-  document.querySelectorAll('.off-btn').forEach(b => b.onclick = async () => {
-    await fetch('/api/admin/promocodes/' + encodeURIComponent(b.dataset.code) + '/deactivate', {method: 'POST', headers: H});
-    loadAll();
-  });
-  document.querySelectorAll('.pdel-btn').forEach(b => b.onclick = async () => {
-    if (!confirm('Удалить промокод ' + b.dataset.code + '?')) return;
-    await fetch('/api/admin/promocodes/' + encodeURIComponent(b.dataset.code) + '/delete', {method: 'POST', headers: H});
-    loadAll();
+  document.querySelectorAll('[data-du]').forEach(b => b.onclick = async () => {
+    const ok = await mcaConfirm('Удалить пользователя?', 'Аккаунт и все его данные будут стёрты безвозвратно.');
+    if (!ok) return;
+    try { await act('/api/admin/user_delete', {user_id: +b.dataset.du}); loadAll(); } catch(e){ showErr('❌ ' + e.message); }
   });
 }
+document.getElementById('userSearch').oninput = renderUsers;
 
-function renderSupport(){
-  const list = DATA.support || [];
-  document.getElementById('supportList').innerHTML = list.length ? list.map(m =>
-    '<div class="glass p-5"><div class="flex flex-wrap items-center gap-3 mb-2"><b>' + mcaEsc(m.email) + '</b>' +
-    '<span class="chip text-xs">' + mcaEsc(m.topic) + '</span><span class="text-xs text-white/50">' + mcaEsc(m.created_at || '') + '</span>' +
-    (m.replied ? '<span class="text-xs text-green-400">✅ отвечено</span>' : '<span class="text-xs text-amber-400">🔥 новое</span>') + '</div>' +
-    '<p class="text-sm text-white/70 mb-3">' + mcaEsc(m.message) + '</p>' +
-    '<textarea id="rep' + m.id + '" rows="3" placeholder="Текст ответа…" class="input text-sm mb-3"></textarea>' +
-    '<button data-mid="' + m.id + '" class="rep-btn btn-primary text-sm">📨 Отправить ответ</button></div>').join('')
-    : '<p class="text-white/50">Обращений пока нет.</p>';
-  document.querySelectorAll('.rep-btn').forEach(b => b.onclick = async () => {
-    const mid = b.dataset.mid;
-    const answer = document.getElementById('rep' + mid).value.trim();
-    if (!answer) return;
-    const r = await fetch('/api/admin/support/' + mid + '/reply', {method: 'POST',
-      headers: {'Content-Type': 'application/json', ...H}, body: JSON.stringify({answer})});
-    b.textContent = r.ok ? '✅ Отправлено' : '❌ Ошибка';
-    if (r.ok) loadAll();
-  });
-}
-
-function renderFeedback(){
-  const list = DATA.feedback || [];
-  document.getElementById('feedbackList').innerHTML = list.length ? list.map(f =>
-    '<div class="glass p-4"><div class="flex justify-between text-sm"><b>' + mcaEsc(f.email || ('user#' + f.user_id)) +
-    '</b><span class="text-amber-400">' + '⭐'.repeat(f.rating || 0) + '</span></div>' +
-    '<p class="text-sm text-white/70 mt-2">' + mcaEsc(f.comment || '—') + '</p>' +
-    '<div class="text-xs text-white/40 mt-1">отчёт #' + f.analysis_id + '</div></div>').join('')
-    : '<p class="text-white/50">Отзывов пока нет — они появятся, когда пользователи оценят отчёты во вкладке ⭐.</p>';
-}
-
-function renderConsults(){
-  const list = DATA.consults || [];
-  document.getElementById('consultsList').innerHTML = list.length ? list.map(c =>
-    '<div class="glass p-4 text-sm"><div class="font-bold mb-1">' + mcaEsc(c.email || ('user#' + c.user_id)) + '</div>' +
-    Object.entries(c).filter(([k]) => !['id','user_id','email','created_at'].includes(k))
-      .map(([k, v]) => '<div class="text-white/70"><span class="text-white/40">' + k + ':</span> ' + mcaEsc(String(v ?? '')) + '</div>').join('') +
-    '</div>').join('')
-    : '<p class="text-white/50">Заявок пока нет — форма есть в профиле пользователя.</p>';
-}
-
-let poll = null;
-function renderLaws(){
-  document.getElementById('lawsTable').innerHTML = (DATA.laws_list || []).map(l =>
-    '<div class="flex justify-between gap-3 border-b border-white/5 pb-1"><span><b>' + mcaEsc(l.code) + '</b> — ' + mcaEsc(l.title) +
-    '</span><span class="text-white/50">' + (l.ft ? (l.ft + ' симв. текста') : 'только суть') + '</span></div>').join('')
-    || '<p class="text-white/50">База пуста — нажми кнопку обновления выше.</p>';
-  renderJob(DATA.job || {});
-}
-function renderJob(j){
-  document.getElementById('jobStatus').textContent = j.running
-    ? ('⏳ Выполняется: ' + j.done + '/' + j.total + ' · ' + j.last)
-    : (j.error ? ('❌ ' + j.error) : (j.last ? ('✅ Последняя операция: ' + j.last) : ''));
-}
-async function pollJob(){
+async function loadAll(){
+  hideErr();
   const r = await fetch('/api/admin/all', {headers: H});
-  if (r.ok) { DATA = await r.json(); renderJob(DATA.job || {}); renderLaws(); }
+  if (!r.ok) {
+    showErr('❌ Не удалось загрузить данные (код ' + r.status + '). Выполни на сервере: systemctl restart mca-api, затем обнови страницу.');
+    return;
+  }
+  DATA = await r.json();
+  renderAll();
 }
-document.getElementById('reloadLaws').onclick = async () => {
-  const r = await fetch('/api/admin/laws_reload', {method: 'POST',
-    headers: {'Content-Type': 'application/json', ...H}, body: JSON.stringify({extended: false})});
-  const d = await r.json().catch(() => ({}));
-  document.getElementById('jobStatus').textContent = r.ok ? '⏳ Запущено в фоне…' : ('❌ ' + (d.detail || 'Ошибка'));
-  setTimeout(pollJob, 2000);
-};
-document.getElementById('reloadLawsExt').onclick = async () => {
-  const r = await fetch('/api/admin/laws_reload', {method: 'POST',
-    headers: {'Content-Type': 'application/json', ...H}, body: JSON.stringify({extended: true})});
-  const d = await r.json().catch(() => ({}));
-  document.getElementById('jobStatus').textContent = r.ok ? '⏳ Расширенная загрузка запущена…' : ('❌ ' + (d.detail || 'Ошибка'));
-  setTimeout(pollJob, 2000);
-};
-setInterval(() => { if (DATA && DATA.job && DATA.job.running) pollJob(); }, 4000);
+document.getElementById('refreshBtn').onclick = loadAll;
 
-mcaNav(); mcaFooter();
-</script>
-<script>
+document.getElementById('tariffBtn').onclick = async () => {
+  try {
+    await act('/api/admin/tariff', {
+      user_id: +document.getElementById('tariffUser').value,
+      tariff: document.getElementById('tariffSel').value,
+      promo: document.getElementById('tariffPromo').value.trim()
+    });
+    document.getElementById('tariffMsg').textContent = '✅ Тариф выдан, проверки начислены.';
+    loadAll();
+  } catch(e){ document.getElementById('tariffMsg').textContent = '❌ ' + e.message; }
+};
+document.getElementById('checksBtn').onclick = async () => {
+  try {
+    await act('/api/admin/checks', {
+      user_id: +document.getElementById('checksUser').value,
+      amount: +document.getElementById('checksAmt').value
+    });
+    document.getElementById('checksMsg').textContent = '✅ Проверки начислены.';
+    loadAll();
+  } catch(e){ document.getElementById('checksMsg').textContent = '❌ ' + e.message; }
+};
+document.getElementById('promoCreateBtn').onclick = async () => {
+  try {
+    await act('/api/admin/promo', {
+      code: document.getElementById('promoCode').value.trim().toUpperCase(),
+      percent: +document.getElementById('promoPercent').value,
+      max_uses: +document.getElementById('promoUses').value
+    });
+    document.getElementById('promoMsg').textContent = '✅ Промокод создан.';
+    loadAll();
+  } catch(e){ document.getElementById('promoMsg').textContent = '❌ ' + e.message; }
+};
+
+function startLaws(pack){
+  act('/api/admin/laws_reload', {pack: pack}).then(pollJob).catch(e => showErr('❌ ' + e.message));
+}
+function pollJob(){
+  fetch('/api/admin/laws_job', {headers: H}).then(r => r.json()).then(j => {
+    const box = document.getElementById('lawsJob');
+    if (!j || !j.running && !j.last) { box.textContent = ''; return; }
+    box.innerHTML = (j.running ? '⏳ Выполняется: ' : '✅ Готово: ') +
+      (j.done ?? 0) + '/' + (j.total ?? 0) + ' · ' + mcaEsc(j.current || '') +
+      (j.log && j.log.length ? '<div class="mt-2 glass p-3 max-h-40 overflow-y-auto text-xs space-y-1">' +
+        j.log.slice(-8).map(l => '<div>' + mcaEsc(l) + '</div>').join('') + '</div>' : '');
+    if (j.running) setTimeout(pollJob, 4000); else loadAll();
+  }).catch(() => {});
+}
+document.getElementById('lawsBaseBtn').onclick = () => startLaws('base');
+document.getElementById('lawsExtBtn').onclick = () => startLaws('ext');
+
 document.getElementById('lawSearchBtn').onclick = async () => {
   const q = document.getElementById('lawQ').value.trim();
   const out = document.getElementById('lawSearchOut');
@@ -407,6 +340,8 @@ document.getElementById('lawSearchBtn').onclick = async () => {
     ? '<div class="p-3 rounded-xl bg-green-500/10 border border-green-500/30"><b>' + mcaEsc(x.code) + ' · ст. ' + mcaEsc(x.art) + '</b> — загружена ✅<div class="text-white/60 text-xs mt-1">' + mcaEsc(x.snippet) + '</div></div>'
     : '<div class="p-3 rounded-xl bg-red-500/10 border border-red-500/30"><b>' + mcaEsc(x.code) + ' · ст. ' + mcaEsc(x.art) + '</b> — НЕ загружена ❌<div class="text-white/60 text-xs mt-1">' + mcaEsc(x.snippet) + '</div></div>').join('');
 };
+
+mcaNav(); mcaFooter(); loadAll(); pollJob();
 </script>
 </body>
 </html>
