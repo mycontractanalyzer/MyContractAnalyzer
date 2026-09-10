@@ -1522,7 +1522,16 @@ def laws_reload_v2(data: LawsReloadV2In, user=Depends(_auth)):
     _admin(user)
     if _LAWS_JOB_V2["running"]:
         return {"started": False, "reason": "already running"}
-    items = list(BASE_PACK_V2 if data.pack == "base" else EXT_PACK_V2 + ADD_PACK_V2)
+    try:
+        from core.law_packs import BASE_PACK_V2 as _B, EXT_PACK_V2 as _E, ADD_PACK_V2 as _A
+    except Exception:
+        _B, _E, _A = [], [], []
+    _B = _B or globals().get("BASE_PACK_V2") or []
+    _E = _E or globals().get("EXT_PACK_V2") or []
+    _A = _A or globals().get("ADD_PACK_V2") or []
+    items = list(_B if data.pack == "base" else _E + _A)
+    if not items:
+        raise HTTPException(500, "Паки не найдены: создай core/law_packs.py")
     threading.Thread(target=_run_pack_v2, args=(items,), daemon=True).start()
     return {"started": True, "total": len(items)}
 
