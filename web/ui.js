@@ -135,4 +135,10 @@ function mcaConfirm(title, text, yesLabel){
     wrap.querySelector('#mcaCNo').onclick = () => done(false);
     wrap.addEventListener('click', e => { if (e.target === wrap) done(false); });
   });
-}
+}setInterval(function(){
+  var vh = window.innerHeight || 800;
+  document.querySelectorAll('.reveal:not(.on)').forEach(function(el){
+    var r = el.getBoundingClientRect();
+    if (r.top < vh * 0.92 && r.bottom > 0) el.classList.add('on');
+  });
+}, 500);

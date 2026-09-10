@@ -148,3 +148,6 @@ h1.grad-text::before{content:'';position:absolute;left:0;bottom:-18px;width:230p
 @keyframes mcaPulse{0%,100%{opacity:.55;transform:scale(.9)}50%{opacity:1;transform:scale(1.15)}}
 .eyebrow{padding:.42rem .95rem;border-radius:999px;background:rgba(245,181,46,.08);border:1px solid rgba(245,181,46,.35);color:#ffd166;box-shadow:inset 0 0 24px rgba(245,181,46,.12),0 6px 18px rgba(0,0,0,.3)}
 .eyebrow::before{content:'';width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,#f5b52e,#ff8a3d);box-shadow:0 0 10px rgba(245,181,46,.9);animation:mcaPulse 2.4s ease-in-out infinite}
+@media (max-width:640px){
+  .float-badge{font-size:.68rem;padding:.35rem .6rem;max-width:70vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
