@@ -68,7 +68,7 @@ function mcaNav(){
     + '<a href="/#how" class="nav-link">Как работает</a>'
     + '<a href="/#pricing" class="nav-link">Тарифы</a>'
     + '<a href="/#faq" class="nav-link">FAQ</a></div>'
-    + '<div class="flex items-center gap-2 text-sm">' + right + '</div></div></nav>';
+    + '<div class="nav-scroll flex items-center gap-2 text-sm overflow-x-auto" style="max-width:62vw;-webkit-overflow-scrolling:touch">' + right + '</div></div></nav>';
 }
 
 function mcaFooter(){

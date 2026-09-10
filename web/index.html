@@ -19,7 +19,7 @@
     <h1 class="text-4xl md:text-6xl font-extrabold leading-tight mb-6 grad-text">See what you're signing</h1>
     <p class="text-lg text-white/70 mb-8 max-w-xl">Нейросеть читает договор целиком и за 30 секунд объясняет каждый риск простым языком — со ссылками на статьи законов. Подписывай уверенно или требуй правок.</p>
     <div class="flex flex-wrap gap-4">
-      <a href="/auth.html#signup" class="btn-primary">🚀 Проверить договор бесплатно</a>
+      <a href="/auth.html#signup" data-auth-redirect class="btn-primary">🚀 Проверить договор бесплатно</a>
       <a href="#how" class="btn-ghost">Как это работает</a>
     </div>
     <div class="flex flex-wrap gap-3 mt-10">
@@ -122,7 +122,7 @@
   <div class="glass p-10 text-center reveal">
     <h2 class="text-2xl md:text-3xl font-bold mb-4 grad-text">Проверь свой договор прямо сейчас</h2>
     <p class="text-white/60 mb-8">Первая проверка бесплатна. Регистрация — 30 секунд с кодом на почту.</p>
-    <a href="/auth.html#signup" class="btn-primary text-lg">🚀 Начать бесплатно</a>
+    <a href="/auth.html#signup" data-auth-redirect class="btn-primary text-lg">🚀 Начать бесплатно</a>
   </div>
 </section>
 
@@ -130,6 +130,9 @@
 
 <script>
 mcaNav(); mcaFooter(); mcaReveal();
+if (mcaToken()) {
+  document.querySelectorAll('[data-auth-redirect]').forEach(a => { a.href = '/analyze.html'; });
+}
 document.querySelectorAll('[data-tariff]').forEach(a => a.addEventListener('click', e => {
   if (mcaToken()) {
     e.preventDefault();

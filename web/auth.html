@@ -20,7 +20,7 @@
       <input name="email" type="email" required placeholder="Email" class="input">
       <div class="relative">
         <input name="password" type="password" required placeholder="Пароль" class="input" style="padding-right:3rem">
-        <button type="button" class="eye absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">👁</button>
+        <button type="button" class="eye absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"></button>
       </div>
       <button class="btn-primary w-full">Войти</button>
     </form>
@@ -37,11 +37,11 @@
       <input name="email" type="email" required placeholder="Email" class="input">
       <div class="relative">
         <input name="password" type="password" required minlength="6" placeholder="Пароль (мин. 6 символов)" class="input" style="padding-right:3rem">
-        <button type="button" class="eye absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">👁</button>
+        <button type="button" class="eye absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"></button>
       </div>
       <div class="relative">
         <input name="password2" type="password" required minlength="6" placeholder="Повторите пароль" class="input" style="padding-right:3rem">
-        <button type="button" class="eye absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">👁</button>
+        <button type="button" class="eye absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"></button>
       </div>
       <label class="flex items-start gap-2 text-xs text-white/60 leading-relaxed">
         <input type="checkbox" required checked class="mt-0.5 accent-amber-500">
@@ -71,7 +71,7 @@
       <input name="rcode" placeholder="Код из письма" class="input">
       <div class="relative">
         <input name="rpass" type="password" minlength="6" placeholder="Новый пароль (мин. 6)" class="input" style="padding-right:3rem">
-        <button type="button" class="eye absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">👁</button>
+        <button type="button" class="eye absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"></button>
       </div>
       <button class="btn-primary w-full">💾 Сменить пароль</button>
     </form>
@@ -90,11 +90,16 @@ function show(v){
 function route(){ show(location.hash.replace('#','') || 'login'); }
 window.addEventListener('hashchange', route); route();
 
-document.querySelectorAll('.eye').forEach(b => b.onclick = () => {
-  const inp = b.parentElement.querySelector('input');
-  const showPass = inp.type === 'password';
-  inp.type = showPass ? 'text' : 'password';
-  b.textContent = showPass ? '🙈' : '👁';
+const EYE_ON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_OFF = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+document.querySelectorAll('.eye').forEach(b => {
+  b.innerHTML = EYE_ON;
+  b.onclick = () => {
+    const inp = b.parentElement.querySelector('input');
+    const showPass = inp.type === 'password';
+    inp.type = showPass ? 'text' : 'password';
+    b.innerHTML = showPass ? EYE_OFF : EYE_ON;
+  };
 });
 
 document.getElementById('loginForm').addEventListener('submit', async e => {
