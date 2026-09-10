@@ -1303,45 +1303,34 @@ def admin_laws_search(q: str = "", user=Depends(_auth)):
         return []
     import re as _re
     conn = get_connection()
-    rows = conn.execute(
-        "SELECT code, title, full_text FROM laws WHERE full_text IS NOT NULL AND LENGTH(full_text) > 500").fetchall()
+    rows = conn.execute("SELECT code, title, essence, full_text FROM laws").fetchall()
     conn.close()
     out = []
-    m = _re.match(r"^([A-Za-zА-Яа-я0-9\-ФЗГКТКУКАПЧСЛВМЖУН]+)?\s*(?:ст\.?|статья)?\s*(\d+(?:[.\d]+)?)$", q, _re.I)
-    if m:
-        code_q = (m.group(1) or "").upper()
-        num = m.group(2)
+    m = _re.match(r"^\s*(?P<code>\d+\s*-\s*ФЗ|[A-Za-zА-Яа-я][A-Za-zА-Яа-я\d\-]*)?\s*"
+                  r"(?:ст\.?|статья)?\s*(?P<num>\d+(?:[.\d]+)?)\s*$", q, _re.I)
+    if m and m.group("num"):
+        code_q = (m.group("code") or "").upper().replace(" ", "")
+        num = m.group("num")
         for r in rows:
-            if code_q and code_q not in (r["code"] or "").upper():
-                continue
-            ft = r["full_text"] or ""
-            mm = _re.search(r"Статья\s*" + _re.escape(num) + r"(?![\d])", ft, _re.I)
-            if not mm:
-                continue
-            start = mm.start()
-            nxt = _re.search(r"Статья\s+\d", ft[start + 8:])
-            end = start + 8 + nxt.start() if nxt else start + 700
-            out.append({"code": r["code"], "art": num, "loaded": True,
-                        "snippet": " ".join(ft[start:min(end, start + 400)].split())})
-            if len(out) >= 12:
-                break
+            c = (r["code"] or "").upper()
+            base, _, art = c.rsplit(" ", 1) if " " in c else (c, "", "")
+            if art == num and (not code_q or code_q in base):
+                out.append({"code": r["code"], "art": num, "loaded": True,
+                            "snippet": " ".join(((r["title"] or "") + " " +
+                                                 (r["full_text"] or r["essence"] or ""))[:400].split())})
+                if len(out) >= 12:
+                    break
         if not out:
-            out.append({"code": code_q or "ВСЕ КОДЕКСЫ", "art": num, "loaded": False,
+            out.append({"code": (m.group("code") or "ВСЕ КОДЕКСЫ").upper(), "art": num,
+                        "loaded": False,
                         "snippet": "Статья не найдена ни в одном загруженном источнике"})
         return out
     low = q.lower()
     for r in rows:
-        ft = r["full_text"] or ""
-        pos = ft.lower().find(low)
-        while pos >= 0 and len(out) < 20:
-            head = ft[:pos]
-            am = None
-            for am in _re.finditer(r"Статья\s*(\d+(?:[.\d]+)?)", head):
-                pass
-            art = am.group(1) if am else "?"
-            out.append({"code": r["code"], "art": art, "loaded": True,
-                        "snippet": " ".join(ft[max(0, pos - 80):pos + 320].split())})
-            pos = ft.lower().find(low, pos + len(low))
-        if len(out) >= 20:
-            break
+        blob = ((r["code"] or "") + " " + (r["title"] or "") + " " + (r["full_text"] or "")).lower()
+        pos = blob.find(low)
+        if pos >= 0 and len(out) < 20:
+            out.append({"code": r["code"],
+                        "art": (r["code"] or "").rsplit(" ", 1)[-1], "loaded": True,
+                        "snippet": " ".join(blob[max(0, pos - 60):pos + 340].split())})
     return out
