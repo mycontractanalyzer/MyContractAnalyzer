@@ -312,10 +312,10 @@ document.getElementById('promoCreateBtn').onclick = async () => {
 };
 
 function startLaws(pack){
-  act('/api/admin/laws_reload', {pack: pack}).then(pollJob).catch(e => showErr('❌ ' + e.message));
+  act('/api/admin/laws_reload_v2', {pack: pack}).then(pollJob).catch(e => showErr('❌ ' + e.message));
 }
 function pollJob(){
-  fetch('/api/admin/laws_job', {headers: H}).then(r => r.json()).then(j => {
+  fetch('/api/admin/laws_job_v2', {headers: H}).then(r => r.json()).then(j => {
     const box = document.getElementById('lawsJob');
     if (!j || !j.running && !j.last) { box.textContent = ''; return; }
     box.innerHTML = (j.running ? '⏳ Выполняется: ' : '✅ Готово: ') +
@@ -333,7 +333,7 @@ document.getElementById('lawSearchBtn').onclick = async () => {
   const out = document.getElementById('lawSearchOut');
   if (!q) return;
   out.innerHTML = '<p class="text-white/50">⏳ Ищу…</p>';
-  const r = await fetch('/api/admin/laws_search?q=' + encodeURIComponent(q), {headers: H});
+  const r = await fetch('/api/admin/laws_search_v2?q=' + encodeURIComponent(q), {headers: H});
   const list = await r.json().catch(() => []);
   if (!r.ok) { out.innerHTML = '<p class="text-red-400">❌ Ошибка поиска</p>'; return; }
   if (!list.length) { out.innerHTML = '<p class="text-red-400">❌ Ничего не найдено по запросу.</p>'; return; }

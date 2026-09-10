@@ -1334,3 +1334,149 @@ def admin_laws_search(q: str = "", user=Depends(_auth)):
                         "art": (r["code"] or "").rsplit(" ", 1)[-1], "loaded": True,
                         "snippet": " ".join(blob[max(0, pos - 60):pos + 340].split())})
     return out
+import threading
+
+_LAWS_JOB_V2 = {"running": False, "done": 0, "total": 0, "current": "", "log": []}
+
+ADD_PACK_V2 = [
+    ("КОНСТ", "Конституция Российской Федерации", ["Конституция Российской Федерации"]),
+    ("54-ФЗ", "ФЗ № 54-ФЗ О применении контрольно-кассовой техники",
+     ["Федеральный закон № 54-ФЗ О применении контрольно-кассовой техники при осуществлении расчетов в Российской Федерации"]),
+]
+
+
+def _fetch_wikisource_v2(title):
+    import urllib.request
+    import urllib.parse
+    import json as _j
+    url = ("https://ru.wikisource.org/w/api.php?action=parse&page="
+           + urllib.parse.quote(title) + "&prop=wikitext&format=json")
+    req = urllib.request.Request(url, headers={"User-Agent": "MCA-LawsBot/1.0 (admin@local)"})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        d = _j.load(r)
+    return d.get("parse", {}).get("wikitext", {}).get("*", "") or ""
+
+
+def _split_articles_v2(ft, code, title):
+    import re as _re
+    ft = _re.sub(r"\{\{[^}]*\}\}", "", ft or "")
+    ft = _re.sub(r"<!--.*?-->", "", ft, flags=_re.S)
+    ms = list(_re.finditer(r"Статья\s*(\d+(?:[.\d]+)?)", ft))
+    rows = []
+    for i, m in enumerate(ms):
+        start = m.start()
+        end = ms[i + 1].start() if i + 1 < len(ms) else min(len(ft), start + 8000)
+        chunk = ft[start:end].strip()
+        if len(chunk) < 40:
+            continue
+        rows.append((f"{code} {m.group(1)}", f"{title} — ст. {m.group(1)}", chunk[:6000]))
+    return rows
+
+
+def _run_pack_v2(items):
+    import re as _re
+    J = _LAWS_JOB_V2
+    J.update(running=True, done=0, total=len(items), current="", log=[])
+    conn = get_connection()
+    conn.execute("CREATE TABLE IF NOT EXISTS laws (id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                 "code TEXT UNIQUE, title TEXT, essence TEXT, tags TEXT, category TEXT, "
+                 "full_text TEXT DEFAULT '')")
+    for code, title, cands in items:
+        J["current"] = title
+        try:
+            ft = ""
+            for c in cands:
+                try:
+                    ft = _fetch_wikisource_v2(c)
+                    if len(ft) > 2000:
+                        break
+                except Exception:
+                    ft = ""
+            if not ft:
+                J["log"].append(f"{code}: не удалось скачать")
+                J["done"] += 1
+                continue
+            rows = _split_articles_v2(ft, code, title)
+            tag = _re.split(r"[\s-]", code)[0].lower()
+            for c2, t2, chunk in rows:
+                conn.execute("INSERT OR REPLACE INTO laws "
+                             "(code, title, essence, tags, category, full_text) "
+                             "VALUES (?,?,?,?,?,?)",
+                             (c2, t2, "", tag + " закон", "закон", chunk))
+            conn.commit()
+            J["log"].append(f"{code}: статей {len(rows)}")
+        except Exception as e:
+            J["log"].append(f"{code}: ошибка {e}")
+        J["done"] += 1
+    conn.close()
+    J["running"] = False
+    J["current"] = ""
+
+
+class LawsReloadV2In(BaseModel):
+    pack: str = "base"
+
+
+@app.post("/api/admin/laws_reload_v2")
+def laws_reload_v2(data: LawsReloadV2In, user=Depends(_auth)):
+    _admin(user)
+    if _LAWS_JOB_V2["running"]:
+        return {"started": False, "reason": "already running"}
+    if data.pack == "base":
+        items = list(globals().get("DEFAULT_PACK") or [])
+    else:
+        items = list(globals().get("EXTENDED_PACK") or []) + ADD_PACK_V2
+    if not items:
+        raise HTTPException(500, "Пакет пуст: проверь DEFAULT_PACK/EXTENDED_PACK в api/main.py")
+    threading.Thread(target=_run_pack_v2, args=(items,), daemon=True).start()
+    return {"started": True, "total": len(items)}
+
+
+@app.get("/api/admin/laws_job_v2")
+def laws_job_v2(user=Depends(_auth)):
+    _admin(user)
+    J = _LAWS_JOB_V2
+    return {"running": J["running"], "done": J["done"], "total": J["total"],
+            "current": J["current"], "log": J["log"][-10:],
+            "last": (not J["running"]) and J["done"] > 0}
+
+
+@app.get("/api/admin/laws_search_v2")
+def laws_search_v2(q: str = "", user=Depends(_auth)):
+    _admin(user)
+    q = (q or "").strip()
+    if not q:
+        return []
+    import re as _re
+    conn = get_connection()
+    rows = conn.execute("SELECT code, title, essence, full_text FROM laws").fetchall()
+    conn.close()
+    out = []
+    m = _re.match(r"^\s*(?P<code>\d+\s*-\s*ФЗ|[A-Za-zА-Яа-я][A-Za-zА-Яа-я\d\-]*)?\s*"
+                  r"(?:ст\.?|статья)?\s*(?P<num>\d+(?:[.\d]+)?)\s*$", q, _re.I)
+    if m and m.group("num"):
+        code_q = (m.group("code") or "").upper().replace(" ", "")
+        num = m.group("num")
+        for r in rows:
+            c = (r["code"] or "").upper()
+            base, _, art = c.rsplit(" ", 1) if " " in c else (c, "", "")
+            if art == num and (not code_q or code_q in base):
+                out.append({"code": r["code"], "art": num, "loaded": True,
+                            "snippet": " ".join(((r["title"] or "") + " " +
+                                                 (r["full_text"] or r["essence"] or ""))[:400].split())})
+                if len(out) >= 12:
+                    break
+        if not out:
+            out.append({"code": (m.group("code") or "ВСЕ КОДЕКСЫ").upper(), "art": num,
+                        "loaded": False,
+                        "snippet": "Статья не найдена ни в одном загруженном источнике"})
+        return out
+    low = q.lower()
+    for r in rows:
+        blob = ((r["code"] or "") + " " + (r["title"] or "") + " " + (r["full_text"] or "")).lower()
+        pos = blob.find(low)
+        if pos >= 0 and len(out) < 20:
+            out.append({"code": r["code"],
+                        "art": (r["code"] or "").rsplit(" ", 1)[-1], "loaded": True,
+                        "snippet": " ".join(blob[max(0, pos - 60):pos + 340].split())})
+    return out
