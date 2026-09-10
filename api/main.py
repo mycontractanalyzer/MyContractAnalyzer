@@ -1471,7 +1471,7 @@ def _run_pack_v2(items):
     ("СК", "Семейный кодекс РФ", ["Семейный кодекс Российской Федерации"]),
     ("152-ФЗ", "ФЗ О персональных данных", ["Федеральный закон О персональных данных"]),
     ("40-ФЗ", "ФЗ Об ОСАГО", ["Федеральный закон Об обязательном страховании гражданской ответственности владельцев транспортных средств"]),
-]
+
 
 EXT_PACK_V2 = [
     ("ЖК", "Жилищный кодекс РФ", ["Жилищный кодекс Российской Федерации"]),
@@ -1529,7 +1529,14 @@ def laws_reload_v2(data: LawsReloadV2In, user=Depends(_auth)):
     _B = _B or globals().get("BASE_PACK_V2") or []
     _E = _E or globals().get("EXT_PACK_V2") or []
     _A = _A or globals().get("ADD_PACK_V2") or []
-    items = list(_B if data.pack == "base" else _E + _A)
+    if data.pack == "max":
+        try:
+            from core.law_packs import FINAL_PACK_V2 as _F
+        except Exception:
+            _F = []
+        items = list(_F or globals().get("FINAL_PACK_V2") or [])
+    else:
+        items = list(_B if data.pack == "base" else _E + _A)
     if not items:
         raise HTTPException(500, "Паки не найдены: создай core/law_packs.py")
     threading.Thread(target=_run_pack_v2, args=(items,), daemon=True).start()

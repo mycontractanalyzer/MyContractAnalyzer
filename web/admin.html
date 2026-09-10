@@ -105,6 +105,7 @@
     <div class="flex flex-wrap gap-3 mb-4">
       <button id="lawsBaseBtn" class="btn-primary text-sm">🔄 Обновить базовый пакет законов</button>
       <button id="lawsExtBtn" class="btn-ghost text-sm">📚 Догрузить расширенный пакет</button>
+      <button id="lawsMaxBtn" class="btn-ghost text-sm">🚀 Финальная догрузка (максимум)</button>
     </div>
     <div id="lawsJob" class="text-sm text-white/60 mb-4"></div>
     <div class="glass p-4 mb-4">
@@ -327,6 +328,7 @@ function pollJob(){
 }
 document.getElementById('lawsBaseBtn').onclick = () => startLaws('base');
 document.getElementById('lawsExtBtn').onclick = () => startLaws('ext');
+document.getElementById('lawsMaxBtn').onclick = () => startLaws('max');
 
 document.getElementById('lawSearchBtn').onclick = async () => {
   const q = document.getElementById('lawQ').value.trim();
