@@ -185,3 +185,6 @@ h1.grad-text::before{content:'';position:absolute;left:0;bottom:-18px;width:230p
   .hero-mock .float-badge:nth-of-type(1){top:calc(4.5% - 17px) !important}
   .hero-mock .float-badge:nth-of-type(3){top:calc(72% - 17px) !important;bottom:auto !important}
 }
+@media (max-width:640px){
+  .hero-mock .float-badge:nth-of-type(3){top:calc(96% - 17px) !important;bottom:auto !important;left:8% !important}
+}
