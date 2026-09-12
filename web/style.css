@@ -188,3 +188,8 @@ h1.grad-text::before{content:'';position:absolute;left:0;bottom:-18px;width:230p
 @media (max-width:640px){
   .hero-mock .float-badge:nth-of-type(3){top:calc(96% - 17px) !important;bottom:auto !important;left:8% !important}
 }
+@media (max-width:640px){
+  .glass, .glass *{overflow-wrap:anywhere;word-break:break-word}
+  main{max-width:100vw;overflow-x:hidden}
+  .glass.p-10 .float-badge{position:absolute}
+}
